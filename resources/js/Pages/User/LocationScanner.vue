@@ -193,10 +193,9 @@
                 <div v-else>
                     <!-- Hero Section -->
                     <div class="scanner-hero">
-                        <div class="hero-content">
-                            <img src="/images/Icons/ppm_logo.png" alt="PinPointMe Logo" style="width: 80px; height: 80px; object-fit: contain; margin-bottom: 12px;" />
-                            <h1>Emergency Scanner</h1>
-                            <p>Scan your location or describe your emergency</p>
+                        <div class="hero-content" style="display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 16px; flex-wrap: nowrap;">
+                            <img src="/images/Icons/ppm_logo.png" alt="PinPointMe Logo" style="width: auto; height: 80px; object-fit: contain; flex-shrink: 0;" />
+                            <img src="/images/Icons/logo.png" alt="Logo" style="width: auto; height: 140px;   flex-shrink: 0;" />
                         </div>
                     </div>
 
@@ -3765,7 +3764,7 @@ const showNotification = (message, color = 'info') => {
 /* Scanner Hero */
 .scanner-hero {
     background: linear-gradient(135deg, #3674B5 0%, #2196F3 100%);
-    padding: 32px 20px 48px;
+    padding: 5px 5px 5px;
     position: relative;
     overflow: hidden;
 }

@@ -148,6 +148,14 @@
             <v-card>
                 <v-card-title>{{ isEditing ? 'Edit Video' : 'Add New Video' }}</v-card-title>
                 <v-card-text>
+                    <!-- VPS Upload Info -->
+                    <v-alert type="info" variant="tonal" density="compact" class="mb-4">
+                        <div class="text-caption">
+                            <strong>VPS Upload Limits:</strong> Videos: 100MB max | Thumbnails: 5MB max<br>
+                            For larger videos, use YouTube links instead.
+                        </div>
+                    </v-alert>
+                    
                     <v-form ref="form">
                         <v-text-field
                             v-model="formData.title"
@@ -189,13 +197,20 @@
                             density="compact"
                             accept="video/mp4,video/webm,video/mov,video/avi"
                             prepend-icon="mdi-video"
-                            :rules="[v => (!!v || !!formData.video_url || isEditing) || 'Video file is required']"
-                            :hint="videoFile ? `Selected: ${videoFile.name}` : 'Max 100MB (MP4, WebM, MOV, AVI)'"
+                            :rules="[
+                                v => (!!v || !!formData.video_url || isEditing) || 'Video file is required',
+                                v => !v || v.size <= 100 * 1024 * 1024 || 'Video must be 100MB or less'
+                            ]"
+                            :hint="videoFile ? `Selected: ${videoFile.name} (${formatFileSize(videoFile.size)})` : 'Max 100MB (MP4 recommended)'"
+                            :error-messages="videoFileError"
                             persistent-hint
                             show-size
                             class="mb-3"
                             @update:model-value="onVideoFileChange"
                         />
+                        <v-alert v-if="videoFile && videoFile.size > 100 * 1024 * 1024" type="warning" variant="tonal" density="compact" class="mb-3">
+                            Warning: File size is {{ formatFileSize(videoFile.size) }}. Maximum allowed is 100MB. Consider compressing the video.
+                        </v-alert>
 
                         <!-- Video URL for YouTube -->
                         <v-text-field
@@ -219,7 +234,10 @@
                             density="compact"
                             accept="image/*"
                             prepend-icon="mdi-image"
-                            hint="Leave empty for auto-generated thumbnail. Max 5MB"
+                            :rules="[
+                                v => !v || v.size <= 5 * 1024 * 1024 || 'Thumbnail must be 5MB or less'
+                            ]"
+                            :hint="thumbnailFile ? `Selected: ${thumbnailFile.name} (${formatFileSize(thumbnailFile.size)})` : 'Leave empty for auto-generated thumbnail. Max 5MB'"
                             persistent-hint
                             show-size
                             class="mb-3"
@@ -252,8 +270,13 @@
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer />
-                    <v-btn variant="text" @click="dialog = false">Cancel</v-btn>
-                    <v-btn color="primary" :loading="saving" @click="saveMeasure">
+                    <v-btn variant="text" @click="dialog = false" :disabled="saving">Cancel</v-btn>
+                    <v-btn 
+                        color="primary" 
+                        :loading="saving" 
+                        @click="saveMeasure"
+                        :disabled="(videoSourceType === 'upload' && videoFile && videoFile.size > 100 * 1024 * 1024) || (thumbnailFile && thumbnailFile.size > 5 * 1024 * 1024)"
+                    >
                         {{ isEditing ? 'Update' : 'Create' }}
                     </v-btn>
                 </v-card-actions>
@@ -348,6 +371,8 @@ const videoFile = ref(null);
 const thumbnailFile = ref(null);
 const videoPreviewUrl = ref('');
 const thumbnailPreviewUrl = ref('');
+const videoFileError = ref('');
+const uploadProgress = ref(0);
 
 const measuresList = ref(props.measures || []);
 const categories = ref(props.categories || ['Fire Safety', 'Earthquake', 'First Aid', 'Evacuation', 'General Safety']);
@@ -375,11 +400,26 @@ const formData = ref({
 
 // File change handlers
 const onVideoFileChange = (file) => {
+    videoFileError.value = '';
     if (file) {
+        // Validate file size (100MB limit)
+        const maxSize = 100 * 1024 * 1024; // 100MB
+        if (file.size > maxSize) {
+            videoFileError.value = `File size (${formatFileSize(file.size)}) exceeds 100MB limit`;
+        }
         videoPreviewUrl.value = URL.createObjectURL(file);
     } else {
         videoPreviewUrl.value = '';
     }
+};
+
+// Format file size helper
+const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 };
 
 const onThumbnailFileChange = (file) => {
@@ -449,7 +489,20 @@ const openEditDialog = (measure) => {
 };
 
 const saveMeasure = async () => {
+    // Validate file sizes before upload
+    if (videoFile.value && videoFile.value.size > 100 * 1024 * 1024) {
+        showSnackbar('Video file must be 100MB or less', 'error');
+        return;
+    }
+    
+    if (thumbnailFile.value && thumbnailFile.value.size > 5 * 1024 * 1024) {
+        showSnackbar('Thumbnail must be 5MB or less', 'error');
+        return;
+    }
+    
     saving.value = true;
+    uploadProgress.value = 0;
+    
     try {
         const url = isEditing.value ? `/preventive-measures/${selectedMeasure.value.id}` : '/preventive-measures';
         
@@ -479,7 +532,7 @@ const saveMeasure = async () => {
         }
         
         const response = await fetch(url, {
-            method: 'POST', // Always POST for FormData with file uploads
+            method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
@@ -488,23 +541,48 @@ const saveMeasure = async () => {
         });
         
         const data = await response.json();
-        if (data.success || data.id) {
+        
+        if (response.ok && (data.success || data.id)) {
             showSnackbar(isEditing.value ? 'Video updated successfully' : 'Video created successfully', 'success');
             dialog.value = false;
-            // Reset file inputs
             videoFile.value = null;
             thumbnailFile.value = null;
             videoPreviewUrl.value = '';
             thumbnailPreviewUrl.value = '';
+            videoFileError.value = '';
             fetchMeasures();
         } else {
-            showSnackbar(data.errors ? Object.values(data.errors).flat().join(', ') : 'Error saving video', 'error');
+            // Enhanced error handling
+            let errorMessage = 'Error saving video';
+            
+            if (data.errors) {
+                errorMessage = Object.values(data.errors).flat().join(', ');
+            } else if (data.message) {
+                errorMessage = data.message;
+            }
+            
+            // Check for common VPS upload issues
+            if (errorMessage.includes('max') || errorMessage.includes('size') || errorMessage.includes('large')) {
+                errorMessage += ' - VPS server may have upload limits. Try a smaller file or compress the video.';
+            }
+            
+            showSnackbar(errorMessage, 'error');
+            console.error('Save error details:', data);
         }
     } catch (error) {
         console.error('Error saving measure:', error);
-        showSnackbar('Error saving video', 'error');
+        let errorMsg = 'Network error. ';
+        
+        if (error.message.includes('Failed to fetch')) {
+            errorMsg += 'Please check your connection and try again.';
+        } else {
+            errorMsg += 'Please try with a smaller file size.';
+        }
+        
+        showSnackbar(errorMsg, 'error');
     } finally {
         saving.value = false;
+        uploadProgress.value = 0;
     }
 };
 

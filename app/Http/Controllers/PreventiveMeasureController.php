@@ -115,6 +115,11 @@ class PreventiveMeasureController extends Controller
             'is_active' => 'boolean',
             'is_published' => 'boolean',
             'sort_order' => 'integer',
+        ], [
+            'video.max' => 'Video file must not exceed 100MB. Consider using YouTube links for larger videos.',
+            'video.mimes' => 'Video must be MP4, MOV, AVI, or WebM format.',
+            'thumbnail.max' => 'Thumbnail image must not exceed 5MB.',
+            'thumbnail.image' => 'Thumbnail must be a valid image file.',
         ]);
 
         // Map is_published to is_active if provided
@@ -181,14 +186,19 @@ class PreventiveMeasureController extends Controller
             'title' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
             'author' => 'nullable|string|max:255',
-            'thumbnail' => 'nullable|image|max:5120',
+            'thumbnail' => 'nullable|image|max:5120', // 5MB max
             'thumbnail_url' => 'nullable|url',
-            'video' => 'nullable|mimes:mp4,mov,avi,webm|max:102400',
+            'video' => 'nullable|mimes:mp4,mov,avi,webm|max:102400', // 100MB max
             'video_url' => 'nullable|url',
             'category' => 'nullable|string|max:100',
             'is_active' => 'boolean',
             'is_published' => 'boolean',
             'sort_order' => 'integer',
+        ], [
+            'video.max' => 'Video file must not exceed 100MB. Consider using YouTube links for larger videos.',
+            'video.mimes' => 'Video must be MP4, MOV, AVI, or WebM format.',
+            'thumbnail.max' => 'Thumbnail image must not exceed 5MB.',
+            'thumbnail.image' => 'Thumbnail must be a valid image file.',
         ]);
 
         // Map is_published to is_active if provided

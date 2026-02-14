@@ -1730,23 +1730,12 @@ class AuthController extends Controller
                     }
                 },
             ],
-            'emergency_contact_name' => 'required|string|max:255',
-            'emergency_contact_phone' => [
-                'required',
-                'string',
-                'regex:/^(09|\+639|639)[0-9]{9}$/',
-            ],
-            'emergency_contact_relationship' => 'required|string|max:100',
         ], [
             'id_number.required' => 'ID number is required.',
             'id_number.digits' => 'ID number must be exactly 9 digits.',
             'id_number.regex' => 'ID number must contain only numbers.',
             'phone_number.required' => 'Phone number is required.',
             'phone_number.regex' => 'Please enter a valid phone number (e.g., 09171234567).',
-            'emergency_contact_name.required' => 'Emergency contact name is required.',
-            'emergency_contact_phone.required' => 'Emergency contact phone number is required.',
-            'emergency_contact_phone.regex' => 'Please enter a valid emergency contact phone number (e.g., 09171234567).',
-            'emergency_contact_relationship.required' => 'Emergency contact relationship is required.',
         ]);
         
         if ($validator->fails()) {
@@ -1784,17 +1773,6 @@ class AuthController extends Controller
             $userData['student_id'] = $idNumber;
         } else {
             $userData['faculty_id'] = $idNumber;
-        }
-        
-        // Add emergency contact if provided
-        if ($request->emergency_contact_name) {
-            $userData['emergency_contact_name'] = $request->emergency_contact_name;
-        }
-        if ($request->emergency_contact_phone) {
-            $userData['emergency_contact_phone'] = $request->emergency_contact_phone;
-        }
-        if ($request->emergency_contact_relationship) {
-            $userData['emergency_contact_relationship'] = $request->emergency_contact_relationship;
         }
         
         try {

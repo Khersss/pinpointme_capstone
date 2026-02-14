@@ -128,11 +128,11 @@ export default defineConfig({
         },
     },
     optimizeDeps: {
-        include: ['jspdf', 'jspdf-autotable', 'qrcode', 'html5-qrcode'],
+        include: ['jspdf', 'jspdf-autotable', 'qrcode', 'html5-qrcode', 'xlsx'],
     },
     build: {
         commonjsOptions: {
-            include: [/jspdf/, /jspdf-autotable/, /node_modules/],
+            include: [/jspdf/, /jspdf-autotable/, /qrcode/, /html5-qrcode/, /xlsx/, /node_modules/],
             transformMixedEsModules: true,
         },
         chunkSizeWarningLimit: 1000,
@@ -153,14 +153,12 @@ export default defineConfig({
                         if (id.includes('@mdi')) {
                             return 'mdi-vendor';
                         }
-                        // PDF and QR libraries
-                        if (id.includes('jspdf') || id.includes('qrcode') || id.includes('html5-qrcode')) {
-                            return 'pdf-qr-vendor';
-                        }
                         // Other utilities
                         if (id.includes('axios') || id.includes('@jamescoyle')) {
                             return 'utils-vendor';
                         }
+                        // PDF, QR, and XLSX libraries stay in the default vendor chunk
+                        // to avoid CommonJS/ESM compatibility issues across chunks
                         // Default vendor chunk for other node_modules
                         return 'vendor';
                     }

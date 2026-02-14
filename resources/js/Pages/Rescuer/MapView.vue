@@ -35,7 +35,7 @@
                         </div>
                         <div class="target-info">
                             <span class="target-label">Target Location</span>
-                            <span class="target-name">{{ rescueRequest?.room?.room_name || rescueRequest?.room?.name || 'Unknown Room' }}</span>
+                            <span class="target-name">You are here</span>
                         </div>
                     </div>
                 </div>
@@ -84,7 +84,7 @@
                                     :style="getRoomAnnotationStyle(targetRoomAnnotation)"
                                 >
                                     <div class="room-annotation-label">
-                                        {{ targetRoomAnnotation.room_name }}
+                                        You are here
                                     </div>
                                     <div class="target-indicator">
                                         <v-icon color="white" size="16">mdi-alert</v-icon>
@@ -857,22 +857,19 @@ onMounted(async () => {
 }
 
 .room-annotation-label {
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
     color: #b71c1c;
     background: rgba(255, 255, 255, 0.95);
-    padding: 4px 8px;
-    border-radius: 4px;
+    padding: 5px 8px;
+    border-radius: 5px;
     text-align: center;
-    word-break: break-word;
+    white-space: nowrap;
     line-height: 1.2;
     max-width: 95%;
     max-height: 90%;
     overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -1286,8 +1283,8 @@ onMounted(async () => {
     }
     
     .room-annotation-label {
-        font-size: 8px;
-        padding: 2px 4px;
+        font-size: 9px;
+        padding: 3px 5px;
     }
     
     .legend-card,
@@ -1371,7 +1368,8 @@ onMounted(async () => {
     }
     
     .room-annotation-label {
-        font-size: 9px;
+        font-size: 10px;
+        padding: 4px 6px;
     }
     
     .legend-item {
@@ -1413,7 +1411,7 @@ onMounted(async () => {
     
     .room-annotation-label {
         font-size: 11px;
-        padding: 5px 10px;
+        padding: 5px 8px;
     }
     
     .legend-card,
@@ -1497,7 +1495,7 @@ onMounted(async () => {
     
     .room-annotation-label {
         font-size: 12px;
-        padding: 6px 12px;
+        padding: 6px 10px;
     }
     
     .legend-card,

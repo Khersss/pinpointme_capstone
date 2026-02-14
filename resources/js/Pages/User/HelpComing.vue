@@ -1370,8 +1370,6 @@ const handleTranslate = async () => {
 
 const openChat = () => {
     if (rescue.value?.assigned_rescuer || rescue.value?.rescuer_id) {
-        // Play sound when opening chat
-        playNotificationSound('message');
         // Use rescue-chat route which will get or create conversation
         router.visit(`/user/rescue-chat/${rescue.value.id}`);
     } else {
