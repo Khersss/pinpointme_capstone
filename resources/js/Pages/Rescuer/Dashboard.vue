@@ -419,9 +419,6 @@
                 </div>
             </v-overlay>
         </v-main>
-
-        <!-- User Guide Wizard -->
-        <UserGuideWizard />
     </v-app>
 </template>
 
@@ -434,7 +431,6 @@ import { useUnreadMessages } from '@/Composables/useUnreadMessages';
 import RescuerMenu from '@/Components/Pages/Rescuer/Menu/RescuerMenu.vue';
 import RescuerBottomNav from '@/Components/Pages/Rescuer/Menu/RescuerBottomNav.vue';
 import NotificationPopup from '@/Components/NotificationPopup.vue';
-import UserGuideWizard from '@/Components/UserGuideWizard.vue';
 
 // Get Inertia page for auth
 const page = usePage();

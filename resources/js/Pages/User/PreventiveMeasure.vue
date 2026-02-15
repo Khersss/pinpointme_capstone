@@ -155,37 +155,56 @@
                 </div>
             </v-container>
 
-            <!-- Video Modal -->
+            <!-- Video Modal - Content-fitted and centered -->
             <v-dialog
                 v-model="showVideoModal"
-                max-width="800"
-                :fullscreen="$vuetify.display.smAndDown"
+                :max-width="$vuetify.display.smAndDown ? '95%' : '800px'"
+                :fullscreen="false"
+                content-class="video-modal-wrapper"
             >
-                <v-card>
-                    <v-toolbar color="primary" density="compact">
-                        <v-btn icon @click="closeVideo">
-                            <v-icon>mdi-close</v-icon>
-                        </v-btn>
-                        <v-toolbar-title class="text-body-1">
-                            {{ selectedMeasure?.title }}
-                        </v-toolbar-title>
-                    </v-toolbar>
+                <v-card class="video-modal-card" elevation="8">
+                    <!-- Header with gradient -->
+                    <div class="video-modal-header">
+                        <div class="header-gradient">
+                            <div class="d-flex align-center justify-space-between pa-4">
+                                <div class="modal-title-section">
+                                    <div v-if="selectedMeasure?.category" class="modal-category">
+                                        <v-icon size="12" class="mr-1">{{ getCategoryIcon(selectedMeasure.category) }}</v-icon>
+                                        {{ formatCategory(selectedMeasure.category) }}
+                                    </div>
+                                </div>
+                                <v-btn 
+                                    icon 
+                                    variant="text" 
+                                    @click="closeVideo"
+                                    class="modal-close-btn"
+                                    size="small"
+                                >
+                                    <v-icon color="white">mdi-close</v-icon>
+                                </v-btn>
+                            </div>
+                        </div>
+                    </div>
 
-                    <v-card-text class="pa-0">
+                    <!-- Video Container -->
+                    <div class="video-section">
                         <!-- Video Loading -->
-                        <div v-if="videoLoading" class="d-flex align-center justify-center py-10">
-                            <v-progress-circular indeterminate color="primary" />
+                        <div v-if="videoLoading" class="video-loading">
+                            <div class="loading-content">
+                                <v-progress-circular indeterminate color="#3674B5" size="40" width="3" />
+                                <span class="loading-text">Loading video...</span>
+                            </div>
                         </div>
 
                         <!-- Video Player -->
-                        <div v-if="selectedMeasure" class="video-container">
+                        <div v-if="selectedMeasure" class="video-player-container">
                             <!-- Local Video -->
                             <video
                                 v-if="isLocalVideo(selectedMeasure)"
                                 :src="getVideoUrl(selectedMeasure)"
                                 controls
                                 autoplay
-                                class="video-player"
+                                class="responsive-video"
                                 @loadeddata="videoLoading = false"
                                 @error="handleVideoError"
                             ></video>
@@ -197,7 +216,7 @@
                                 frameborder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowfullscreen
-                                class="video-iframe"
+                                class="responsive-video"
                                 @load="videoLoading = false"
                                 @error="handleVideoError"
                             ></iframe>
@@ -209,26 +228,32 @@
                                 :poster="getThumbnailUrl(selectedMeasure)"
                                 controls
                                 autoplay
-                                class="video-player"
+                                class="responsive-video"
                                 @loadeddata="videoLoading = false"
                                 @error="handleVideoError"
                             ></video>
                         </div>
-                    </v-card-text>
+                    </div>
 
-                    <!-- Video Details -->
-                    <v-card-text v-if="selectedMeasure" class="pt-4">
-                        <p class="text-body-2 text-grey-darken-1 mb-3">
-                            {{ selectedMeasure.description }}
-                        </p>
-                        <div class="d-flex align-center text-caption text-grey">
-                            <v-icon size="14" class="mr-1">mdi-account</v-icon>
-                            By: {{ selectedMeasure.author || 'Unknown' }}
-                            <span class="mx-2">•</span>
-                            <v-icon size="14" class="mr-1">mdi-calendar</v-icon>
-                            {{ formatDate(selectedMeasure.created_at) }}
+                    <!-- Video Details - Compact design -->
+                    <div v-if="selectedMeasure" class="video-details">
+                        <div class="details-content">
+                            <p v-if="selectedMeasure.description" class="video-description">
+                                {{ selectedMeasure.description }}
+                            </p>
+                            <div class="video-meta">
+                                <div class="meta-item">
+                                    <v-icon size="14" color="#3674B5">mdi-account-circle</v-icon>
+                                    <span>{{ selectedMeasure.author || 'Unknown Author' }}</span>
+                                </div>
+                                <div class="meta-divider">•</div>
+                                <div class="meta-item">
+                                    <v-icon size="14" color="#3674B5">mdi-calendar-clock</v-icon>
+                                    <span>{{ formatDate(selectedMeasure.created_at) }}</span>
+                                </div>
+                            </div>
                         </div>
-                    </v-card-text>
+                    </div>
                 </v-card>
             </v-dialog>
 
@@ -809,25 +834,259 @@ onMounted(() => {
     margin-bottom: 16px;
 }
 
-/* Video Modal */
-.video-container {
-    position: relative;
-    width: 100%;
-    padding-top: 56.25%; /* 16:9 Aspect Ratio */
-    background: #000;
+/* Enhanced Video Modal - Content-fitted */
+.video-modal-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2vh 2vw;
 }
 
-.video-iframe,
-.video-player {
+.video-modal-card {
+    overflow: hidden;
+    border-radius: 16px !important;
+    background: white;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+}
+
+/* Remove old modal classes */
+.video-modal-desktop,
+.video-modal-mobile {
+    /* These are now handled by the wrapper */
+}
+
+/* Modal Header */
+.video-modal-header {
+    position: relative;
+    overflow: hidden;
+}
+
+.header-gradient {
+    background: linear-gradient(135deg, #3674B5 0%, #13294B 100%);
+    position: relative;
+}
+
+.header-gradient::before {
+    content: '';
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+    pointer-events: none;
 }
 
-.video-player {
+.modal-title-section {
+    flex: 1;
+    min-width: 0;
+}
+
+.modal-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 4px 0;
+    line-height: 1.3;
+    /* Truncate long titles */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+}
+
+.modal-category {
+    display: flex;
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.modal-close-btn {
+    background: rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+}
+
+.modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.25) !important;
+    transform: scale(1.05);
+}
+
+/* Video Section */
+.video-section {
+    position: relative;
     background: #000;
+}
+
+.video-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.loading-text {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.video-player-container {
+    position: relative;
+    width: 100%;
+    /* Responsive aspect ratio */
+    aspect-ratio: 16 / 9;
+    background: #000;
+    overflow: hidden;
+    max-height: 60vh;
+}
+
+.responsive-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000;
+}
+
+/* Video Details - Content based */
+.video-details {
+    border-top: 1px solid rgba(54, 116, 181, 0.1);
+    background: linear-gradient(180deg, #ffffff 0%, #fafafb 100%);
+}
+
+.details-content {
+    padding: 16px 20px;
+}
+
+.video-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 12px 0;
+    line-height: 1.4;
+}
+
+.video-description {
+    font-size: 0.9rem;
+    color: #4a5568;
+    margin: 0 0 12px 0;
+    line-height: 1.5;
+}
+
+.video-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: #718096;
+    font-weight: 500;
+}
+
+.meta-divider {
+    color: #CBD5E0;
+    font-size: 0.8rem;
+    user-select: none;
+}
+
+/* Mobile Optimizations - Content based */
+@media (max-width: 600px) {
+    .video-modal-wrapper {
+        padding: 1vh 1vw;
+        align-items: flex-start;
+        padding-top: 5vh;
+    }
+    
+    .video-modal-card {
+        border-radius: 12px !important;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .video-player-container {
+        max-height: 50vh;
+        aspect-ratio: 16 / 9;
+    }
+    
+    .modal-title {
+        font-size: 1rem;
+        max-width: 200px;
+    }
+    
+    .details-content {
+        padding: 16px;
+    }
+    
+    .video-description {
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+    
+    .video-loading {
+        min-height: 200px;
+    }
+}
+
+/* Landscape phone optimization */
+@media (max-width: 900px) and (orientation: landscape) {
+    .video-modal-wrapper {
+        padding: 2vh 2vw;
+        align-items: center;
+    }
+    
+    .video-modal-card {
+        max-height: 95vh;
+        overflow-y: auto;
+    }
+    
+    .video-player-container {
+        max-height: 45vh;
+    }
+    
+    .details-content {
+        padding: 12px 16px;
+    }
+    
+    .video-description {
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+}
+
+/* Tablet and desktop */
+@media (min-width: 601px) {
+    .video-player-container {
+        min-height: 300px;
+        max-height: 500px;
+    }
+    
+    .modal-title {
+        max-width: 400px;
+    }
+    
+    .video-modal-wrapper {
+        padding: 3vh 3vw;
+    }
 }
 
 /* Main Content */
@@ -836,6 +1095,29 @@ onMounted(() => {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 120px) !important;
+}
+
+/* Global modal overrides */
+:deep(.v-dialog) {
+    align-items: center;
+    justify-content: center;
+}
+
+:deep(.v-overlay__content) {
+    margin: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+:deep(.video-modal-wrapper) {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Tablet: 2-column grid */
@@ -870,6 +1152,12 @@ onMounted(() => {
     
     .main-content {
         padding-bottom: 40px !important;
+    }
+    
+    /* Larger video modal on desktop */
+    .video-player-container {
+        min-height: 400px;
+        max-height: 600px;
     }
 }
 

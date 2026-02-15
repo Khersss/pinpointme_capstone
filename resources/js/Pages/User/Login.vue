@@ -50,12 +50,7 @@
                                 <h2 class="text-h5 font-weight-bold text-primary mt-2">PinPointMe</h2>
                             </div>
 
-                            <v-card-title class="text-h5 font-weight-bold text-center mb-2">
-                                Welcome Back
-                            </v-card-title>
-                            <v-card-subtitle class="text-center mb-6">
-                                Sign in to continue
-                            </v-card-subtitle>
+                         
 
                             <v-form @submit.prevent="handleLogin" ref="formRef">
                                 <v-alert
@@ -121,7 +116,7 @@
                                     prepend-inner-icon="mdi-email"
                                     :rules="[rules.required, rules.email]"
                                     :disabled="isLoading"
-                                    class="mb-3"
+                                    class="mb-1"
                                 />
 
                                 <v-text-field
@@ -155,8 +150,8 @@
                             </v-form>
 
                             <div class="text-center mt-2">
-                                <span class="text-grey-darken-1">Don't have an account?</span>
-                                <v-btn variant="text" color="primary" size="small" @click="showRegister = true" class="ml-1">
+                                <span class="text-grey-darken-1 text-caption" >Don't have an account?</span>
+                                <v-btn variant="text" color="primary" size="x-small" @click="showRegister = true" class="ml-1">
                                     Register here
                                 </v-btn>
                             </div>

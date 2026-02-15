@@ -420,9 +420,6 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
-
-        <!-- User Guide Wizard -->
-        <UserGuideWizard />
     </v-app>
 </template>
 
@@ -430,7 +427,6 @@
 import { ref, computed, onMounted } from 'vue';
 import { useDisplay } from 'vuetify';
 import AdminAppBar from '@/Components/AdminAppBar.vue';
-import UserGuideWizard from '@/Components/UserGuideWizard.vue';
 import { getAllRescueRequests } from '@/Composables/useApi';
 
 const { mobile } = useDisplay();
