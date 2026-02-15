@@ -48,6 +48,10 @@ Route::middleware(['guest'])->group(function () {
     Route::post('/auth/google/complete', [AuthController::class, 'completeGoogleRegistration']);
     Route::post('/auth/google/send-otp', [AuthController::class, 'googleSendOtp']);
     Route::post('/auth/google/verify-otp', [AuthController::class, 'googleVerifyOtp']);
+    
+    // Google verification link routes
+    Route::post('/auth/google/resend-verification', [AuthController::class, 'sendGoogleVerificationLink']);
+    Route::get('/auth/google/verify-link', [AuthController::class, 'verifyGoogleLink'])->name('auth.google.verify-link');
 });
 
 // Native Google OAuth from APK (no CSRF, no guest middleware)

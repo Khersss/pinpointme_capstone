@@ -21,6 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
             CheckTermsAcceptance::class,
         ]);
         
+        // Add CORS middleware for mobile app support
+        $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
+        
         // Disable CSRF for API routes
         $middleware->validateCsrfTokens(except: [
             '/api/*'

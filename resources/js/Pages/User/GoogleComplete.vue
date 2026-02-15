@@ -1,9 +1,7 @@
 <template>
     <v-app class="bg-user-gradient-light">
         <v-main class="registration-viewport">
-            <!-- Mobile-First Single Column Layout -->
             <div class="mobile-container">
-                <!-- Logo Header for Mobile -->
                 <div class="mobile-header">
                     <v-img
                         src="/images/logos/pinpointme.png"
@@ -14,45 +12,11 @@
                     />
                     <h1 class="text-h6 font-weight-bold text-primary mt-2 mb-0">PinPointMe</h1>
                 </div>
-
-                <!-- Registration Card -->
                 <v-card class="registration-card" rounded="xl" elevation="2">
-                    <!-- Progress Steps -->
-                    <div class="step-indicator">
-                        <div class="step" :class="{ active: step >= 1, completed: step > 1 }">
-                            <div class="step-circle">
-                                <v-icon v-if="step > 1" size="16">mdi-check</v-icon>
-                                <span v-else>1</span>
-                            </div>
-                            <span class="step-label">Details</span>
-                        </div>
-                        <div class="step-line" :class="{ active: step >= 2 }"></div>
-                        <div class="step" :class="{ active: step >= 2, completed: step > 2 }">
-                            <div class="step-circle">
-                                <v-icon v-if="step > 2" size="16">mdi-check</v-icon>
-                                <span v-else>2</span>
-                            </div>
-                            <span class="step-label">Verify</span>
-                        </div>
-                        <div class="step-line" :class="{ active: step >= 3 }"></div>
-                        <div class="step" :class="{ active: step >= 3 }">
-                            <div class="step-circle">
-                                <v-icon v-if="step === 3" size="16">mdi-check</v-icon>
-                                <span v-else>3</span>
-                            </div>
-                            <span class="step-label">Done</span>
-                        </div>
-                    </div>
-
-                    <!-- Google Profile Card -->
-                    <div class="google-profile-card">
+                    <div class="google-profile-card mb-4 mt-2">
                         <v-avatar size="40" class="mr-3">
-                            <v-img 
-                                v-if="googleUser.profile_picture" 
-                                :src="googleUser.profile_picture"
-                                alt="Profile"
-                            />
-                            <v-icon v-else size="24" color="primary">mdi-account</v-icon>
+                            <v-img v-if="googleUser.profile_picture" :src="googleUser.profile_picture" />
+                            <v-icon v-else color="primary">mdi-account-circle</v-icon>
                         </v-avatar>
                         <div class="profile-info">
                             <div class="profile-name">{{ googleUser.first_name }} {{ googleUser.last_name }}</div>
@@ -60,73 +24,29 @@
                         </div>
                         <v-icon color="success" size="20">mdi-check-circle</v-icon>
                     </div>
-
-                    <!-- Error Alert -->
-                    <v-alert
-                        v-if="error"
-                        type="error"
-                        variant="tonal"
-                        class="mb-4 mx-4"
-                        closable
-                        density="compact"
-                        @click:close="error = ''"
-                    >
-                        {{ error }}
-                    </v-alert>
-
-                    <!-- Step 1: ID & Phone Form -->
-                    <div v-if="step === 1" class="form-content">
-                        <h2 class="form-title">Complete Your Profile</h2>
-                        <p class="form-subtitle">We need a few more details to set up your account</p>
-
-                        <v-form @submit.prevent="sendOtp" ref="formRef">
-                            <!-- ID Number Field -->
-                            <div class="input-group">
-                                <label class="input-label">
-                                    <v-icon size="18" class="mr-1">mdi-card-account-details</v-icon>
-                                    ID Number
-                                </label>
-                                <v-text-field
-                                    v-model="form.id_number"
-                                    placeholder="Enter 9-digit ID"
-                                    variant="outlined"
-                                    density="compact"
-                                    :rules="[rules.required, rules.idNumber]"
-                                    :disabled="isLoading"
-                                    maxlength="9"
-                                    @input="formatIdNumber"
-                                    hide-details="auto"
-                                    type="tel"
-                                    inputmode="numeric"
-                                />
-                                <v-chip 
-                                    v-if="userRole" 
-                                    :color="userRole === 'student' ? 'blue' : 'green'" 
-                                    size="x-small" 
-                                    class="mt-1"
-                                    variant="flat"
-                                >
-                                    <v-icon start size="12">{{ userRole === 'student' ? 'mdi-school' : 'mdi-account-tie' }}</v-icon>
-                                    {{ userRole === 'student' ? 'Student' : 'Faculty' }}
-                                </v-chip>
-                            </div>
-
-                            <!-- Phone Number Field -->
-                            <div class="input-group">
-                                <label class="input-label">
-                                    <v-icon size="18" class="mr-1">mdi-cellphone</v-icon>
-                                    Phone Number
-                                </label>
-                                <v-text-field
-                                    v-model="form.phone_number"
-                                    placeholder="09XXXXXXXXX"
-                                    variant="outlined"
-                                    density="compact"
-                                    :rules="[rules.required, rules.phoneNumber]"
-                                    :disabled="isLoading"
-                                    maxlength="11"
-                                    @input="formatPhoneNumber"
-                                    hide-details="auto"
+                    <div class="form-content text-center">
+                        <v-icon size="56" color="primary" class="mb-3">mdi-email-check-outline</v-icon>
+                        <h2 class="form-title" style="color:#3674B5;">Verify Your SDCA Email</h2>
+                        <p class="form-subtitle mb-4">
+                            We have sent a verification link to your SDCA Gmail account.<br>
+                            <span style="color:#3674B5;font-weight:600">Please check your inbox and click the link to verify your account.</span>
+                        </p>
+                        <v-alert v-if="error" type="error" variant="tonal" class="mb-4 mx-4" closable density="compact" @click:close="error = ''">
+                            {{ error }}
+                        </v-alert>
+                        <v-btn color="primary" class="submit-btn mb-2" :loading="isLoading" @click="resendVerification" variant="tonal">
+                            Resend Verification Email
+                        </v-btn>
+                        <v-btn color="grey" class="submit-btn" @click="handleCancel" variant="text">
+                            Back to Login
+                        </v-btn>
+                    </div>
+                </v-card>
+            </div>
+        </v-main>
+        <v-snackbar v-model="showToast" :color="toastColor" location="top" timeout="3000">
+            {{ toastMessage }}
+        </v-snackbar>
                                     type="tel"
                                     inputmode="numeric"
                                 />
@@ -255,106 +175,25 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { usePage } from '@inertiajs/vue3';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { Capacitor } from '@capacitor/core';
 
 const page = usePage();
 const googleUser = computed(() => page.props.googleUser || {});
-
-// Step state: 1 = Form, 2 = OTP, 3 = Success
-const step = ref(1);
-
-// Form state
-const formRef = ref(null);
-const otpFormRef = ref(null);
-const form = ref({
-    id_number: '',
-    phone_number: '',
-});
-const otp = ref('');
-
-// UI state
 const isLoading = ref(false);
 const error = ref('');
 const showToast = ref(false);
 const toastMessage = ref('');
 const toastColor = ref('success');
 
-// Resend cooldown
-const resendCooldown = ref(0);
-let cooldownInterval = null;
-
-// Computed role based on ID number first digit
-const userRole = computed(() => {
-    if (!form.value.id_number || form.value.id_number.length === 0) return null;
-    const firstDigit = form.value.id_number.charAt(0);
-    return firstDigit === '2' ? 'student' : 'faculty';
-});
-
-// Validation rules
-const rules = {
-    required: (v) => !!v || 'Required',
-    idNumber: (v) => {
-        if (!v) return 'ID number is required';
-        if (!/^[0-9]+$/.test(v)) return 'Numbers only';
-        if (v.length !== 9) return 'Must be 9 digits';
-        return true;
-    },
-    phoneNumber: (v) => {
-        if (!v) return 'Phone number is required';
-        let normalized = v.replace(/[^0-9+]/g, '');
-        if (normalized.startsWith('+63')) {
-            normalized = '0' + normalized.substring(3);
-        } else if (normalized.startsWith('63')) {
-            normalized = '0' + normalized.substring(2);
-        } else if (normalized.startsWith('9') && normalized.length === 10) {
-            normalized = '0' + normalized;
-        }
-        if (!/^09[0-9]{9}$/.test(normalized)) {
-            return 'Invalid format (09XXXXXXXXX)';
-        }
-        return true;
-    },
-};
-
-// Format helpers
-const formatIdNumber = () => {
-    form.value.id_number = form.value.id_number.replace(/[^0-9]/g, '').substring(0, 9);
-};
-
-const formatPhoneNumber = () => {
-    let value = form.value.phone_number.replace(/[^0-9]/g, '');
-    if (value.startsWith('63') && value.length > 2) {
-        value = '0' + value.substring(2);
-    } else if (value.startsWith('9') && value.length <= 10) {
-        value = '0' + value;
-    }
-    form.value.phone_number = value.substring(0, 11);
-};
-
-// Start resend cooldown
-const startResendCooldown = () => {
-    resendCooldown.value = 60;
-    cooldownInterval = setInterval(() => {
-        resendCooldown.value--;
-        if (resendCooldown.value <= 0) {
-            clearInterval(cooldownInterval);
-        }
-    }, 1000);
-};
-
-// Send OTP
-const sendOtp = async () => {
-    if (formRef.value) {
-        const { valid } = await formRef.value.validate();
-        if (!valid) return;
-    }
-
+// Resend verification email
+const resendVerification = async () => {
     isLoading.value = true;
     error.value = '';
-
     try {
-        const response = await fetch('/auth/google/send-otp', {
+        const response = await fetch('/auth/google/resend-verification', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -362,103 +201,36 @@ const sendOtp = async () => {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
             },
             body: JSON.stringify({
-                id_number: form.value.id_number,
-                phone_number: form.value.phone_number,
+                email: googleUser.value.email,
             }),
         });
-
         const data = await response.json();
-
         if (response.ok && data.success) {
-            step.value = 2;
-            startResendCooldown();
-            toastMessage.value = 'Verification code sent to your email!';
+            toastMessage.value = 'Verification email resent! Please check your inbox.';
             toastColor.value = 'success';
             showToast.value = true;
         } else {
-            if (data.errors) {
-                const errorMessages = Object.values(data.errors).flat();
-                error.value = errorMessages.join(' ');
-            } else {
-                error.value = data.message || 'Failed to send verification code.';
-            }
+            error.value = data.message || 'Failed to resend verification email.';
         }
     } catch (err) {
-        console.error('Send OTP error:', err);
         error.value = 'Connection error. Please try again.';
     } finally {
         isLoading.value = false;
     }
 };
 
-// Resend OTP
-const resendOtp = async () => {
-    if (resendCooldown.value > 0) return;
-    await sendOtp();
-};
-
-// Verify OTP and complete registration
-const verifyOtp = async () => {
-    if (otp.value.length !== 6) {
-        error.value = 'Please enter the 6-digit code';
-        return;
-    }
-
-    isLoading.value = true;
-    error.value = '';
-
-    try {
-        const response = await fetch('/auth/google/verify-otp', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-            },
-            body: JSON.stringify({
-                id_number: form.value.id_number,
-                phone_number: form.value.phone_number,
-                otp: otp.value,
-            }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-            step.value = 3;
-            toastMessage.value = 'Account verified successfully!';
-            toastColor.value = 'success';
-            showToast.value = true;
-        } else {
-            error.value = data.message || 'Invalid verification code.';
-        }
-    } catch (err) {
-        console.error('Verify OTP error:', err);
-        error.value = 'Connection error. Please try again.';
-    } finally {
-        isLoading.value = false;
-    }
-};
-
-// Redirect to set password page
-const redirectToSetPassword = () => {
-    window.location.href = '/change-password';
-};
-
-// Redirect to app (fallback)
-const redirectToApp = () => {
-    window.location.href = '/change-password';
-};
-
-// Handle cancel
 const handleCancel = () => {
     window.location.href = '/login';
 };
 
-// Cleanup
-onUnmounted(() => {
-    if (cooldownInterval) {
-        clearInterval(cooldownInterval);
+// Initialize GoogleAuth for native platforms
+onMounted(() => {
+    if (Capacitor.isNativePlatform()) {
+        try {
+            GoogleAuth.initialize();
+        } catch (error) {
+            console.error('GoogleAuth initialization error:', error);
+        }
     }
 });
 </script>

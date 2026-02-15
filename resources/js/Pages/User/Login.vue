@@ -649,42 +649,51 @@ const showToast = ref(false);
 const toastMessage = ref('');
 const toastColor = ref('success');
 
-// Google OAuth state
-const isGoogleLoading = ref(false);
-const googleError = ref('');
+// Handle Google OAuth login
+const handleGoogleLogin = async () => {
+    isGoogleLoading.value = true;
+    googleError.value = '';
 
-// Forgot Password state
-const showForgotPassword = ref(false);
-const forgotPasswordEmail = ref('');
-const forgotPasswordLoading = ref(false);
-const forgotPasswordError = ref('');
-const forgotFormRef = ref(null);
-const otpFormRef = ref(null);
-const newPasswordFormRef = ref(null);
-
-// OTP-based reset state
-const resetStep = ref(1); // 1: email, 2: OTP, 3: new password
-const resetOtp = ref('');
-const resetToken = ref('');
-const newPassword = ref('');
-const confirmNewPassword = ref('');
-const showNewPassword = ref(false);
-const showConfirmPassword = ref(false);
-const resetComplete = ref(false);
-const resendCooldown = ref(0);
-let cooldownInterval = null;
-
-// Registration state
-const showRegister = ref(false);
-const registerStep = ref(1); // 1: email, 2: OTP, 3: new password, 4: success
-const registerEmail = ref('');
-const registerOtp = ref('');
-const registerToken = ref('');
-const registerPassword = ref('');
-const registerConfirmPassword = ref('');
-const showRegisterPassword = ref(false);
-const showRegisterConfirmPassword = ref(false);
-const registerLoading = ref(false);
+    // Check if the app is running as a Native APK
+    if (Capacitor.isNativePlatform()) {
+        try {
+            // 1. Trigger the Native Android Google Picker
+            const result = await GoogleAuth.signIn();
+            // 2. Send the ID token to our Laravel backend via fetch
+            const apiUrl = 'https://pinpointme.app/auth/google/callback/native';
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({ idToken: result.authentication.idToken })
+            });
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else if (response.ok) {
+                const data = await response.json();
+                if (data.verified) {
+                    window.location.href = 'https://pinpointme.app/user/scanner';
+                } else {
+                    isGoogleLoading.value = false;
+                    googleError.value = 'Please verify your SDCA email first. Check your inbox for the verification link.';
+                }
+            } else {
+                isGoogleLoading.value = false;
+                googleError.value = 'Google sign-in failed. Please try again.';
+            }
+        } catch (error) {
+            console.error('Google Auth Error:', error);
+            isGoogleLoading.value = false;
+            googleError.value = 'Google sign-in was cancelled or failed. ' + error.message;
+        }
+    } else {
+        // Standard Web Redirect for browser users
+        window.location.href = '/auth/google';
+    }
+};
 const registerError = ref('');
 const registerFormRef = ref(null);
 const registerOtpFormRef = ref(null);
@@ -741,9 +750,17 @@ rules.sdcaEmail = (v) => {
 
 // Check for existing session on mount
 onMounted(() => {
+    // Initialize GoogleAuth for native platforms to prevent white screen crashes
+    if (Capacitor.isNativePlatform()) {
+        try {
+            GoogleAuth.initialize();
+        } catch (error) {
+            console.error('GoogleAuth initialization error:', error);
+        }
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const logout = urlParams.get('logout');
-    
     // Check for Google OAuth errors from backend
     const errors = page.props?.errors;
     if (errors?.google) {

@@ -4,6 +4,17 @@ import Layout from "@/App.vue";
 import vuetify from "./vuetify";
 import { registerServiceWorker } from "./Utilities/pushNotifications";
 
+// Add global error handler for debugging white screen issues
+window.addEventListener('error', (event) => {
+    console.error('[App] Global error:', event.error);
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+    console.error('[App] Unhandled promise rejection:', event.reason);
+});
+
+console.log('[App] Starting app initialization...');
+
 // Register service workers immediately for push notifications
 // This needs to happen early so push notifications work even when app is closed
 if ('serviceWorker' in navigator) {
@@ -18,39 +29,74 @@ if ('serviceWorker' in navigator) {
             console.error('[App] Main service worker registration failed:', error);
         });
     
-    // Register Firebase messaging service worker
-    navigator.serviceWorker.register('/firebase-messaging-sw.js')
-        .then(registration => {
-            console.log('[App] Firebase messaging service worker registered');
-        })
-        .catch(error => {
-            console.error('[App] Firebase messaging service worker registration failed:', error);
-        });
+    // Register Firebase messaging service worker (wrapped in try-catch)
+    try {
+        navigator.serviceWorker.register('/firebase-messaging-sw.js')
+            .then(registration => {
+                console.log('[App] Firebase messaging service worker registered');
+            })
+            .catch(error => {
+                console.error('[App] Firebase messaging service worker registration failed:', error);
+            });
+    } catch (error) {
+        console.error('[App] Firebase service worker registration error:', error);
+    }
 }
 
 createInertiaApp({
     resolve: (name) => {
-        const pages = import.meta.glob("./Pages/**/*.vue", { eager: true });
-        const page = pages[`./Pages/${name}.vue`];
+        try {
+            console.log('[App] Resolving page:', name);
+            const pages = import.meta.glob("./Pages/**/*.vue", { eager: true });
+            const page = pages[`./Pages/${name}.vue`];
 
-        if (page.default.layout === undefined) {
-            page.default.layout = Layout;
+            if (!page) {
+                console.error('[App] Page not found:', name);
+                throw new Error(`Page not found: ${name}`);
+            }
+
+            if (page.default.layout === undefined) {
+                page.default.layout = Layout;
+            }
+
+            console.log('[App] Page resolved successfully:', name);
+            return page;
+        } catch (error) {
+            console.error('[App] Error resolving page:', name, error);
+            throw error;
         }
-
-        return page;
     },
     setup({ el, App, props, plugin }) {
-        const app = createApp({ render: () => h(App, props) });
+        try {
+            console.log('[App] Setting up Vue app...');
+            const app = createApp({ render: () => h(App, props) });
 
-        const components = import.meta.glob("./Components/Customs/**/*.vue", {
-            eager: true,
-        });
+            const components = import.meta.glob("./Components/Customs/**/*.vue", {
+                eager: true,
+            });
 
-        Object.entries(components).forEach(([path, definition]) => {
-            const filename = path.split("/").pop().replace(".vue", "");
-            app.component(filename, definition.default);
-        });
+            Object.entries(components).forEach(([path, definition]) => {
+                const filename = path.split("/").pop().replace(".vue", "");
+                app.component(filename, definition.default);
+            });
 
-        app.use(plugin).use(vuetify).mount(el);
+            console.log('[App] Installing plugins...');
+            app.use(plugin).use(vuetify);
+            
+            console.log('[App] Mounting app...');
+            app.mount(el);
+            
+            console.log('[App] App mounted successfully!');
+        } catch (error) {
+            console.error('[App] Setup error:', error);
+            throw error;
+        }
+    }
+}).catch(error => {
+    console.error('[App] Inertia app creation failed:', error);
+    // Create a simple fallback display
+    const el = document.getElementById('app');
+    if (el) {
+        el.innerHTML = '<div style="padding: 20px; color: red;">App failed to load. Check console for details.</div>';
     }
 });

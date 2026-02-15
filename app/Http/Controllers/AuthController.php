@@ -1,3 +1,71 @@
+    /**
+     * Send SDCA Google verification email with link
+     */
+    public function sendGoogleVerificationLink(Request $request)
+    {
+        $user = Auth::user() ?: User::where('email', $request->email)->first();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not found.'], 404);
+        }
+        if ($user->email_verified_at) {
+            return response()->json(['success' => false, 'message' => 'Account already verified.'], 400);
+        }
+        // Generate a signed verification URL
+        $token = Str::random(64);
+        $user->verification_token = $token;
+        $user->save();
+        $verifyUrl = url('/auth/google/verify-link?token=' . $token . '&email=' . urlencode($user->email));
+        try {
+            Mail::send([], [], function ($message) use ($user, $verifyUrl) {
+                $message->to($user->email)
+                    ->subject('PinPointMe - Verify Your SDCA Google Account')
+                    ->html("
+                        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                            <div style='background: linear-gradient(135deg, #3674B5 0%, #2D5F96 100%); padding: 30px; text-align: center;'>
+                                <h1 style='color: white; margin: 0; font-size: 28px;'>Verify Your SDCA Google Account</h1>
+                            </div>
+                            <div style='padding: 30px; background-color: #f8f9fa;'>
+                                <h2 style='color: #333; margin-bottom: 20px;'>Hi {$user->first_name}!</h2>
+                                <p style='color: #666; font-size: 16px; line-height: 1.6;'>Thank you for signing up with PinPointMe using your SDCA Google account. Please verify your email by clicking the button below:</p>
+                                <div style='text-align:center; margin: 30px 0;'>
+                                    <a href='{$verifyUrl}' style='background: #3674B5; color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-size: 18px; font-weight: bold;'>Verify My Account</a>
+                                </div>
+                                <p style='color: #999; font-size: 13px; text-align: center;'>If you did not sign up, you can ignore this email.</p>
+                            </div>
+                            <div style='background: #333; padding: 20px; text-align: center;'>
+                                <p style='color: #ccc; margin: 0; font-size: 14px;'>PinPointMe Emergency Rescue System</p>
+                            </div>
+                        </div>
+                    ");
+            });
+            return response()->json(['success' => true, 'message' => 'Verification email sent!']);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send Google verification link: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to send verification email.'], 500);
+        }
+    }
+
+    /**
+     * Handle SDCA Google verification link
+     */
+    public function verifyGoogleLink(Request $request)
+    {
+        $user = User::where('email', $request->email)->where('verification_token', $request->token)->first();
+        if (!$user) {
+            return Inertia::render('User/GoogleVerifyResult', [
+                'success' => false,
+                'message' => 'Invalid or expired verification link.'
+            ]);
+        }
+        $user->email_verified_at = now();
+        $user->verification_token = null;
+        $user->status = 'active';
+        $user->save();
+        return Inertia::render('User/GoogleVerifyResult', [
+            'success' => true,
+            'message' => 'Your account has been verified! You can now sign in using SDCA Google.'
+        ]);
+    }
 <?php
 
 namespace App\Http\Controllers;
@@ -126,78 +194,24 @@ class AuthController extends Controller
         
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            
             $user = Auth::user();
-            
             // Update last login timestamp
             $user->update(['last_login_at' => Carbon::now()]);
-            
-            // Check if account is pending verification
-            if ($user->status === 'pending' && !$user->otp_verified) {
-                // Log out and redirect to verification
+            // Block login if SDCA Google and not verified
+            if (str_ends_with($user->email, '@sdca.edu.ph') && !$user->email_verified_at) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
-                
-                // Only send new OTP if there's no valid existing OTP
-                $hasValidOtp = $user->otp_code && 
-                               strlen($user->otp_code) === 6 && 
-                               $user->otp_expires_at && 
-                               Carbon::now()->isBefore($user->otp_expires_at);
-                
-                if (!$hasValidOtp) {
-                    // Generate and send new OTP
-                    $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
-                    $user->update([
-                        'otp_code' => $otp,
-                        'otp_expires_at' => now()->addMinutes(30),
-                    ]);
-                    
-                    // Send OTP email
-                    try {
-                        Mail::send([], [], function ($message) use ($user, $otp) {
-                            $message->to($user->email)
-                                ->subject('PinPointMe - Verification Code')
-                                ->html("
-                                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
-                                        <div style='background: linear-gradient(135deg, #1976D2, #0D47A1); padding: 30px; text-align: center;'>
-                                            <h1 style='color: white; margin: 0;'>PinPointMe</h1>
-                                        </div>
-                                        <div style='padding: 30px; background: #f5f5f5;'>
-                                            <h2 style='color: #333;'>Account Verification Required</h2>
-                                            <p style='color: #666;'>Hi {$user->first_name}, please verify your account with this code:</p>
-                                            <div style='background: white; padding: 20px; border-radius: 10px; text-align: center; margin: 20px 0;'>
-                                                <h1 style='color: #1976D2; letter-spacing: 8px; font-size: 36px; margin: 0;'>{$otp}</h1>
-                                                <p style='color: #888; font-size: 12px; margin-top: 10px;'>Code expires in 30 minutes</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ");
-                        });
-                    } catch (\Exception $e) {
-                        \Log::error('Failed to send verification OTP: ' . $e->getMessage());
-                    }
-                }
-                
-                return redirect('/verify-account?email=' . urlencode($user->email));
+                return redirect('/login')->withErrors(['email' => 'Please verify your SDCA Google account first. Check your inbox for the verification link.']);
             }
-            
-            // Check if user needs to change password (forced password change)
-            if ($user->force_password_change) {
-                return redirect('/change-password');
-            }
-            
             // Redirect based on user role
-            // Admin check - either isAdmin flag is true or role is 'admin'
             if ($user->isAdmin == 1 || $user->isAdmin === true || $user->role === 'admin') {
                 return redirect()->intended('/admin/dashboard');
-            } 
-            // Rescuer check
-            elseif ($user->role === 'rescuer') {
+            } elseif ($user->role === 'rescuer') {
                 return redirect()->intended('/rescuer/dashboard');
-            } 
-            // All other users (student, faculty, staff, etc.) go to user scanner
-            else {
+            } else {
+                return redirect()->intended('/user/scanner');
+            }
                 return redirect()->intended('/user/scanner');
             }
         }
