@@ -1,208 +1,305 @@
 <template>
     <v-app class="bg-user-gradient-light">
         <v-main class="registration-viewport">
-            <v-container fluid class="fill-height pa-0">
-                <v-row no-gutters class="fill-height">
-                    <!-- Left Panel - Desktop/Laptop Only -->
-                    <v-col cols="12" lg="6" class="d-none d-lg-flex">
-                        <div class="w-100 h-100 d-flex flex-column justify-center align-center left-panel">
-                            <div class="logo-container">
-                                <v-img
-                                    src="/images/logos/pinpointme.png"
-                                    max-height="160"
-                                    max-width="160"
-                                    contain
-                                    class="logo-image"
+            <!-- Mobile-First Single Column Layout -->
+            <div class="mobile-container">
+                <!-- Logo Header for Mobile -->
+                <div class="mobile-header">
+                    <v-img
+                        src="/images/logos/pinpointme.png"
+                        max-height="64"
+                        max-width="64"
+                        contain
+                        class="mx-auto"
+                    />
+                    <h1 class="text-h6 font-weight-bold text-primary mt-2 mb-0">PinPointMe</h1>
+                </div>
+
+                <!-- Registration Card -->
+                <v-card class="registration-card" rounded="xl" elevation="2">
+                    <!-- Progress Steps -->
+                    <div class="step-indicator">
+                        <div class="step" :class="{ active: step >= 1, completed: step > 1 }">
+                            <div class="step-circle">
+                                <v-icon v-if="step > 1" size="16">mdi-check</v-icon>
+                                <span v-else>1</span>
+                            </div>
+                            <span class="step-label">Details</span>
+                        </div>
+                        <div class="step-line" :class="{ active: step >= 2 }"></div>
+                        <div class="step" :class="{ active: step >= 2, completed: step > 2 }">
+                            <div class="step-circle">
+                                <v-icon v-if="step > 2" size="16">mdi-check</v-icon>
+                                <span v-else>2</span>
+                            </div>
+                            <span class="step-label">Verify</span>
+                        </div>
+                        <div class="step-line" :class="{ active: step >= 3 }"></div>
+                        <div class="step" :class="{ active: step >= 3 }">
+                            <div class="step-circle">
+                                <v-icon v-if="step === 3" size="16">mdi-check</v-icon>
+                                <span v-else>3</span>
+                            </div>
+                            <span class="step-label">Done</span>
+                        </div>
+                    </div>
+
+                    <!-- Google Profile Card -->
+                    <div class="google-profile-card">
+                        <v-avatar size="40" class="mr-3">
+                            <v-img 
+                                v-if="googleUser.profile_picture" 
+                                :src="googleUser.profile_picture"
+                                alt="Profile"
+                            />
+                            <v-icon v-else size="24" color="primary">mdi-account</v-icon>
+                        </v-avatar>
+                        <div class="profile-info">
+                            <div class="profile-name">{{ googleUser.first_name }} {{ googleUser.last_name }}</div>
+                            <div class="profile-email">{{ googleUser.email }}</div>
+                        </div>
+                        <v-icon color="success" size="20">mdi-check-circle</v-icon>
+                    </div>
+
+                    <!-- Error Alert -->
+                    <v-alert
+                        v-if="error"
+                        type="error"
+                        variant="tonal"
+                        class="mb-4 mx-4"
+                        closable
+                        density="compact"
+                        @click:close="error = ''"
+                    >
+                        {{ error }}
+                    </v-alert>
+
+                    <!-- Step 1: ID & Phone Form -->
+                    <div v-if="step === 1" class="form-content">
+                        <h2 class="form-title">Complete Your Profile</h2>
+                        <p class="form-subtitle">We need a few more details to set up your account</p>
+
+                        <v-form @submit.prevent="sendOtp" ref="formRef">
+                            <!-- ID Number Field -->
+                            <div class="input-group">
+                                <label class="input-label">
+                                    <v-icon size="18" class="mr-1">mdi-card-account-details</v-icon>
+                                    ID Number
+                                </label>
+                                <v-text-field
+                                    v-model="form.id_number"
+                                    placeholder="Enter 9-digit ID"
+                                    variant="outlined"
+                                    density="compact"
+                                    :rules="[rules.required, rules.idNumber]"
+                                    :disabled="isLoading"
+                                    maxlength="9"
+                                    @input="formatIdNumber"
+                                    hide-details="auto"
+                                    type="tel"
+                                    inputmode="numeric"
+                                />
+                                <v-chip 
+                                    v-if="userRole" 
+                                    :color="userRole === 'student' ? 'blue' : 'green'" 
+                                    size="x-small" 
+                                    class="mt-1"
+                                    variant="flat"
+                                >
+                                    <v-icon start size="12">{{ userRole === 'student' ? 'mdi-school' : 'mdi-account-tie' }}</v-icon>
+                                    {{ userRole === 'student' ? 'Student' : 'Faculty' }}
+                                </v-chip>
+                            </div>
+
+                            <!-- Phone Number Field -->
+                            <div class="input-group">
+                                <label class="input-label">
+                                    <v-icon size="18" class="mr-1">mdi-cellphone</v-icon>
+                                    Phone Number
+                                </label>
+                                <v-text-field
+                                    v-model="form.phone_number"
+                                    placeholder="09XXXXXXXXX"
+                                    variant="outlined"
+                                    density="compact"
+                                    :rules="[rules.required, rules.phoneNumber]"
+                                    :disabled="isLoading"
+                                    maxlength="11"
+                                    @input="formatPhoneNumber"
+                                    hide-details="auto"
+                                    type="tel"
+                                    inputmode="numeric"
                                 />
                             </div>
-                            <h1 class="text-h4 text-white mt-6 font-weight-bold brand-title">
-                                PinPointMe
-                            </h1>
-                            <p class="text-h6 text-white-darken-1 text-center mt-2 brand-subtitle">
-                                Complete Your Profile
-                            </p>
-                            <p class="text-body-2 text-white-darken-2 text-center mt-4 px-8" style="max-width: 400px;">
-                                Just a few more details to activate your account and start using PinPointMe rescue services.
+
+                            <v-btn
+                                type="submit"
+                                color="primary"
+                                block
+                                size="large"
+                                :loading="isLoading"
+                                class="submit-btn mt-4"
+                            >
+                                <v-icon start size="20">mdi-email-send</v-icon>
+                                Send Verification Code
+                            </v-btn>
+                        </v-form>
+                    </div>
+
+                    <!-- Step 2: OTP Verification -->
+                    <div v-else-if="step === 2" class="form-content">
+                        <div class="text-center mb-4">
+                            <v-icon size="48" color="primary" class="mb-2">mdi-email-check-outline</v-icon>
+                            <h2 class="form-title">Check Your Email</h2>
+                            <p class="form-subtitle">
+                                We sent a 6-digit verification code to<br>
+                                <strong>{{ googleUser.email }}</strong>
                             </p>
                         </div>
-                    </v-col>
 
-                    <!-- Right Panel - Form -->
-                    <v-col cols="12" lg="6" class="d-flex align-center justify-center right-panel">
-                        <div class="form-container">
-                            <v-card class="registration-card pa-6 pa-sm-8" rounded="lg" elevation="8">
-                                <!-- Mobile/Tablet Logo & Header -->
-                                <div class="d-lg-none text-center mb-6">
-                                    <v-img
-                                        src="/images/logos/pinpointme.png"
-                                        max-height="100"
-                                        max-width="100"
-                                        contain
-                                        class="mx-auto mb-3"
-                                    />
-                                    <h2 class="text-h6 font-weight-bold text-primary">Complete Your Registration</h2>
-                                </div>
+                        <v-form @submit.prevent="verifyOtp" ref="otpFormRef">
+                            <div class="input-group">
+                                <label class="input-label text-center d-block">Enter Verification Code</label>
+                                <v-otp-input
+                                    v-model="otp"
+                                    length="6"
+                                    variant="outlined"
+                                    :disabled="isLoading"
+                                    class="otp-input"
+                                />
+                            </div>
 
-                                <!-- Header with Google Profile -->
-                                <div class="text-center mb-6 d-none d-lg-block">
-                                    <v-avatar size="80" class="mb-4 elevation-4">
-                                        <v-img 
-                                            v-if="googleUser.profile_picture" 
-                                            :src="googleUser.profile_picture"
-                                            alt="Profile"
-                                        />
-                                        <v-icon v-else size="48" color="primary">mdi-account</v-icon>
-                                    </v-avatar>
-                                    <h2 class="text-h5 font-weight-bold mb-1">Complete Your Registration</h2>
-                                    <p class="text-body-2 text-grey">
-                                        Welcome, {{ googleUser.first_name }}! Please provide additional information to complete your account.
-                                    </p>
-                                    <v-chip color="primary" variant="tonal" class="mt-2" size="small">
-                                        <v-icon start size="16">mdi-google</v-icon>
-                                        {{ googleUser.email }}
-                                    </v-chip>
-                                </div>
-
-                                <!-- Mobile Google Profile -->
-                                <div class="d-lg-none mb-6">
-                                    <v-card variant="tonal" color="primary" class="pa-3">
-                                        <div class="d-flex align-center">
-                                            <v-avatar size="48" class="mr-3">
-                                                <v-img 
-                                                    v-if="googleUser.profile_picture" 
-                                                    :src="googleUser.profile_picture"
-                                                    alt="Profile"
-                                                />
-                                                <v-icon v-else size="32" color="primary">mdi-account</v-icon>
-                                            </v-avatar>
-                                            <div class="flex-grow-1">
-                                                <div class="text-subtitle-2 font-weight-medium">{{ googleUser.first_name }} {{ googleUser.last_name }}</div>
-                                                <div class="text-caption text-grey-darken-1">{{ googleUser.email }}</div>
-                                            </div>
-                                        </div>
-                                    </v-card>
-                                </div>
-
-                            <!-- Error Alert -->
-                            <v-alert
-                                v-if="error"
-                                type="error"
-                                variant="tonal"
-                                class="mb-4"
-                                closable
-                                @click:close="error = ''"
+                            <v-btn
+                                type="submit"
+                                color="primary"
+                                block
+                                size="large"
+                                :loading="isLoading"
+                                :disabled="otp.length !== 6"
+                                class="submit-btn"
                             >
-                                {{ error }}
-                            </v-alert>
+                                <v-icon start size="20">mdi-check-circle</v-icon>
+                                Verify Email
+                            </v-btn>
 
-                            <!-- Registration Form -->
-                            <v-form @submit.prevent="handleSubmit" ref="formRef">
-                                <!-- ID Number Section -->
-                                <div class="mb-5">
-                                    <div class="d-flex align-center mb-2">
-                                        <v-icon size="20" color="primary" class="mr-2">mdi-card-account-details</v-icon>
-                                        <span class="text-subtitle-2 font-weight-medium">ID Number</span>
-                                    </div>
-                                    <v-text-field
-                                        v-model="form.id_number"
-                                        label="ID Number (9 digits)"
-                                        variant="outlined"
-                                        density="comfortable"
-                                        placeholder="e.g., 201234567"
-                                        :rules="[rules.required, rules.idNumber]"
-                                        :disabled="isLoading"
-                                        maxlength="9"
-                                        @input="formatIdNumber"
-                                        
-                                    />
-                                    <v-chip 
-                                        v-if="userRole" 
-                                        :color="userRole === 'student' ? 'blue' : 'green'" 
-                                        size="small" 
-                                        class="mt-2"
-                                        variant="flat"
-                                    >
-                                        <v-icon start size="16">{{ userRole === 'student' ? 'mdi-school' : 'mdi-account-tie' }}</v-icon>
-                                        {{ userRole === 'student' ? 'Student' : 'Faculty' }}
-                                    </v-chip>
-                                </div>
-
-                                <!-- Phone Number Section -->
-                                <div class="mb-5">
-                                    <div class="d-flex align-center mb-2">
-                                        <v-icon size="20" color="primary" class="mr-2">mdi-phone</v-icon>
-                                        <span class="text-subtitle-2 font-weight-medium">Phone Number</span>
-                                    </div>
-                                    <v-text-field
-                                        v-model="form.phone_number"
-                                        label="Mobile Number"
-                                        variant="outlined"
-                                        density="comfortable"
-                                        placeholder="e.g., 09171234567"
-                                        :rules="[rules.required, rules.phoneNumber]"
-                                        :disabled="isLoading"
-                                        maxlength="13"
-                                        @input="formatPhoneNumber"
-                                        hint="11-digit mobile number format"
-                                        persistent-hint
-                                        prepend-inner-icon="mdi-cellphone"
-                                    />
-                                </div>
-
-                              
-                                <!-- Submit Button -->
-                                <v-btn
-                                    type="submit"
-                                    color="primary"
-                                    size="large"
-                                    block
-                                    :loading="isLoading"
-                                    class="mb-4 registration-btn"
+                            <div class="text-center mt-3">
+                                <span class="text-caption text-grey">Didn't receive it? </span>
+                                <v-btn 
+                                    variant="text" 
+                                    color="primary" 
+                                    size="small"
+                                    density="compact"
+                                    @click="resendOtp"
+                                    :disabled="resendCooldown > 0 || isLoading"
                                 >
-                                    <v-icon start>mdi-check</v-icon>
-                                    Complete Registration
+                                    {{ resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code' }}
                                 </v-btn>
+                            </div>
 
-                                <!-- Cancel Link -->
-                                <div class="text-center">
-                                    <v-btn variant="text" color="grey" size="small" @click="handleCancel" :disabled="isLoading">
-                                        Cancel and go back to login
-                                    </v-btn>
-                                </div>
-                            </v-form>
-                        </v-card>
+                            <v-btn
+                                variant="text"
+                                color="grey"
+                                block
+                                size="small"
+                                class="mt-2"
+                                @click="step = 1; otp = ''"
+                                :disabled="isLoading"
+                            >
+                                <v-icon start size="16">mdi-arrow-left</v-icon>
+                                Back to Edit Details
+                            </v-btn>
+                        </v-form>
                     </div>
-                </v-col>
-            </v-row>
-        </v-container>
 
-        <!-- Success Snackbar -->
-        <v-snackbar v-model="showSuccess" color="success" location="top">
-            {{ successMessage }}
+                    <!-- Step 3: Success -->
+                    <div v-else-if="step === 3" class="form-content text-center">
+                        <v-icon size="72" color="success" class="mb-4">mdi-check-circle</v-icon>
+                        <h2 class="form-title text-success">Email Verified!</h2>
+                        <p class="form-subtitle">
+                            Your account has been created. We've sent a <strong>temporary password</strong> to your email.
+                        </p>
+
+                        <v-alert
+                            type="info"
+                            variant="tonal"
+                            class="mb-4 text-left"
+                            density="compact"
+                        >
+                            <div class="text-caption">
+                                <v-icon size="16" class="mr-1">mdi-information</v-icon>
+                                <strong>Next steps:</strong>
+                                <ol class="mt-1 ml-2" style="line-height: 1.8;">
+                                    <li>Check your email for the temporary password</li>
+                                    <li>Log in with your email and temporary password</li>
+                                    <li>You'll be asked to set a new password</li>
+                                </ol>
+                            </div>
+                        </v-alert>
+
+                        <v-btn
+                            color="primary"
+                            block
+                            size="large"
+                            @click="redirectToApp"
+                            class="submit-btn"
+                        >
+                            <v-icon start size="20">mdi-login</v-icon>
+                            Continue to PinPointMe
+                        </v-btn>
+                    </div>
+
+                    <!-- Cancel Button -->
+                    <div v-if="step < 3" class="cancel-section">
+                        <v-btn 
+                            variant="text" 
+                            color="grey" 
+                            size="small"
+                            @click="handleCancel" 
+                            :disabled="isLoading"
+                        >
+                            Cancel Registration
+                        </v-btn>
+                    </div>
+                </v-card>
+            </div>
+        </v-main>
+
+        <!-- Toast Snackbar -->
+        <v-snackbar v-model="showToast" :color="toastColor" location="top" timeout="3000">
+            {{ toastMessage }}
         </v-snackbar>
-    </v-main>
-</v-app>
+    </v-app>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { router, usePage } from '@inertiajs/vue3';
+import { ref, computed, onUnmounted } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 
 const page = usePage();
 const googleUser = computed(() => page.props.googleUser || {});
 
+// Step state: 1 = Form, 2 = OTP, 3 = Success
+const step = ref(1);
+
 // Form state
 const formRef = ref(null);
+const otpFormRef = ref(null);
 const form = ref({
     id_number: '',
     phone_number: '',
 });
+const otp = ref('');
 
 // UI state
 const isLoading = ref(false);
 const error = ref('');
-const showSuccess = ref(false);
-const successMessage = ref('');
+const showToast = ref(false);
+const toastMessage = ref('');
+const toastColor = ref('success');
+
+// Resend cooldown
+const resendCooldown = ref(0);
+let cooldownInterval = null;
 
 // Computed role based on ID number first digit
 const userRole = computed(() => {
@@ -213,17 +310,15 @@ const userRole = computed(() => {
 
 // Validation rules
 const rules = {
-    required: (v) => !!v || 'This field is required',
+    required: (v) => !!v || 'Required',
     idNumber: (v) => {
         if (!v) return 'ID number is required';
-        if (!/^[0-9]+$/.test(v)) return 'ID number must contain only numbers';
-        if (v.length !== 9) return 'ID number must be exactly 9 digits';
+        if (!/^[0-9]+$/.test(v)) return 'Numbers only';
+        if (v.length !== 9) return 'Must be 9 digits';
         return true;
     },
     phoneNumber: (v) => {
         if (!v) return 'Phone number is required';
-        
-        // Normalize the phone number
         let normalized = v.replace(/[^0-9+]/g, '');
         if (normalized.startsWith('+63')) {
             normalized = '0' + normalized.substring(3);
@@ -232,207 +327,375 @@ const rules = {
         } else if (normalized.startsWith('9') && normalized.length === 10) {
             normalized = '0' + normalized;
         }
-        
-        // Must start with 09 and have exactly 11 digits
         if (!/^09[0-9]{9}$/.test(normalized)) {
-            return 'Please enter a valid number';
+            return 'Invalid format (09XXXXXXXXX)';
         }
-        
         return true;
     },
 };
 
-// Format ID number (numbers only)
+// Format helpers
 const formatIdNumber = () => {
     form.value.id_number = form.value.id_number.replace(/[^0-9]/g, '').substring(0, 9);
 };
 
-// Format phone number
 const formatPhoneNumber = () => {
-    let value = form.value.phone_number.replace(/[^0-9+]/g, '');
-    
-    // Handle various formats
-    if (value.startsWith('+63')) {
-        value = '0' + value.substring(3);
-    } else if (value.startsWith('63') && !value.startsWith('639')) {
+    let value = form.value.phone_number.replace(/[^0-9]/g, '');
+    if (value.startsWith('63') && value.length > 2) {
         value = '0' + value.substring(2);
     } else if (value.startsWith('9') && value.length <= 10) {
         value = '0' + value;
     }
-    
     form.value.phone_number = value.substring(0, 11);
 };
 
-// Handle form submission
-const handleSubmit = async () => {
-    const { valid } = await formRef.value.validate();
-    if (!valid) return;
-    
+// Start resend cooldown
+const startResendCooldown = () => {
+    resendCooldown.value = 60;
+    cooldownInterval = setInterval(() => {
+        resendCooldown.value--;
+        if (resendCooldown.value <= 0) {
+            clearInterval(cooldownInterval);
+        }
+    }, 1000);
+};
+
+// Send OTP
+const sendOtp = async () => {
+    if (formRef.value) {
+        const { valid } = await formRef.value.validate();
+        if (!valid) return;
+    }
+
     isLoading.value = true;
     error.value = '';
-    
+
     try {
-        const response = await fetch('/auth/google/complete', {
+        const response = await fetch('/auth/google/send-otp', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
             },
             body: JSON.stringify({
                 id_number: form.value.id_number,
                 phone_number: form.value.phone_number,
             }),
         });
-        
+
         const data = await response.json();
-        
-        if (data.success) {
-            successMessage.value = data.message || 'Registration completed successfully!';
-            showSuccess.value = true;
-            
-            // Redirect to the appropriate page
-            setTimeout(() => {
-                window.location.href = data.redirect || '/user/scanner';
-            }, 1500);
+
+        if (response.ok && data.success) {
+            step.value = 2;
+            startResendCooldown();
+            toastMessage.value = 'Verification code sent to your email!';
+            toastColor.value = 'success';
+            showToast.value = true;
         } else {
             if (data.errors) {
-                // Handle validation errors
                 const errorMessages = Object.values(data.errors).flat();
                 error.value = errorMessages.join(' ');
             } else {
-                error.value = data.message || 'Failed to complete registration.';
+                error.value = data.message || 'Failed to send verification code.';
             }
         }
     } catch (err) {
-        console.error('Registration error:', err);
-        error.value = 'An unexpected error occurred. Please try again.';
+        console.error('Send OTP error:', err);
+        error.value = 'Connection error. Please try again.';
     } finally {
         isLoading.value = false;
     }
+};
+
+// Resend OTP
+const resendOtp = async () => {
+    if (resendCooldown.value > 0) return;
+    await sendOtp();
+};
+
+// Verify OTP and complete registration
+const verifyOtp = async () => {
+    if (otp.value.length !== 6) {
+        error.value = 'Please enter the 6-digit code';
+        return;
+    }
+
+    isLoading.value = true;
+    error.value = '';
+
+    try {
+        const response = await fetch('/auth/google/verify-otp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+            },
+            body: JSON.stringify({
+                id_number: form.value.id_number,
+                phone_number: form.value.phone_number,
+                otp: otp.value,
+            }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            step.value = 3;
+            toastMessage.value = 'Account verified successfully!';
+            toastColor.value = 'success';
+            showToast.value = true;
+        } else {
+            error.value = data.message || 'Invalid verification code.';
+        }
+    } catch (err) {
+        console.error('Verify OTP error:', err);
+        error.value = 'Connection error. Please try again.';
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+// Redirect to app
+const redirectToApp = () => {
+    window.location.href = '/login';
 };
 
 // Handle cancel
 const handleCancel = () => {
     window.location.href = '/login';
 };
+
+// Cleanup
+onUnmounted(() => {
+    if (cooldownInterval) {
+        clearInterval(cooldownInterval);
+    }
+});
 </script>
 
 <style scoped>
 /* =================================================================
-   Viewport & Layout - Full 100vh, Responsive Design
+   Mobile-First Container Layout
    ================================================================= */
 .registration-viewport {
     min-height: 100vh;
-    height: 100vh;
-    overflow-y: auto;
-    overflow-x: hidden;
+    min-height: 100dvh;
+    padding: 0;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
-.fill-height {
-    min-height: 100%;
-}
-
-/* =================================================================
-   Left Panel - Desktop Branding Section
-   ================================================================= */
-.left-panel {
-    background: linear-gradient(135deg, #13294B 0%, #185D33 100%);
-    position: relative;
-    overflow: hidden;
+.mobile-container {
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 12px;
+    padding-top: max(12px, env(safe-area-inset-top, 12px));
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+    display: flex;
+    flex-direction: column;
     min-height: 100vh;
-}
-
-.left-panel::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(223, 169, 44, 0.15) 0%, transparent 60%);
-    animation: pulse 15s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.3; }
-    50% { transform: scale(1.1) rotate(180deg); opacity: 0.5; }
-}
-
-.logo-container {
-    position: relative;
-    z-index: 1;
-}
-
-.logo-image {
-    filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.3));
-    animation: float 6s ease-in-out infinite;
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-15px); }
-}
-
-.brand-title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    letter-spacing: 3px;
-    text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    position: relative;
-    z-index: 1;
-}
-
-.brand-subtitle {
-    font-size: 1rem;
-    letter-spacing: 6px;
-    opacity: 0.9;
-    position: relative;
-    z-index: 1;
-}
-
-.text-white-darken-1 {
-    color: rgba(255, 255, 255, 0.95) !important;
-}
-
-.text-white-darken-2 {
-    color: rgba(255, 255, 255, 0.85) !important;
+    min-height: 100dvh;
+    box-sizing: border-box;
 }
 
 /* =================================================================
-   Right Panel - Form Section
+   Mobile Header
    ================================================================= */
-.right-panel {
+.mobile-header {
+    text-align: center;
+    padding: 4px 0 10px;
+    flex-shrink: 0;
+}
+
+.mobile-header .v-img {
+    max-height: 48px !important;
+    max-width: 48px !important;
+}
+
+.mobile-header h1 {
+    font-size: 1rem !important;
+}
+
+/* =================================================================
+   Registration Card - Main Container
+   ================================================================= */
+.registration-card {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    background: white !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* =================================================================
+   Step Indicator
+   ================================================================= */
+.step-indicator {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px 16px;
-    min-height: 100vh;
-    overflow-y: auto;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    gap: 6px;
+    flex-shrink: 0;
 }
 
-.form-container {
-    width: 100%;
-    max-width: 500px;
-    padding: 0 8px;
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.step-circle {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    background: #e0e0e0;
+    color: #9e9e9e;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.step.active .step-circle {
+    background: #3674B5;
+    color: white;
+}
+
+.step.completed .step-circle {
+    background: #4caf50;
+    color: white;
+}
+
+.step-label {
+    font-size: 10px;
+    color: #9e9e9e;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.step.active .step-label,
+.step.completed .step-label {
+    color: #333;
+}
+
+.step-line {
+    width: clamp(24px, 8vw, 48px);
+    height: 2px;
+    background: #e0e0e0;
+    margin-bottom: 16px;
+    transition: background 0.3s ease;
+    flex-shrink: 0;
+}
+
+.step-line.active {
+    background: #3674B5;
 }
 
 /* =================================================================
-   Registration Card
+   Google Profile Card
    ================================================================= */
-.registration-card {
-    width: 100%;
-    border-radius: 16px !important;
-    box-shadow: 0 8px 32px rgba(19, 41, 75, 0.12) !important;
-    background: rgba(255, 255, 255, 0.98) !important;
+.google-profile-card {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    margin: 0 12px 6px;
+    background: linear-gradient(135deg, #f0f7ff 0%, #e8f4f8 100%);
+    border-radius: 10px;
+    border: 1px solid rgba(54, 116, 181, 0.15);
+    flex-shrink: 0;
+    min-width: 0;
 }
 
-/* Form Field Enhancements */
+.google-profile-card .v-avatar {
+    flex-shrink: 0;
+}
+
+.profile-info {
+    flex: 1;
+    min-width: 0;
+    margin-right: 8px;
+}
+
+.profile-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-email {
+    font-size: 11px;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* =================================================================
+   Form Content Area
+   ================================================================= */
+.form-content {
+    padding: 14px;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
+}
+
+.form-title {
+    font-size: clamp(16px, 4.5vw, 20px);
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.form-subtitle {
+    font-size: clamp(12px, 3.2vw, 14px);
+    color: #666;
+    margin-bottom: 16px;
+    line-height: 1.4;
+}
+
+/* =================================================================
+   Input Groups
+   ================================================================= */
+.input-group {
+    margin-bottom: 12px;
+}
+
+.input-label {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 4px;
+}
+
+/* Text field styling */
 :deep(.v-text-field .v-field) {
     border-radius: 10px;
     background: #fafafa;
+    font-size: 15px;
+    min-height: 44px;
 }
 
 :deep(.v-text-field .v-field--focused) {
@@ -440,162 +703,463 @@ const handleCancel = () => {
 }
 
 :deep(.v-text-field .v-field__outline) {
-    --v-field-border-opacity: 0.3;
+    --v-field-border-opacity: 0.25;
 }
 
 :deep(.v-text-field .v-field--focused .v-field__outline) {
     --v-field-border-opacity: 1;
 }
 
-/* Button Styling */
-.registration-btn {
+:deep(.v-text-field input) {
+    font-size: 15px !important;
+}
+
+:deep(.v-text-field input::placeholder) {
+    font-size: 14px !important;
+    color: #aaa !important;
+}
+
+/* OTP Input */
+.otp-input {
+    justify-content: center;
+}
+
+:deep(.v-otp-input) {
+    max-width: 100%;
+    gap: 4px;
+}
+
+:deep(.v-otp-input .v-otp-input__content) {
+    gap: clamp(4px, 1.5vw, 8px);
+    justify-content: center;
+}
+
+:deep(.v-otp-input .v-field) {
+    border-radius: 8px;
+    min-width: 0;
+    width: clamp(36px, 11vw, 48px);
+    height: clamp(40px, 11vw, 48px);
+}
+
+:deep(.v-otp-input input) {
+    font-size: clamp(16px, 4.5vw, 20px) !important;
+    font-weight: 600;
+    padding: 0 !important;
+    text-align: center;
+}
+
+/* =================================================================
+   Submit Button
+   ================================================================= */
+.submit-btn {
     text-transform: none !important;
     font-weight: 600;
-    font-size: 1rem;
-    letter-spacing: 0.5px;
-    border-radius: 10px !important;
-    box-shadow: 0 4px 12px rgba(19, 41, 75, 0.15) !important;
-    transition: all 0.3s ease;
-}
-
-.registration-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(19, 41, 75, 0.25) !important;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+    border-radius: 12px !important;
+    height: 46px !important;
+    box-shadow: 0 4px 12px rgba(54, 116, 181, 0.25) !important;
+    flex-shrink: 0;
 }
 
 /* =================================================================
-   Responsive Design - Mobile & Tablet
+   Cancel Section
    ================================================================= */
-@media (max-width: 1279px) {
-    .registration-viewport {
-        height: auto;
-        min-height: 100vh;
-    }
-    
-    .right-panel {
-        min-height: 100vh;
-        padding: 32px 16px;
-    }
-    
-    .form-container {
-        max-width: 480px;
-    }
-    
-    .registration-card {
-        box-shadow: 0 4px 20px rgba(19, 41, 75, 0.1) !important;
-    }
-}
-
-@media (max-width: 599px) {
-    .registration-viewport {
-        overflow-y: auto;
-    }
-    
-    .right-panel {
-        padding: 24px 12px;
-        min-height: 100vh;
-    }
-    
-    .form-container {
-        padding: 0;
-    }
-    
-    .registration-card {
-        border-radius: 12px !important;
-    }
-    
-    .brand-title {
-        font-size: 2rem;
-        letter-spacing: 2px;
-    }
-    
-    .brand-subtitle {
-        font-size: 0.9rem;
-        letter-spacing: 4px;
-    }
-}
-
-/* Very small devices */
-@media (max-width: 374px) {
-    .registration-card {
-        padding: 20px 16px !important;
-    }
-}
-
-/* Landscape mobile */
-@media (max-height: 600px) and (orientation: landscape) {
-    .registration-viewport {
-        height: auto;
-    }
-    
-    .right-panel {
-        padding: 16px;
-        min-height: auto;
-    }
-    
-    .registration-card {
-        margin: 16px 0;
-    }
-    
-    .left-panel {
-        min-height: auto;
-    }
+.cancel-section {
+    padding: 10px 14px 14px;
+    text-align: center;
+    border-top: 1px solid #f0f0f0;
+    margin-top: auto;
+    flex-shrink: 0;
 }
 
 /* =================================================================
-   Role Chip Enhancement
-   ================================================================= */
-:deep(.v-chip) {
-    font-weight: 500;
-    border-radius: 8px;
-}
-
-/* =================================================================
-   Alert Styling
+   Alerts
    ================================================================= */
 :deep(.v-alert) {
     border-radius: 10px;
 }
 
-/* =================================================================
-   Scrollbar Styling for Overflow Areas
-   ================================================================= */
-.registration-viewport::-webkit-scrollbar {
-    width: 8px;
-}
-
-.registration-viewport::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.registration-viewport::-webkit-scrollbar-thumb {
-    background: rgba(19, 41, 75, 0.2);
-    border-radius: 4px;
-}
-
-.registration-viewport::-webkit-scrollbar-thumb:hover {
-    background: rgba(19, 41, 75, 0.3);
+:deep(.v-alert .v-alert__content) {
+    font-size: 12px;
 }
 
 /* =================================================================
-   Vuetify Component Overrides for Better Spacing
+   Chips
    ================================================================= */
-.v-expansion-panel-title {
-    font-size: 0.95rem;
+:deep(.v-chip) {
+    font-weight: 500;
+    border-radius: 6px;
 }
 
-.v-expansion-panel-text {
-    padding-top: 16px;
+/* =================================================================
+   Responsive – Extra-small phones (iPhone SE, Galaxy S3, 320px)
+   ================================================================= */
+@media (max-width: 359px) {
+    .mobile-container {
+        padding: 8px;
+    }
+
+    .mobile-header {
+        padding: 2px 0 6px;
+    }
+
+    .mobile-header .v-img {
+        max-height: 36px !important;
+        max-width: 36px !important;
+    }
+
+    .mobile-header h1 {
+        font-size: 0.85rem !important;
+        margin-top: 4px !important;
+    }
+
+    .step-indicator {
+        padding: 8px 10px;
+        gap: 4px;
+    }
+
+    .step-circle {
+        width: 22px;
+        height: 22px;
+        font-size: 10px;
+    }
+
+    .step-label {
+        font-size: 9px;
+    }
+
+    .step-line {
+        width: 20px;
+        margin-bottom: 14px;
+    }
+
+    .google-profile-card {
+        margin: 0 8px 4px;
+        padding: 8px 10px;
+    }
+
+    .google-profile-card .v-avatar {
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    .profile-name {
+        font-size: 12px;
+    }
+
+    .profile-email {
+        font-size: 10px;
+    }
+
+    .form-content {
+        padding: 10px;
+    }
+
+    .input-group {
+        margin-bottom: 10px;
+    }
+
+    .input-label {
+        font-size: 12px;
+    }
+
+    .submit-btn {
+        height: 42px !important;
+        font-size: 13px;
+    }
+
+    .cancel-section {
+        padding: 8px 10px 10px;
+    }
+
+    :deep(.v-text-field input) {
+        font-size: 14px !important;
+    }
+
+    :deep(.v-text-field input::placeholder) {
+        font-size: 13px !important;
+    }
 }
 
-/* Field hints styling */
-:deep(.v-messages__message) {
-    color: #546E7A;
-    font-size: 0.75rem;
+/* =================================================================
+   Responsive – Small phones (375px)
+   ================================================================= */
+@media (min-width: 360px) and (max-width: 399px) {
+    .mobile-container {
+        padding: 10px;
+    }
+
+    .form-content {
+        padding: 12px;
+    }
+
+    .google-profile-card {
+        margin: 0 10px 6px;
+    }
 }
 
-/* Focus states */
+/* =================================================================
+   Responsive – Short screens / landscape
+   ================================================================= */
+@media (max-height: 640px) {
+    .mobile-container {
+        min-height: auto;
+        padding-top: 6px;
+        padding-bottom: 6px;
+    }
+
+    .mobile-header {
+        padding: 2px 0 6px;
+    }
+
+    .mobile-header .v-img {
+        max-height: 36px !important;
+        max-width: 36px !important;
+    }
+
+    .mobile-header h1 {
+        font-size: 0.85rem !important;
+        margin-top: 2px !important;
+    }
+
+    .registration-card {
+        flex: none;
+    }
+
+    .step-indicator {
+        padding: 8px 14px;
+    }
+
+    .google-profile-card {
+        padding: 8px 10px;
+        margin-bottom: 4px;
+    }
+
+    .form-content {
+        padding: 10px 14px;
+    }
+
+    .form-title {
+        margin-bottom: 2px;
+    }
+
+    .form-subtitle {
+        margin-bottom: 10px;
+    }
+
+    .input-group {
+        margin-bottom: 8px;
+    }
+
+    .submit-btn {
+        height: 42px !important;
+    }
+
+    .cancel-section {
+        padding: 6px 14px 10px;
+    }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .mobile-header {
+        display: none;
+    }
+
+    .step-indicator {
+        padding: 6px 12px;
+    }
+
+    .step-circle {
+        width: 22px;
+        height: 22px;
+        font-size: 10px;
+    }
+
+    .step-label {
+        display: none;
+    }
+
+    .step-line {
+        margin-bottom: 0;
+    }
+
+    .google-profile-card {
+        margin: 0 10px 2px;
+        padding: 6px 10px;
+    }
+
+    .form-content {
+        padding: 8px 12px;
+        overflow-y: auto;
+    }
+
+    .form-title {
+        font-size: 15px;
+    }
+
+    .form-subtitle {
+        font-size: 11px;
+        margin-bottom: 8px;
+    }
+
+    .input-group {
+        margin-bottom: 6px;
+    }
+
+    .input-label {
+        font-size: 11px;
+        margin-bottom: 2px;
+    }
+
+    :deep(.v-text-field .v-field) {
+        min-height: 38px;
+    }
+
+    .submit-btn {
+        height: 38px !important;
+        font-size: 13px;
+    }
+
+    .cancel-section {
+        padding: 4px 12px 6px;
+    }
+}
+
+/* =================================================================
+   Responsive – Tablet and larger
+   ================================================================= */
+@media (min-width: 600px) {
+    .mobile-container {
+        padding: 24px;
+        justify-content: center;
+        min-height: 100vh;
+        min-height: 100dvh;
+    }
+
+    .mobile-header {
+        padding: 12px 0 20px;
+    }
+
+    .mobile-header .v-img {
+        max-height: 72px !important;
+        max-width: 72px !important;
+    }
+
+    .mobile-header h1 {
+        font-size: 1.35rem !important;
+    }
+
+    .registration-card {
+        flex: none;
+        max-width: 100%;
+    }
+
+    .step-indicator {
+        padding: 16px 20px;
+    }
+
+    .form-content {
+        padding: 20px 24px;
+    }
+
+    .google-profile-card {
+        margin: 0 20px 12px;
+        padding: 12px 16px;
+    }
+
+    .profile-name {
+        font-size: 14px;
+    }
+
+    .profile-email {
+        font-size: 12px;
+    }
+
+    .form-title {
+        font-size: 20px;
+    }
+
+    .form-subtitle {
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+
+    .input-group {
+        margin-bottom: 16px;
+    }
+
+    .submit-btn {
+        height: 48px !important;
+        font-size: 15px;
+    }
+}
+
+/* =================================================================
+   Responsive – Desktop
+   ================================================================= */
+@media (min-width: 960px) {
+    .mobile-container {
+        padding: 32px;
+    }
+
+    .mobile-header {
+        padding: 16px 0 24px;
+    }
+
+    .mobile-header .v-img {
+        max-height: 80px !important;
+        max-width: 80px !important;
+    }
+
+    .mobile-header h1 {
+        font-size: 1.5rem !important;
+    }
+
+    .form-content {
+        padding: 24px 28px;
+    }
+
+    .google-profile-card {
+        margin: 0 24px 16px;
+    }
+
+    .form-title {
+        font-size: 22px;
+    }
+}
+
+/* =================================================================
+   Safe Area Support (notched phones)
+   ================================================================= */
+@supports (padding-top: env(safe-area-inset-top)) {
+    .mobile-container {
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
+    }
+}
+
+/* =================================================================
+   Focus states for accessibility
+   ================================================================= */
 :deep(.v-field--focused .v-label) {
-    color: #13294B !important;
+    color: #3674B5 !important;
+}
+
+/* =================================================================
+   Scrollbar (for overflow content)
+   ================================================================= */
+.form-content::-webkit-scrollbar {
+    width: 3px;
+}
+
+.form-content::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 2px;
+}
+
+.form-content {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
 }
 </style>

@@ -1128,11 +1128,28 @@ class AuthController extends Controller
      */
     public function completePasswordChange(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'token' => 'required|string',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
+        $user = User::where('email', $request->email)->first();
+        
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not found'], 404);
+        }
+
+        // For new users with force_password_change, skip token verification
+        // They already verified their email during registration
+        $isNewUser = (bool) $user->force_password_change;
+        
+        if ($isNewUser) {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+                'password' => 'required|string|min:8|confirmed',
+            ]);
+        } else {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+                'token' => 'required|string',
+                'password' => 'required|string|min:8|confirmed',
+            ]);
+        }
 
         if ($validator->fails()) {
             return response()->json([
@@ -1142,23 +1159,19 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $user = User::where('email', $request->email)->first();
-        
-        if (!$user) {
-            return response()->json(['success' => false, 'message' => 'User not found'], 404);
-        }
+        // For non-new users, verify the OTP token
+        if (!$isNewUser) {
+            if ($user->otp_code !== $request->token) {
+                return response()->json(['success' => false, 'message' => 'Invalid verification token'], 400);
+            }
 
-        // Verify the token
-        if ($user->otp_code !== $request->token) {
-            return response()->json(['success' => false, 'message' => 'Invalid verification token'], 400);
-        }
+            if (!$user->otp_verified) {
+                return response()->json(['success' => false, 'message' => 'Email not verified'], 400);
+            }
 
-        if (!$user->otp_verified) {
-            return response()->json(['success' => false, 'message' => 'Email not verified'], 400);
-        }
-
-        if ($user->otp_expires_at && Carbon::now()->isAfter($user->otp_expires_at)) {
-            return response()->json(['success' => false, 'message' => 'Token expired. Please request a new verification code.'], 400);
+            if ($user->otp_expires_at && Carbon::now()->isAfter($user->otp_expires_at)) {
+                return response()->json(['success' => false, 'message' => 'Token expired. Please request a new verification code.'], 400);
+            }
         }
 
         // Update password and mark as changed
@@ -1238,6 +1251,7 @@ class AuthController extends Controller
         return Inertia::render('ChangePassword', [
             'email' => $user->email,
             'role' => $user->role,
+            'isNewUser' => (bool) $user->force_password_change,
         ]);
     }
 
@@ -1386,52 +1400,36 @@ class AuthController extends Controller
         
         $user = User::create($userData);
 
-        // Send OTP and temporary password via email
+        // Send OTP ONLY via email (temp password will be sent after OTP verification)
         try {
-            Mail::send([], [], function ($message) use ($user, $otp, $tempPassword) {
+            Mail::send([], [], function ($message) use ($user, $otp) {
                 $message->to($user->email)
-                    ->subject('PinPointMe - Account Registration')
+                    ->subject('PinPointMe - Verify Your Email')
                     ->html("
                         <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
                             <div style='background: linear-gradient(135deg, #3674B5 0%, #2D5F96 100%); padding: 30px; text-align: center;'>
                                 <h1 style='color: white; margin: 0; font-size: 28px;'>Welcome to PinPointMe!</h1>
-                                <p style='color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;'>Your Emergency Rescue System</p>
+                                <p style='color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;'>Verify Your Email Address</p>
                             </div>
                             <div style='padding: 30px; background-color: #f8f9fa;'>
-                                <h2 style='color: #333; margin-bottom: 20px;'>Registration Details</h2>
-                                <p style='color: #666; font-size: 16px; line-height: 1.6;'>Thank you for registering with PinPointMe. Here are your registration details:</p>
+                                <h2 style='color: #333; margin-bottom: 20px;'>Email Verification</h2>
+                                <p style='color: #666; font-size: 16px; line-height: 1.6;'>Thank you for registering with PinPointMe. Please enter the verification code below to confirm your email:</p>
                                 
-                                <div style='background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3674B5;'>
-                                    <h3 style='color: #3674B5; margin-top: 0;'>Verification Code (OTP):</h3>
-                                    <p style='font-size: 24px; font-weight: bold; color: #333; margin: 10px 0;'>{$otp}</p>
+                                <div style='background: white; padding: 25px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3674B5; text-align: center;'>
+                                    <h3 style='color: #3674B5; margin-top: 0;'>Verification Code</h3>
+                                    <p style='font-size: 32px; font-weight: bold; color: #333; margin: 10px 0; letter-spacing: 8px;'>{$otp}</p>
                                 </div>
                                 
-                                <div style='background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #e74c3c;'>
-                                    <h3 style='color: #e74c3c; margin-top: 0;'>Temporary Password:</h3>
-                                    <p style='font-size: 18px; font-weight: bold; color: #333; margin: 10px 0; font-family: monospace; background: #f5f5f5; padding: 10px; border-radius: 4px;'>{$tempPassword}</p>
-                                </div>
+                                <p style='color: #999; font-size: 13px; text-align: center;'>This code will expire in <strong>15 minutes</strong></p>
                                 
-                                <div style='background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #ffeaa7;'>
-                                    <p style='color: #856404; margin: 0; font-size: 14px;'>
-                                        <strong>Important:</strong> You must change this temporary password immediately after your first login for security reasons.
+                                <div style='background: #e8f4fd; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #bee5eb;'>
+                                    <p style='color: #0c5460; margin: 0; font-size: 14px;'>
+                                        <strong>What happens next?</strong> After verifying your email, we'll send you a temporary password to log in.
                                     </p>
                                 </div>
-                                
-                                <h3 style='color: #333; margin-top: 30px;'>Next Steps:</h3>
-                                <ol style='color: #666; line-height: 1.8;'>
-                                    <li>Enter the verification code in the registration form</li>
-                                    <li>Set your new secure password</li>
-                                    <li>Log in with your new password</li>
-                                    <li>Complete your profile information</li>
-                                </ol>
-                                
-                                <p style='color: #666; font-size: 14px; margin-top: 30px;'>
-                                    This verification code will expire in 15 minutes. If you need a new code, please request one from the registration form.
-                                </p>
                             </div>
                             <div style='background: #333; padding: 20px; text-align: center;'>
                                 <p style='color: #ccc; margin: 0; font-size: 14px;'>PinPointMe Emergency Rescue System</p>
-                                <p style='color: #999; margin: 5px 0 0 0; font-size: 12px;'>This is an automated message. Please do not reply to this email.</p>
                             </div>
                         </div>
                     ");
@@ -1439,7 +1437,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'success' => true, 
-                'message' => 'Registration code and temporary password sent to your email',
+                'message' => 'Verification code sent to your email',
                 'expires_in' => 900 // 15 minutes in seconds
             ]);
         } catch (\Exception $e) {
@@ -1451,7 +1449,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Verify OTP for registration
+     * Verify OTP for registration - completes registration with temp password
      */
     public function registerVerifyOtp(Request $request)
     {
@@ -1479,20 +1477,67 @@ class AuthController extends Controller
             return response()->json(['success' => false, 'message' => 'Verification code has expired'], 400);
         }
 
-        // Generate a registration token for password change step
-        $registrationToken = bin2hex(random_bytes(32));
-        
-        // Store token temporarily
+        // Complete registration - activate account with temp password
+        // User will be forced to change password on first login
         $user->update([
+            'status' => 'active',
+            'otp_code' => null,
+            'otp_expires_at' => null,
             'otp_verified' => true,
-            'otp_code' => $registrationToken, // Repurpose for registration token
-            'otp_expires_at' => Carbon::now()->addMinutes(30), // 30 min for password change
+            'email_verified_at' => Carbon::now(),
+            // force_password_change stays true from registration
         ]);
+        
+        // Now send the temporary password via email (sent AFTER successful OTP verification)
+        try {
+            // Retrieve the temp password from the stored hash (we need to regenerate one since we can't reverse hash)
+            $tempPassword = 'Temp' . str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT) . '!';
+            $user->update(['password' => Hash::make($tempPassword)]);
+            
+            Mail::send([], [], function ($message) use ($user, $tempPassword) {
+                $message->to($user->email)
+                    ->subject('PinPointMe - Your Temporary Password')
+                    ->html("
+                        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                            <div style='background: linear-gradient(135deg, #3674B5 0%, #2D5F96 100%); padding: 30px; text-align: center;'>
+                                <h1 style='color: white; margin: 0; font-size: 28px;'>🎉 Email Verified!</h1>
+                                <p style='color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;'>Your account is now active</p>
+                            </div>
+                            <div style='padding: 30px; background-color: #f8f9fa;'>
+                                <h2 style='color: #333; margin-bottom: 20px;'>Your Temporary Password</h2>
+                                <p style='color: #666; font-size: 16px; line-height: 1.6;'>Your email has been verified successfully! Use the temporary password below to log in:</p>
+                                
+                                <div style='background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3674B5; text-align: center;'>
+                                    <h3 style='color: #3674B5; margin-top: 0;'>Temporary Password</h3>
+                                    <p style='font-size: 24px; font-weight: bold; color: #333; margin: 10px 0; font-family: monospace; background: #f5f5f5; padding: 12px; border-radius: 6px; letter-spacing: 2px;'>{$tempPassword}</p>
+                                </div>
+                                
+                                <div style='background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #ffeaa7;'>
+                                    <p style='color: #856404; margin: 0; font-size: 14px;'>
+                                        <strong>⚠️ Important:</strong> You will be required to change this temporary password when you first log in.
+                                    </p>
+                                </div>
+                                
+                                <h3 style='color: #333; margin-top: 25px;'>Next Steps:</h3>
+                                <ol style='color: #666; line-height: 1.8;'>
+                                    <li>Go to the PinPointMe login page</li>
+                                    <li>Log in with your email and temporary password</li>
+                                    <li>Set your new secure password</li>
+                                </ol>
+                            </div>
+                            <div style='background: #333; padding: 20px; text-align: center;'>
+                                <p style='color: #ccc; margin: 0; font-size: 14px;'>PinPointMe Emergency Rescue System</p>
+                            </div>
+                        </div>
+                    ");
+            });
+        } catch (\Exception $e) {
+            \Log::error('Failed to send temporary password email: ' . $e->getMessage());
+        }
 
         return response()->json([
             'success' => true, 
-            'message' => 'Verification code confirmed successfully',
-            'token' => $registrationToken,
+            'message' => 'Email verified! Your temporary password has been sent to your email.',
         ]);
     }
 
@@ -1706,7 +1751,321 @@ class AuthController extends Controller
     }
 
     /**
-     * Complete Google OAuth registration with additional user data
+     * Send OTP for Google OAuth registration verification
+     */
+    public function googleSendOtp(Request $request)
+    {
+        $googleUser = $request->session()->get('google_user');
+        
+        if (!$googleUser) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Session expired. Please try signing in with Google again.'
+            ], 400);
+        }
+        
+        // Validate the form fields
+        $validator = Validator::make($request->all(), [
+            'id_number' => [
+                'required',
+                'string',
+                'digits:9',
+                'regex:/^[0-9]{9}$/',
+            ],
+            'phone_number' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    // Normalize phone number
+                    $normalized = preg_replace('/[^0-9]/', '', $value);
+                    if (str_starts_with($normalized, '63')) {
+                        $normalized = '0' . substr($normalized, 2);
+                    }
+                    if (str_starts_with($normalized, '9') && strlen($normalized) === 10) {
+                        $normalized = '0' . $normalized;
+                    }
+                    
+                    // Must be 11 digits starting with 09
+                    if (!preg_match('/^09[0-9]{9}$/', $normalized)) {
+                        $fail('Please enter a valid 11-digit phone number (e.g., 09171234567).');
+                        return;
+                    }
+                    
+                    // Valid Philippine mobile prefixes
+                    $validPrefixes = [
+                        '0905', '0906', '0915', '0916', '0917', '0926', '0927', '0935', '0936', '0937', 
+                        '0945', '0953', '0954', '0955', '0956', '0965', '0966', '0967', '0975', '0976', 
+                        '0977', '0978', '0979', '0995', '0996', '0997',
+                        '0908', '0909', '0910', '0911', '0912', '0913', '0914', '0918', '0919', '0920', 
+                        '0921', '0928', '0929', '0930', '0938', '0939', '0940', '0946', '0947', '0948', 
+                        '0949', '0950', '0951', '0961', '0963', '0968', '0969', '0970', '0981', '0989', 
+                        '0992', '0998', '0999',
+                        '0895', '0896', '0897', '0898', '0991', '0992', '0993', '0994',
+                    ];
+                    
+                    $prefix = substr($normalized, 0, 4);
+                    if (!in_array($prefix, $validPrefixes)) {
+                        $fail('Please enter a valid phone number with a recognized network prefix.');
+                    }
+                },
+            ],
+        ], [
+            'id_number.required' => 'ID number is required.',
+            'id_number.digits' => 'ID number must be exactly 9 digits.',
+            'id_number.regex' => 'ID number must contain only numbers.',
+            'phone_number.required' => 'Phone number is required.',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed.',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        
+        $idNumber = $request->id_number;
+        
+        // Check if ID is already taken
+        $existingUser = User::where(function($query) use ($idNumber) {
+            $query->where('student_id', $idNumber)
+                  ->orWhere('faculty_id', $idNumber)
+                  ->orWhere('staff_id', $idNumber)
+                  ->orWhere('rescuer_id', $idNumber);
+        })->first();
+        
+        if ($existingUser) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This ID number is already registered.',
+                'errors' => ['id_number' => ['This student/staff/rescuer ID is already taken.']]
+            ], 422);
+        }
+        
+        // Check if email is already taken (shouldn't happen but just in case)
+        $existingEmail = User::where('email', $googleUser['email'])->first();
+        if ($existingEmail) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An account with this email already exists. Please login instead.'
+            ], 422);
+        }
+        
+        // Generate OTP and temporary password
+        $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $tempPassword = 'Temp' . str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT) . '!';
+        
+        // Store registration data in session
+        $request->session()->put('google_registration', [
+            'id_number' => $idNumber,
+            'phone_number' => $request->phone_number,
+            'otp' => $otp,
+            'temp_password' => $tempPassword,
+            'expires_at' => Carbon::now()->addMinutes(15)->toDateTimeString(),
+        ]);
+        
+        // Send OTP ONLY via email (temp password will be sent after OTP verification)
+        try {
+            $email = $googleUser['email'];
+            $firstName = $googleUser['first_name'];
+            
+            Mail::send([], [], function ($message) use ($email, $firstName, $otp) {
+                $message->to($email)
+                    ->subject('PinPointMe - Verify Your Email')
+                    ->html("
+                        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                            <div style='background: linear-gradient(135deg, #3674B5 0%, #2D5F96 100%); padding: 30px; text-align: center;'>
+                                <h1 style='color: white; margin: 0; font-size: 28px;'>Welcome to PinPointMe!</h1>
+                                <p style='color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;'>Verify Your Email Address</p>
+                            </div>
+                            <div style='padding: 30px; background-color: #f8f9fa;'>
+                                <h2 style='color: #333; margin-bottom: 20px;'>Hi {$firstName}!</h2>
+                                <p style='color: #666; font-size: 16px; line-height: 1.6;'>Thank you for registering with PinPointMe using your Google account. Enter the verification code below to confirm your email:</p>
+                                
+                                <div style='background: white; padding: 25px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3674B5; text-align: center;'>
+                                    <h3 style='color: #3674B5; margin-top: 0;'>Verification Code</h3>
+                                    <p style='font-size: 32px; font-weight: bold; color: #333; margin: 10px 0; letter-spacing: 8px;'>{$otp}</p>
+                                </div>
+                                
+                                <p style='color: #999; font-size: 13px; text-align: center;'>This code will expire in <strong>15 minutes</strong></p>
+                                
+                                <div style='background: #e8f4fd; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #bee5eb;'>
+                                    <p style='color: #0c5460; margin: 0; font-size: 14px;'>
+                                        <strong>What happens next?</strong> After verifying your email, we'll send you a temporary password to log in.
+                                    </p>
+                                </div>
+                            </div>
+                            <div style='background: #333; padding: 20px; text-align: center;'>
+                                <p style='color: #ccc; margin: 0; font-size: 14px;'>PinPointMe Emergency Rescue System</p>
+                            </div>
+                        </div>
+                    ");
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Verification code sent to your email!',
+                'expires_in' => 900
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to send Google registration OTP: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send verification email. Please try again.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Verify OTP and complete Google OAuth registration
+     */
+    public function googleVerifyOtp(Request $request)
+    {
+        $googleUser = $request->session()->get('google_user');
+        $registration = $request->session()->get('google_registration');
+        
+        if (!$googleUser || !$registration) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Session expired. Please start the registration process again.'
+            ], 400);
+        }
+        
+        // Validate OTP
+        $validator = Validator::make($request->all(), [
+            'otp' => 'required|string|size:6',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please enter a valid 6-digit code.'
+            ], 422);
+        }
+        
+        // Check OTP
+        if ($registration['otp'] !== $request->otp) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid verification code. Please check and try again.'
+            ], 400);
+        }
+        
+        // Check expiration
+        if (Carbon::now()->isAfter(Carbon::parse($registration['expires_at']))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Verification code has expired. Please request a new one.'
+            ], 400);
+        }
+        
+        // Determine role based on ID number
+        $idNumber = $registration['id_number'];
+        $firstDigit = substr($idNumber, 0, 1);
+        $role = ($firstDigit === '2') ? 'student' : 'faculty';
+        
+        // Create user with temporary password
+        $userData = [
+            'email' => $googleUser['email'],
+            'first_name' => $googleUser['first_name'],
+            'last_name' => $googleUser['last_name'],
+            'profile_picture' => $googleUser['profile_picture'],
+            'google_id' => $googleUser['google_id'],
+            'google_token' => $googleUser['google_token'],
+            'role' => $role,
+            'contact_number' => $registration['phone_number'],
+            'password' => Hash::make($registration['temp_password']),
+            'status' => 'active',
+            'otp_verified' => true,
+            'email_verified_at' => Carbon::now(),
+            'force_password_change' => true, // User must change temp password on first login
+            'must_update_profile' => false,
+        ];
+        
+        // Set appropriate ID field based on role
+        if ($role === 'student') {
+            $userData['student_id'] = $idNumber;
+        } else {
+            $userData['faculty_id'] = $idNumber;
+        }
+        
+        try {
+            $user = User::create($userData);
+            
+            // Clear session data
+            $request->session()->forget(['google_user', 'google_registration']);
+            
+            // Send temporary password email (sent AFTER OTP verification)
+            $tempPassword = $registration['temp_password'];
+            try {
+                Mail::send([], [], function ($message) use ($user, $tempPassword) {
+                    $message->to($user->email)
+                        ->subject('PinPointMe - Your Temporary Password')
+                        ->html("
+                            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                                <div style='background: linear-gradient(135deg, #3674B5 0%, #2D5F96 100%); padding: 30px; text-align: center;'>
+                                    <h1 style='color: white; margin: 0; font-size: 28px;'>🎉 Email Verified!</h1>
+                                    <p style='color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;'>Your account is now active</p>
+                                </div>
+                                <div style='padding: 30px; background-color: #f8f9fa;'>
+                                    <h2 style='color: #333; margin-bottom: 20px;'>Hi {$user->first_name}!</h2>
+                                    <p style='color: #666; font-size: 16px; line-height: 1.6;'>Your email has been verified. Use the temporary password below to log in:</p>
+                                    
+                                    <div style='background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3674B5; text-align: center;'>
+                                        <h3 style='color: #3674B5; margin-top: 0;'>Temporary Password</h3>
+                                        <p style='font-size: 24px; font-weight: bold; color: #333; margin: 10px 0; font-family: monospace; background: #f5f5f5; padding: 12px; border-radius: 6px; letter-spacing: 2px;'>{$tempPassword}</p>
+                                    </div>
+                                    
+                                    <div style='background: #d4edda; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;'>
+                                        <h3 style='color: #155724; margin-top: 0; font-size: 14px;'>✅ Account Details</h3>
+                                        <ul style='color: #155724; margin: 10px 0; font-size: 14px;'>
+                                            <li><strong>Role:</strong> " . ucfirst($user->role) . "</li>
+                                            <li><strong>ID:</strong> " . ($user->student_id ?? $user->faculty_id) . "</li>
+                                            <li><strong>Email:</strong> {$user->email}</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div style='background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #ffeaa7;'>
+                                        <p style='color: #856404; margin: 0; font-size: 14px;'>
+                                            <strong>⚠️ Important:</strong> You will be required to change this temporary password when you first log in.
+                                        </p>
+                                    </div>
+                                    
+                                    <h3 style='color: #333; margin-top: 25px;'>Next Steps:</h3>
+                                    <ol style='color: #666; line-height: 1.8;'>
+                                        <li>Go to the PinPointMe login page</li>
+                                        <li>Log in with your email and temporary password</li>
+                                        <li>Set your new secure password</li>
+                                    </ol>
+                                </div>
+                                <div style='background: #333; padding: 20px; text-align: center;'>
+                                    <p style='color: #ccc; margin: 0; font-size: 14px;'>PinPointMe Emergency Rescue System</p>
+                                </div>
+                            </div>
+                        ");
+                });
+            } catch (\Exception $e) {
+                \Log::error('Failed to send Google registration temp password email: ' . $e->getMessage());
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Account created successfully! Please log in with your temporary password.',
+                'redirect' => '/login'
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Google registration error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create account. Please try again.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Complete Google OAuth registration with additional user data (Legacy - kept for backwards compatibility)
      */
     public function completeGoogleRegistration(Request $request)
     {

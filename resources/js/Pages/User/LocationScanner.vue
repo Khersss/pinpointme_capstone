@@ -204,7 +204,7 @@
                         <!-- Quick Action Cards -->
                         <div class="action-cards mb-4">
                             <!-- QR Scan Card - Hidden on mobile/tablet (use bottom nav instead) -->
-                            <div class="action-card primary hide-on-mobile" @click="!isProfileComplete ? null : startQrScan" :class="{ disabled: isScanning || !isProfileComplete }">
+                            <div class="action-card primary hide-on-mobile" @click="!isProfileComplete ? goToProfile() : startQrScan()" :class="{ disabled: isScanning }">
                                 <div class="action-icon">
                                     <v-icon size="36" color="white">mdi-qrcode-scan</v-icon>
                                 </div>
@@ -215,7 +215,7 @@
                                 <v-progress-circular v-if="isScanning" indeterminate size="24" color="white" />
                                 <v-icon v-else color="white" size="20">mdi-chevron-right</v-icon>
                             </div>
-                            <div class="action-card success" @click="!isProfileComplete ? null : toggleVoiceInput" :class="{ disabled: !isProfileComplete }">
+                            <div class="action-card success" @click="!isProfileComplete ? goToProfile() : toggleVoiceInput()">
                                 <div class="action-icon" :class="{ recording: isRecording }">
                                     <v-icon size="36" color="white">{{ isRecording ? 'mdi-microphone-off' : 'mdi-microphone' }}</v-icon>
                                 </div>
@@ -1036,7 +1036,7 @@ const isProfileComplete = computed(() => {
     // Check basic personal information
     const hasBasicInfo = userData.value.first_name && 
                         userData.value.last_name && 
-                        userData.value.contact_number;
+                        (userData.value.contact_number || userData.value.phone_number);
     
     // Check emergency contact information
     const hasEmergencyContact = userData.value.emergency_contact_name &&
@@ -1395,25 +1395,34 @@ onMounted(async () => {
         return;
     }
     
-    // Use Inertia auth user data
+    // Use Inertia auth user data, merged with localStorage (profile updates)
     const user = authUser.value;
+    let mergedUser = { ...user };
+    try {
+        const stored = JSON.parse(localStorage.getItem('userData') || '{}');
+        if (stored && stored.id === user.id) {
+            mergedUser = { ...user, ...stored };
+        }
+    } catch (e) { /* ignore parse errors */ }
+    
     userData.value = {
-        id: user.id,
-        email: user.email,
-        firstName: user.first_name || '',
-        lastName: user.last_name || '',
-        first_name: user.first_name || '',
-        last_name: user.last_name || '',
-        role: user.role || 'student',
-        isAdmin: user.isAdmin === true || user.isAdmin === 1 || user.role === 'admin',
-        profile_picture: user.profile_picture || null,
-        contact_number: user.contact_number || user.phone_number || '',
-        emergency_contact_name: user.emergency_contact_name || '',
-        emergency_contact_phone: user.emergency_contact_phone || '',
-        emergency_contact_relation: user.emergency_contact_relation || '',
-        blood_type: user.blood_type || '',
-        allergies: user.allergies || '',
-        medical_conditions: user.medical_conditions || '',
+        id: mergedUser.id,
+        email: mergedUser.email,
+        firstName: mergedUser.first_name || '',
+        lastName: mergedUser.last_name || '',
+        first_name: mergedUser.first_name || '',
+        last_name: mergedUser.last_name || '',
+        role: mergedUser.role || 'student',
+        isAdmin: mergedUser.isAdmin === true || mergedUser.isAdmin === 1 || mergedUser.role === 'admin',
+        profile_picture: mergedUser.profile_picture || null,
+        contact_number: mergedUser.contact_number || mergedUser.phone_number || '',
+        phone_number: mergedUser.phone_number || mergedUser.contact_number || '',
+        emergency_contact_name: mergedUser.emergency_contact_name || '',
+        emergency_contact_phone: mergedUser.emergency_contact_phone || '',
+        emergency_contact_relation: mergedUser.emergency_contact_relation || '',
+        blood_type: mergedUser.blood_type || '',
+        allergies: mergedUser.allergies || '',
+        medical_conditions: mergedUser.medical_conditions || '',
     };
     
     // Also save to localStorage for components that need it

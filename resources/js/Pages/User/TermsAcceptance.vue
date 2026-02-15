@@ -7,29 +7,23 @@
                 <div class="terms-header">
                     <div class="header-content">
                         <div class="logo-section">
-                            <img src="/images/pinpointme-logo.png" alt="PinPointMe" class="logo" />
+                            <img src="/images/icons/ppm_logo.png" alt="PinPointMe" class="logo" />
                             <div class="logo-text">
                                 <h1>PinPointMe</h1>
                                 <p>SDCA Emergency Rescue System</p>
                             </div>
                         </div>
+                        
+                        <div class="welcome-text mt-5">
+
+                            <div class="welcome-highlight">
+                                
+                                <v-icon size="16" color="rgba(255, 255, 255, 0.8)" class="mr-2">mdi-information-outline</v-icon>
+                                <span class="highlight-text">Please review and accept our Terms & Conditions and Privacy Policy</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Welcome Card -->
-                <v-card class="welcome-card mx-4 mt-n8" elevation="8" rounded="xl">
-                    <v-card-text class="text-center pa-2">
-                        <v-avatar size="64" color="#3674B5" class="mb-1">
-                            <v-icon size="36" color="white">mdi-hand-wave</v-icon>
-                        </v-avatar>
-                        <h2 class="text-h5 font-weight-bold text-grey-darken-3 mb-2">
-                            Welcome, {{ user?.first_name || 'User' }}!
-                        </h2>
-                        <p class="text-body-2 text-grey-darken-1 mb-0">
-                            Before you continue, please review and accept our Terms & Conditions and Privacy Policy.
-                        </p>
-                    </v-card-text>
-                </v-card>
 
                 <!-- Terms Content Card -->
                 <v-card class="terms-card mx-4 mt-4" elevation="2" rounded="xl">
@@ -65,23 +59,22 @@
                                     <h3 class="section-title">1. Acceptance of Terms</h3>
                                     <p>
                                         By accessing or using PinPointMe ("the App"), you agree to be bound by these Terms and Conditions. 
-                                        PinPointMe is an emergency rescue location system developed for St. Dominic College of Asia (SDCA).
-                                        If you do not agree with any part of these terms, you may not use our service.
+                                        PinPointMe is an emergency rescue location system developed as a capstone project for St. Dominic College of Asia (SDCA).
+                                        If you do not agree with any part of these terms, you may not use the service.
                                     </p>
 
                                     <h3 class="section-title">2. Service Description</h3>
                                     <p>PinPointMe provides emergency rescue coordination services within SDCA premises, including:</p>
                                     <ul class="terms-list">
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Location-based emergency alerts and rescue requests</li>
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Real-time communication between users and rescuers</li>
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Floor plan navigation and location tracking during emergencies</li>
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Emergency preventive measure information</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Location-based emergency alerts via QR code scanning</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Real-time communication between users and responders</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Access to emergency preventive measures and instructions</li>
                                     </ul>
 
                                     <h3 class="section-title">3. User Eligibility</h3>
                                     <p>
-                                        The App is exclusively for authorized SDCA community members including students, faculty, 
-                                        staff, and designated rescuers. You must have a valid SDCA email address (@sdca.edu.ph) 
+                                        The App is exclusively for authorized SDCA community members, including students, faculty, 
+                                        staff, and designated responders. A valid SDCA email address (@sdca.edu.ph) is required 
                                         to access the service.
                                     </p>
 
@@ -89,46 +82,39 @@
                                     <p>Users agree to:</p>
                                     <ul class="terms-list">
                                         <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Provide accurate and truthful information during registration</li>
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Use the emergency features only for genuine emergencies</li>
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Not misuse or abuse the rescue request system</li>
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Keep login credentials secure and confidential</li>
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Report any security vulnerabilities responsibly</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Use emergency features strictly for genuine emergency situations</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Refrain from misusing or abusing the rescue request system</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Maintain the security and confidentiality of their login credentials</li>
                                     </ul>
 
                                     <h3 class="section-title">5. Prohibited Use</h3>
-                                    <p>You are prohibited from:</p>
+                                    <p>Users are prohibited from:</p>
                                     <ul class="terms-list warning">
-                                        <li><v-icon size="16" color="#C62828">mdi-close-circle</v-icon> Making false emergency reports</li>
+                                        <li><v-icon size="16" color="#C62828">mdi-close-circle</v-icon> Submitting false emergency reports</li>
                                         <li><v-icon size="16" color="#C62828">mdi-close-circle</v-icon> Attempting to gain unauthorized access to the system</li>
-                                        <li><v-icon size="16" color="#C62828">mdi-close-circle</v-icon> Interfering with the service's proper functioning</li>
-                                        <li><v-icon size="16" color="#C62828">mdi-close-circle</v-icon> Sharing your account with unauthorized persons</li>
+                                        <li><v-icon size="16" color="#C62828">mdi-close-circle</v-icon> Interfering with the proper functioning of the service</li>
                                         <li><v-icon size="16" color="#C62828">mdi-close-circle</v-icon> Using the service for any unlawful purpose</li>
                                     </ul>
 
                                     <h3 class="section-title">6. Limitation of Liability</h3>
                                     <p>
-                                        PinPointMe and SDCA shall not be liable for any indirect, incidental, or consequential 
-                                        damages arising from the use or inability to use the service. The App is provided as a 
-                                        supplementary emergency tool and does not replace official emergency services.
+                                        PinPointMe and SDCA shall not be liable for any damages arising from the use or inability 
+                                        to use the service. This App is a supplementary academic prototype and does not replace 
+                                        official emergency services. Its performance is subject to mobile hardware specifications 
+                                        and network connectivity.
                                     </p>
 
-                                    <h3 class="section-title">7. Service Availability</h3>
+                                    <h3 class="section-title">7. Governing Law</h3>
                                     <p>
-                                        We strive to maintain 24/7 availability but do not guarantee uninterrupted service. 
-                                        Maintenance, updates, or unforeseen circumstances may temporarily affect availability.
-                                    </p>
-
-                                    <h3 class="section-title">8. Governing Law</h3>
-                                    <p>
-                                        These terms shall be governed by and construed in accordance with the laws of the 
-                                        Republic of the Philippines, including the Data Privacy Act of 2012 (RA 10173).
+                                        These terms shall be governed by the laws of the Republic of the Philippines, 
+                                        including the Data Privacy Act of 2012 (RA 10173).
                                     </p>
 
                                     <div class="contact-box mt-4">
                                         <v-icon color="#3674B5" class="mr-2">mdi-email-outline</v-icon>
                                         <div>
                                             <strong>Questions?</strong><br>
-                                            <span class="text-grey-darken-1">pinpointme@sdca.edu.ph</span>
+                                            <span class="text-grey-darken-1">pinpointme@gmail.com</span>
                                         </div>
                                     </div>
                                 </div>
@@ -146,10 +132,9 @@
 
                                     <h3 class="section-title">1. Introduction</h3>
                                     <p>
-                                        St. Dominic College of Asia ("SDCA", "we", "us") is committed to protecting your privacy. 
-                                        This Privacy Policy explains how we collect, use, store, and protect your personal information 
-                                        through PinPointMe in compliance with the <strong>Data Privacy Act of 2012 (Republic Act No. 10173)</strong> 
-                                        and its Implementing Rules and Regulations.
+                                        St. Dominic College of Asia ("SDCA") is committed to protecting your privacy. 
+                                        This Privacy Policy explains how we collect, use, and protect your personal information 
+                                        through PinPointMe in compliance with the <strong>Data Privacy Act of 2012 (Republic Act No. 10173)</strong>.
                                     </p>
 
                                     <h3 class="section-title">2. Information We Collect</h3>
@@ -160,19 +145,17 @@
                                     </div>
                                     <ul class="terms-list compact">
                                         <li>Full name and SDCA email address</li>
-                                        <li>Student ID, Faculty ID, or Staff ID number</li>
-                                        <li>Contact phone number</li>
-                                        <li>Profile picture (optional)</li>
-                                        <li>Role within SDCA (student, faculty, staff, rescuer)</li>
+                                        <li>Student/Faculty/Staff ID number</li>
+                                        <li>Institutional role</li>
                                     </ul>
 
                                     <div class="info-category">
                                         <v-icon color="#C62828" size="20">mdi-medical-bag</v-icon>
-                                        <strong>Emergency & Medical Information (Optional):</strong>
+                                        <strong>Emergency Information (Optional):</strong>
                                     </div>
                                     <ul class="terms-list compact">
                                         <li>Emergency contact details</li>
-                                        <li>Blood type, allergies, and medical conditions</li>
+                                        <li>Blood type, allergies, and relevant medical conditions</li>
                                     </ul>
 
                                     <div class="info-category">
@@ -180,77 +163,51 @@
                                         <strong>Usage Data:</strong>
                                     </div>
                                     <ul class="terms-list compact">
-                                        <li>Location data during active rescue requests</li>
-                                        <li>Device information and IP address</li>
-                                        <li>Activity logs and rescue request history</li>
+                                        <li>Location data recorded during active QR code scans</li>
+                                        <li>Rescue request history</li>
                                     </ul>
 
                                     <h3 class="section-title">3. How We Use Your Information</h3>
+                                    <p>Your information is used to:</p>
                                     <ul class="terms-list">
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Provide emergency rescue coordination services</li>
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Enable real-time location tracking during emergencies</li>
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Facilitate communication between users and rescuers</li>
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Improve service quality and safety features</li>
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Comply with legal obligations</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Facilitate emergency rescue coordination</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Enable location identification via QR code logs during emergencies</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Allow direct communication between users and responders</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Comply with institutional safety protocols</li>
                                     </ul>
 
-                                    <h3 class="section-title">4. Legal Basis for Processing</h3>
-                                    <div class="legal-basis-grid">
-                                        <div class="legal-item">
-                                            <v-icon color="#DFA92C">mdi-check-decagram</v-icon>
-                                            <span><strong>Consent</strong><br>Your explicit acceptance</span>
-                                        </div>
-                                        <div class="legal-item">
-                                            <v-icon color="#DFA92C">mdi-shield-account</v-icon>
-                                            <span><strong>Legitimate Interest</strong><br>Campus safety</span>
-                                        </div>
-                                        <div class="legal-item">
-                                            <v-icon color="#DFA92C">mdi-gavel</v-icon>
-                                            <span><strong>Legal Obligation</strong><br>Philippine laws</span>
-                                        </div>
-                                        <div class="legal-item">
-                                            <v-icon color="#DFA92C">mdi-heart-pulse</v-icon>
-                                            <span><strong>Vital Interest</strong><br>Life protection</span>
-                                        </div>
-                                    </div>
-
-                                    <h3 class="section-title">5. Data Sharing</h3>
+                                    <h3 class="section-title">4. Data Sharing and Disclosure</h3>
                                     <p>Your information may be shared with:</p>
                                     <ul class="terms-list compact">
                                         <li>SDCA Security and Safety Office</li>
-                                        <li>Authorized rescue personnel</li>
-                                        <li>Emergency responders when required</li>
-                                        <li>Government authorities as required by law</li>
+                                        <li>Authorized rescue personnel (RCYC)</li>
+                                        <li>Emergency responders during active incidents</li>
                                     </ul>
-                                    <v-alert type="info" variant="tonal" density="compact" class="mt-3">
-                                        <strong>We do NOT sell or rent your personal information to third parties.</strong>
-                                    </v-alert>
+
+                                    <h3 class="section-title">5. Data Retention</h3>
+                                    <p>
+                                        Personal data is retained for the duration of the study and your enrollment or employment 
+                                        at SDCA. Rescue records may be kept for safety analysis and incident documentation.
+                                    </p>
 
                                     <h3 class="section-title">6. Your Rights</h3>
-                                    <p>Under the Data Privacy Act, you have the right to:</p>
-                                    <ul class="terms-list">
-                                        <li><v-icon size="16" color="#3674B5">mdi-eye</v-icon> Access your personal data</li>
-                                        <li><v-icon size="16" color="#3674B5">mdi-pencil</v-icon> Rectification of inaccurate data</li>
-                                        <li><v-icon size="16" color="#3674B5">mdi-delete</v-icon> Erasure of your data</li>
-                                        <li><v-icon size="16" color="#3674B5">mdi-hand-back-right</v-icon> Object to processing</li>
-                                        <li><v-icon size="16" color="#3674B5">mdi-download</v-icon> Data portability</li>
-                                    </ul>
+                                    <p>
+                                        Under the Data Privacy Act, you have the right to correct, or request the deletion of 
+                                        your data, subject to legal and institutional retention requirements.
+                                    </p>
 
-                                    <h3 class="section-title">7. Data Protection Officer</h3>
+                                    <h3 class="section-title">7. Data Security</h3>
+                                    <p>
+                                        We implement technical measures, authentication and secure access controls, to protect 
+                                        your data from unauthorized access.
+                                    </p>
+
+                                    <h3 class="section-title">8. Data Protection Officer</h3>
                                     <div class="contact-box">
                                         <v-icon color="#3674B5" class="mr-2">mdi-shield-account</v-icon>
                                         <div>
-                                            <strong>SDCA Data Protection Officer</strong><br>
-                                            <span class="text-grey-darken-1">dpo@sdca.edu.ph | (046) 417-1234</span>
-                                        </div>
-                                    </div>
-
-                                    <h3 class="section-title">8. Filing a Complaint</h3>
-                                    <div class="contact-box">
-                                        <v-icon color="#C62828" class="mr-2">mdi-alert-circle</v-icon>
-                                        <div>
-                                            <strong>National Privacy Commission</strong><br>
-                                            <span class="text-grey-darken-1">www.privacy.gov.ph | complaints@privacy.gov.ph</span>
+                                            <strong>Data Protection Officer</strong><br>
+                                            <span class="text-grey-darken-1">pinpointme@gmail.com</span>
                                         </div>
                                     </div>
                                 </div>
@@ -408,7 +365,7 @@ onMounted(() => {
 /* Header Section */
 .terms-header {
     background: #3674B5;
-    padding: 32px 24px 56px;
+    padding: 32px 24px 16px;
     position: relative;
 }
 
@@ -444,7 +401,7 @@ onMounted(() => {
 
 .logo-text h1 {
     color: white;
-    font-size: 1.75rem;
+    font-size: 1.6rem;
     font-weight: 700;
     margin: 0;
     letter-spacing: 0.5px;
@@ -452,14 +409,64 @@ onMounted(() => {
 
 .logo-text p {
     color: rgba(255, 255, 255, 0.8);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     margin: 0;
 }
 
-/* Welcome Card */
-.welcome-card {
-    position: relative;
-    z-index: 2;
+.welcome-text {
+    text-align: center;
+}
+
+.welcome-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    margin: 0 auto;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.welcome-title {
+    color: white;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+
+.welcome-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin: 0;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.welcome-highlight {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 12px 20px;
+    margin: 0 auto;
+    max-width: 380px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.highlight-text {
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.4;
 }
 
 /* Terms Card */
@@ -506,7 +513,7 @@ onMounted(() => {
 .terms-text {
     color: #333;
     line-height: 1.6;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .terms-header-badge {
@@ -515,7 +522,7 @@ onMounted(() => {
 
 .section-title {
     color: #3674B5;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
     margin-top: 20px;
     margin-bottom: 10px;
@@ -543,7 +550,7 @@ onMounted(() => {
     padding: 6px 10px;
     background: #f8faf8;
     border-radius: 6px;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
 }
 
 .terms-list li .v-icon {
@@ -599,7 +606,7 @@ onMounted(() => {
     align-items: center;
     gap: 8px;
     color: #3674B5;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     text-align: center;
     justify-content: center;
 }
@@ -609,7 +616,7 @@ onMounted(() => {
     align-items: center;
     gap: 8px;
     color: #3674B5;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     text-align: center;
     justify-content: center;
 }
@@ -626,7 +633,7 @@ onMounted(() => {
 }
 
 .contact-box div {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     line-height: 1.5;
 }
 
@@ -639,7 +646,7 @@ onMounted(() => {
     padding: 10px;
     background: linear-gradient(to top, #f5f5f5, transparent);
     color: #3674B5;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     animation: bounce 2s infinite;
 }
 
@@ -665,7 +672,7 @@ onMounted(() => {
 
 .consent-label {
     color: #333;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     line-height: 1.5;
 }
 
@@ -682,14 +689,14 @@ onMounted(() => {
 
 .legal-note {
     color: #666;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     line-height: 1.5;
 }
 
 /* Responsive Adjustments */
 @media (max-width: 599px) {
     .terms-header {
-        padding: 24px 16px 48px;
+        padding: 24px 16px 16px;
     }
 
     .logo {
@@ -698,7 +705,30 @@ onMounted(() => {
     }
 
     .logo-text h1 {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
+    }
+
+    .welcome-icon {
+        width: 50px;
+        height: 50px;
+    }
+
+    .welcome-title {
+        font-size: 1.1rem;
+    }
+
+    .welcome-subtitle {
+        font-size: 0.85rem;
+        max-width: 300px;
+    }
+
+    .welcome-highlight {
+        padding: 10px 16px;
+        max-width: 320px;
+    }
+
+    .highlight-text {
+        font-size: 0.75rem;
     }
 
     .terms-scroll-area {
@@ -710,11 +740,11 @@ onMounted(() => {
     }
 
     .section-title {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
     }
 
     .terms-text {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
     }
 }
 

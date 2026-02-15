@@ -462,7 +462,7 @@
                         <!-- Step 1: Enter Email -->
                         <div v-if="registerStep === 1">
                             <p class="text-body-2 text-grey mb-4">
-                                Enter your SDCA email address to register. We'll send you an OTP and temporary password.
+                                Enter your SDCA email address to register. We'll send a verification code to confirm your email.
                             </p>
 
                             <v-alert
@@ -495,8 +495,9 @@
                             <div class="text-center mb-4">
                                 <v-icon size="48" color="primary" class="mb-2">mdi-email-check</v-icon>
                                 <p class="text-body-2 text-grey">
-                                    We've sent a 6-digit code and temporary password to <strong>{{ registerEmail }}</strong>
+                                    We've sent a <strong>6-digit verification code</strong> to:
                                 </p>
+                                <p class="text-body-2 font-weight-bold text-primary">{{ registerEmail }}</p>
                             </div>
 
                             <v-alert
@@ -511,6 +512,7 @@
                             </v-alert>
 
                             <v-form @submit.prevent="verifyRegisterOtp" ref="registerOtpFormRef">
+                                <label class="text-caption font-weight-medium text-grey-darken-1 d-block mb-2 text-center">Enter Verification Code</label>
                                 <v-otp-input
                                     v-model="registerOtp"
                                     length="6"
@@ -534,108 +536,35 @@
                             </p>
                         </div>
 
-                        <!-- Step 3: Set New Password -->
-                        <div v-else-if="registerStep === 3">
-                            <p class="text-body-2 text-grey mb-4 text-center">
-                                Create a strong password for your account.
-                            </p>
-
-                            <v-alert
-                                v-if="registerError"
-                                type="error"
-                                variant="tonal"
-                                class="mb-4"
-                                closable
-                                @click:close="registerError = ''"
-                            >
-                                {{ registerError }}
-                            </v-alert>
-
-                            <v-form @submit.prevent="completeRegister" ref="registerPasswordFormRef">
-                                <v-text-field
-                                    v-model="registerPassword"
-                                    label="New Password"
-                                    :type="showRegisterPassword ? 'text' : 'password'"
-                                    variant="outlined"
-                                    density="comfortable"
-                                    prepend-inner-icon="mdi-lock"
-                                    :append-inner-icon="showRegisterPassword ? 'mdi-eye-off' : 'mdi-eye'"
-                                    @click:append-inner="showRegisterPassword = !showRegisterPassword"
-                                    :rules="[rules.required, rules.minLength, rules.hasUppercase, rules.hasLowercase, rules.hasNumber, rules.hasSpecial]"
-                                    :disabled="registerLoading"
-                                    autocomplete="new-password"
-                                    class="mb-1"
-                                />
-
-                                <!-- Password Requirements Checklist -->
-                                <div class="password-requirements mb-4 px-2">
-                                    <div class="requirements-grid">
-                                        <div :class="['requirement-item', registerPasswordChecks.length ? 'met' : '']">
-                                            <v-icon size="16" :color="registerPasswordChecks.length ? 'success' : 'grey'">
-                                                {{ registerPasswordChecks.length ? 'mdi-check-circle' : 'mdi-checkbox-blank-circle-outline' }}
-                                            </v-icon>
-                                            <span>At least 8 characters</span>
-                                        </div>
-                                        <div :class="['requirement-item', registerPasswordChecks.uppercase ? 'met' : '']">
-                                            <v-icon size="16" :color="registerPasswordChecks.uppercase ? 'success' : 'grey'">
-                                                {{ registerPasswordChecks.uppercase ? 'mdi-check-circle' : 'mdi-checkbox-blank-circle-outline' }}
-                                            </v-icon>
-                                            <span>One uppercase letter (A-Z)</span>
-                                        </div>
-                                        <div :class="['requirement-item', registerPasswordChecks.lowercase ? 'met' : '']">
-                                            <v-icon size="16" :color="registerPasswordChecks.lowercase ? 'success' : 'grey'">
-                                                {{ registerPasswordChecks.lowercase ? 'mdi-check-circle' : 'mdi-checkbox-blank-circle-outline' }}
-                                            </v-icon>
-                                            <span>One lowercase letter (a-z)</span>
-                                        </div>
-                                        <div :class="['requirement-item', registerPasswordChecks.number ? 'met' : '']">
-                                            <v-icon size="16" :color="registerPasswordChecks.number ? 'success' : 'grey'">
-                                                {{ registerPasswordChecks.number ? 'mdi-check-circle' : 'mdi-checkbox-blank-circle-outline' }}
-                                            </v-icon>
-                                            <span>One number (0-9)</span>
-                                        </div>
-                                        <div :class="['requirement-item', registerPasswordChecks.special ? 'met' : '']">
-                                            <v-icon size="16" :color="registerPasswordChecks.special ? 'success' : 'grey'">
-                                                {{ registerPasswordChecks.special ? 'mdi-check-circle' : 'mdi-checkbox-blank-circle-outline' }}
-                                            </v-icon>
-                                            <span>One special character (!@#$%^&*)</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <v-text-field
-                                    v-model="registerConfirmPassword"
-                                    label="Confirm Password"
-                                    :type="showRegisterConfirmPassword ? 'text' : 'password'"
-                                    variant="outlined"
-                                    density="comfortable"
-                                    prepend-inner-icon="mdi-lock-check"
-                                    :append-inner-icon="showRegisterConfirmPassword ? 'mdi-eye-off' : 'mdi-eye'"
-                                    @click:append-inner="showRegisterConfirmPassword = !showRegisterConfirmPassword"
-                                    :rules="[rules.required, v => v === registerPassword || 'Passwords do not match']"
-                                    :disabled="registerLoading"
-                                    autocomplete="new-password"
-                                    :error="registerConfirmPassword && registerConfirmPassword !== registerPassword"
-                                />
-                                <p v-if="registerConfirmPassword && registerConfirmPassword === registerPassword" class="text-caption text-success mt-1 px-2">
-                                    <v-icon size="16" color="success">mdi-check</v-icon> Passwords match
-                                </p>
-                            </v-form>
-                        </div>
-
                         <!-- Success State -->
-                        <div v-else-if="registerStep === 4" class="text-center py-4 success-state">
+                        <div v-else-if="registerStep === 3" class="text-center py-4 success-state">
                             <v-icon size="64" color="success" class="mb-4">mdi-check-circle</v-icon>
-                            <h3 class="text-h6 font-weight-bold mb-2">Registration Successful!</h3>
+                            <h3 class="text-h6 font-weight-bold mb-2">Email Verified!</h3>
                             <p class="text-body-2 text-grey mb-4">
-                                Your account has been created successfully. You can now log in with your new password.
+                                Your email has been verified. We've sent a <strong>temporary password</strong> to your email.
                             </p>
+                            <v-alert
+                                type="info"
+                                variant="tonal"
+                                class="mb-4 text-left"
+                                density="compact"
+                            >
+                                <div class="text-caption">
+                                    <v-icon size="16" class="mr-1">mdi-information</v-icon>
+                                    <strong>Next steps:</strong>
+                                    <ol class="mt-1 ml-2" style="line-height: 1.8;">
+                                        <li>Check your email for the temporary password</li>
+                                        <li>Log in using your email and temporary password</li>
+                                        <li>You'll be asked to set a new password</li>
+                                    </ol>
+                                </div>
+                            </v-alert>
                         </div>
                     </v-card-text>
 
                     <v-card-actions class="pa-4 pt-0">
                         <!-- Success State Actions -->
-                        <template v-if="registerStep === 4">
+                        <template v-if="registerStep === 3">
                             <v-spacer />
                             <v-btn color="primary" @click="closeRegister">
                                 Back to Login
@@ -669,23 +598,7 @@
                                 :loading="registerLoading"
                                 :disabled="registerOtp.length !== 6"
                             >
-                                Verify Code
-                            </v-btn>
-                        </template>
-
-                        <!-- Step 3 Actions -->
-                        <template v-else-if="registerStep === 3">
-                            <v-btn variant="text" @click="registerStep = 2; registerOtp = ''" :disabled="registerLoading">
-                                Back
-                            </v-btn>
-                            <v-spacer />
-                            <v-btn 
-                                color="primary" 
-                                @click="completeRegister"
-                                :loading="registerLoading"
-                                :disabled="!isRegisterPasswordValid || !registerConfirmPassword || registerConfirmPassword !== registerPassword"
-                            >
-                                Create Account
+                                Verify Email
                             </v-btn>
                         </template>
                     </v-card-actions>
@@ -1167,11 +1080,11 @@ const sendRegisterOtp = async () => {
         if (response.ok && data.success) {
             registerStep.value = 2;
             startRegisterResendCooldown();
-            toastMessage.value = 'Registration code sent to your email!';
+            toastMessage.value = 'Verification code sent to your email!';
             toastColor.value = 'success';
             showToast.value = true;
         } else {
-            registerError.value = data.message || 'Failed to send registration code. Please try again.';
+            registerError.value = data.message || 'Failed to send verification code. Please try again.';
         }
     } catch (err) {
         console.error('Send register OTP error:', err);
@@ -1209,7 +1122,7 @@ const verifyRegisterOtp = async () => {
         if (response.ok && data.success) {
             registerToken.value = data.token;
             registerStep.value = 3;
-            toastMessage.value = 'Code verified!';
+            toastMessage.value = 'Email verified! Check your email for the temporary password.';
             toastColor.value = 'success';
             showToast.value = true;
         } else {

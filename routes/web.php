@@ -46,6 +46,8 @@ Route::middleware(['guest'])->group(function () {
     Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
     Route::get('/auth/google/complete', [AuthController::class, 'showGoogleComplete'])->name('auth.google.complete');
     Route::post('/auth/google/complete', [AuthController::class, 'completeGoogleRegistration']);
+    Route::post('/auth/google/send-otp', [AuthController::class, 'googleSendOtp']);
+    Route::post('/auth/google/verify-otp', [AuthController::class, 'googleVerifyOtp']);
 });
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -71,10 +73,9 @@ Route::prefix('api')->withoutMiddleware([Csrf::class])->group(function () {
     Route::post('/auth/verify-password-change-otp', [AuthController::class, 'verifyPasswordChangeOtp']);
     Route::post('/auth/complete-password-change', [AuthController::class, 'completePasswordChange']);
     
-    // Terms & Conditions acceptance endpoint (requires auth)
+// Terms & Conditions acceptance endpoint (requires auth)
     Route::post('/accept-terms', [AuthController::class, 'acceptTerms'])->middleware('auth');
-    
-    // Buildings with floors and rooms - for location scanner
+
     Route::get('/buildings', [BuildingController::class, 'apiIndex']);
     
     // Rescue requests - public endpoints

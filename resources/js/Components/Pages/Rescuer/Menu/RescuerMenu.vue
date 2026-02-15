@@ -1,5 +1,5 @@
 <template>
-    <v-navigation-drawer v-model="drawerModel" temporary class="rescuer-menu-drawer">
+    <v-navigation-drawer v-model="drawerModel" temporary touchless class="rescuer-menu-drawer">
         <v-list-item class="pa-4 menu-header">
             <template v-slot:prepend>
                 <v-avatar color="white" size="48">

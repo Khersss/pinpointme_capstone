@@ -2,6 +2,7 @@
     <v-navigation-drawer 
         v-model="drawerModel" 
         temporary
+        touchless
         class="user-menu-drawer"
         width="256"
     >
