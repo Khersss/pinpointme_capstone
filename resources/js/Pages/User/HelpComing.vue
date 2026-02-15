@@ -422,35 +422,79 @@
                             </v-expand-transition>
                         </v-card>
 
-                        <!-- Action Buttons -->
-                        <div v-if="rescue.status !== 'rescued' && rescue.status !== 'safe'" class="action-buttons pb-safe">
-                            <v-btn
-                                color="primary"
-                                size="large"
-                                block
-                                class="mb-2 rounded-xl"
-                                elevation="2"
-                                @click="openChat"
-                            >
-                                <v-icon start>mdi-message-text</v-icon>
-                                Chat with Rescuer
-                            </v-btn>
-                            <v-btn
-                                color="success"
-                                size="large"
-                                block
-                                variant="flat"
-                                class="rounded-xl"
-                                elevation="2"
-                                @click="showConfirmSafe = true"
-                            >
-                                <v-icon start>mdi-check-circle</v-icon>
-                                I'm Safe Now
+                        <!-- Action Container -->
+                        <div v-if="rescue.status !== 'rescued' && rescue.status !== 'safe' && rescue.status !== 'cancelled'" class="action-container">
+                            <div class="primary-action">
+                                <!-- Slide to confirm Mark as Safe -->
+                                <div class="slide-to-confirm" @mousedown="startSlide" @touchstart="startSlide">
+                                    <div class="slide-track">
+                                        <div class="slide-progress" :style="{ width: slideProgress + '%' }"></div>
+                                        <div 
+                                            class="slide-thumb" 
+                                            :class="{ 'slide-complete': isSlideComplete, 'slide-active': isSliding }"
+                                            :style="{ transform: `translateX(${slidePosition}px) translateY(-50%)` }"
+                                        >
+                                            <v-icon size="24" color="white">
+                                                {{ isSlideComplete ? 'mdi-check' : 'mdi-shield-check' }}
+                                            </v-icon>
+                                        </div>
+                                        <div class="slide-text">
+                                            <span v-if="!isSlideComplete" class="slide-instruction">
+                                                {{ isSliding ? 'Keep sliding...' : 'Slide to confirm you are safe' }}
+                                            </span>
+                                            <span v-else class="slide-success">
+                                                Marked as safe!
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="secondary-actions">
+                                <div class="action-row">
+                                    <v-btn
+                                        variant="tonal"
+                                        color="primary"
+                                        size="large"
+                                        rounded="xl"
+                                        @click="openChat"
+                                        class="secondary-btn flex-btn"
+                                        flex
+                                    >
+                                        <v-icon start size="18">mdi-message-text-outline</v-icon>
+                                        <span>Message</span>
+                                    </v-btn>
+                                    
+                                    <v-btn
+                                        v-if="canCancel"
+                                        variant="outlined"
+                                        color="error"
+                                        size="large"
+                                        rounded="xl"
+                                        @click="showConfirmCancel = true"
+                                        class="secondary-btn cancel-btn flex-btn"
+                                        flex
+                                    >
+                                        <v-icon start size="18">mdi-close-circle-outline</v-icon>
+                                        <span>Cancel</span>
+                                    </v-btn>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cancelled State -->
+                        <div v-else-if="rescue.status === 'cancelled'" class="text-center py-4" style="padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);">
+                            <v-icon size="56" color="grey" class="mb-2">mdi-close-circle</v-icon>
+                            <h3 class="text-h6 mb-1">Request Cancelled</h3>
+                            <p class="text-grey mb-1" v-if="rescue.cancellation_reason">Reason: {{ rescue.cancellation_reason }}</p>
+                            <p class="text-grey mb-3">You can submit a new rescue request if needed.</p>
+                            <v-btn color="primary" variant="tonal" class="rounded-xl" @click="handleGoBack">
+                                Return to Dashboard
                             </v-btn>
                         </div>
                         
                         <!-- Completed State Actions -->
-                        <div v-else class="text-center py-4 pb-safe">
+                        <div v-else class="text-center py-4" style="padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);">
                             <v-icon size="56" color="success" class="mb-2">mdi-check-circle</v-icon>
                             <h3 class="text-h6 mb-1">Rescue Complete</h3>
                             <p class="text-grey mb-3">Thank you for using PinPointMe. Stay safe!</p>
@@ -472,20 +516,71 @@
                 </div>
             </v-container>
 
-            <!-- Confirm Safe Dialog -->
-            <v-dialog v-model="showConfirmSafe" max-width="400">
+            <!-- Cancel Request Dialog -->
+            <v-dialog v-model="showConfirmCancel" max-width="440" persistent>
                 <v-card class="rounded-xl">
-                    <v-card-text class="text-center pt-6">
-                        <v-avatar color="success" size="64" class="mb-4">
-                            <v-icon size="32" color="white">mdi-check-circle</v-icon>
-                        </v-avatar>
-                        <h3 class="text-h6 mb-2">Confirm You're Safe</h3>
-                        <p class="text-grey">This will close your rescue request. Are you sure?</p>
+                    <v-card-text class="pt-6 pb-2">
+                        <div class="text-center mb-4">
+                            <v-avatar color="error" size="64" class="mb-3">
+                                <v-icon size="32" color="white">mdi-alert-circle-outline</v-icon>
+                            </v-avatar>
+                            <h3 class="text-h6 mb-1">Cancel Rescue Request?</h3>
+                            <p class="text-grey text-body-2">Please let us know why you're cancelling so we can improve our service.</p>
+                        </div>
+
+                        <v-form ref="cancelFormRef" v-model="cancelFormValid">
+                            <!-- Quick Reason Chips -->
+                            <div class="mb-3">
+                                <p class="text-caption text-grey-darken-1 font-weight-medium mb-2">Quick select a reason:</p>
+                                <div class="d-flex flex-wrap ga-2">
+                                    <v-chip
+                                        v-for="option in cancelReasonOptions"
+                                        :key="option"
+                                        :color="cancelReason === option ? 'error' : 'default'"
+                                        :variant="cancelReason === option ? 'flat' : 'outlined'"
+                                        size="small"
+                                        class="cancel-reason-chip"
+                                        @click="cancelReason = option"
+                                    >
+                                        {{ option }}
+                                    </v-chip>
+                                </div>
+                            </div>
+
+                            <!-- Custom Reason Text -->
+                            <v-textarea
+                                v-model="cancelReason"
+                                label="Reason for cancellation"
+                                :rules="cancelReasonRules"
+                                variant="outlined"
+                                rows="2"
+                                density="comfortable"
+                                counter="500"
+                                maxlength="500"
+                                placeholder="Tell us why you're cancelling..."
+                                prepend-inner-icon="mdi-text"
+                                class="mt-1"
+                            />
+                        </v-form>
                     </v-card-text>
                     <v-card-actions class="pa-4 pt-0">
-                        <v-btn variant="text" class="flex-grow-1" @click="showConfirmSafe = false">Cancel</v-btn>
-                        <v-btn color="success" variant="flat" class="flex-grow-1 rounded-lg" :loading="isMarkingSafe" @click="markAsSafe">
-                            Yes, I'm Safe
+                        <v-btn
+                            variant="text"
+                            class="flex-grow-1 rounded-lg"
+                            @click="showConfirmCancel = false; cancelReason = ''"
+                        >
+                            Go Back
+                        </v-btn>
+                        <v-btn
+                            color="error"
+                            variant="flat"
+                            class="flex-grow-1 rounded-lg"
+                            :loading="isCancelling"
+                            :disabled="!cancelFormValid"
+                            @click="handleCancelRequest"
+                        >
+                            <v-icon start>mdi-close-circle</v-icon>
+                            Confirm Cancel
                         </v-btn>
                     </v-card-actions>
                 </v-card>
@@ -593,6 +688,7 @@ import {
     getRescueRequestByCode,
     getRescueRequestById,
     markRescueSafe,
+    cancelRescueRequest,
     translateRescueRequest,
     updateRescueRequest,
     getBuildingsFullStructure,
@@ -628,8 +724,40 @@ const rescue = ref(null);
 const loading = ref(true);
 const error = ref(null);
 const showConfirmSafe = ref(false);
+const showConfirmCancel = ref(false);
 const showRescuerProfile = ref(false);
 const isMarkingSafe = ref(false);
+const isCancelling = ref(false);
+
+// Slide to confirm states
+const isSliding = ref(false);
+const slidePosition = ref(0);
+const slideProgress = ref(0);
+const isSlideComplete = ref(false);
+const slideStartX = ref(0);
+const maxSlideDistance = ref(0);
+let completionTimer = null;
+const cancelReason = ref('');
+const cancelReasonRules = [
+    v => !!v || 'Please provide a reason for cancellation',
+    v => (v && v.trim().length >= 5) || 'Reason must be at least 5 characters',
+];
+const cancelFormRef = ref(null);
+const cancelFormValid = ref(false);
+
+const cancelReasonOptions = [
+    'Accidentally clicked the request',
+    'No longer in danger',
+    'Found help from someone nearby',
+    'Wrong location selected',
+    'Duplicate request',
+];
+
+// Check if cancellation is allowed (allow cancellation unless rescued/safe/cancelled)
+const canCancel = computed(() => {
+    if (!rescue.value) return false;
+    return !['rescued', 'safe', 'cancelled', 'completed'].includes(rescue.value.status);
+});
 const isTranslating = ref(false);
 const locationDetails = ref({
     buildingName: '',
@@ -1004,6 +1132,14 @@ onUnmounted(() => {
     if (unregisterNewMessages) {
         unregisterNewMessages();
     }
+    if (completionTimer) {
+        clearTimeout(completionTimer);
+    }
+    // Remove slide event listeners
+    document.removeEventListener('mousemove', handleSlide);
+    document.removeEventListener('mouseup', endSlide);
+    document.removeEventListener('touchmove', handleSlide);
+    document.removeEventListener('touchend', endSlide);
 });
 
 const fetchRescueData = async (silent = false) => {
@@ -1307,7 +1443,6 @@ const markAsSafe = async () => {
     try {
         await markRescueSafe(rescue.value.id);
         rescue.value.status = 'safe';
-        showConfirmSafe.value = false;
 
         // Clear emergency form data from localStorage
         localStorage.removeItem('emergency_form_data');
@@ -1335,6 +1470,8 @@ const markAsSafe = async () => {
         toastMessage.value = 'Failed to update status';
         toastColor.value = 'error';
         showToast.value = true;
+        // Reset slide on error
+        resetSlide();
     } finally {
         isMarkingSafe.value = false;
     }
@@ -1344,6 +1481,45 @@ const toggleUpdateForm = async () => {
     showUpdateForm.value = !showUpdateForm.value;
     if (showUpdateForm.value && buildings.value.length === 0) {
         await loadBuildings();
+    }
+};
+
+const handleCancelRequest = async () => {
+    if (!cancelFormValid.value) return;
+    isCancelling.value = true;
+    try {
+        await cancelRescueRequest(rescue.value.id, cancelReason.value.trim());
+        rescue.value.status = 'cancelled';
+        rescue.value.cancellation_reason = cancelReason.value.trim();
+        showConfirmCancel.value = false;
+
+        // Clear saved data
+        localStorage.removeItem('emergency_form_data');
+        localStorage.removeItem('location_selection_data');
+        localStorage.removeItem('lastRescueCode');
+        localStorage.removeItem('lastRescueRequestId');
+
+        showNotification({
+            title: 'Request Cancelled',
+            message: 'Your rescue request has been cancelled.',
+            type: 'warning',
+            icon: 'mdi-close-circle',
+            sound: 'notification',
+            vibratePattern: 'standard'
+        });
+
+        setTimeout(() => {
+            router.visit('/user/scanner');
+        }, 2500);
+    } catch (err) {
+        console.error('Failed to cancel request:', err);
+        toastMessage.value = err.message?.includes('no longer') 
+            ? 'Rescue is already in progress and cannot be cancelled.' 
+            : 'Failed to cancel request. Please try again.';
+        toastColor.value = 'error';
+        showToast.value = true;
+    } finally {
+        isCancelling.value = false;
     }
 };
 
@@ -1387,6 +1563,88 @@ const viewMap = () => {
     } else {
         router.visit('/user/map');
     }
+};
+
+// Slide to confirm functions
+const startSlide = (event) => {
+    if (isMarkingSafe.value || isSlideComplete.value) return;
+    
+    event.preventDefault();
+    isSliding.value = true;
+    
+    const clientX = event.type === 'touchstart' ? event.touches[0].clientX : event.clientX;
+    slideStartX.value = clientX;
+    
+    // Calculate max slide distance (button width minus thumb width)
+    const slideTrack = event.currentTarget.querySelector('.slide-track');
+    maxSlideDistance.value = slideTrack.clientWidth - 64; // 64px is thumb width
+    
+    // Add event listeners
+    document.addEventListener('mousemove', handleSlide);
+    document.addEventListener('mouseup', endSlide);
+    document.addEventListener('touchmove', handleSlide, { passive: false });
+    document.addEventListener('touchend', endSlide);
+};
+
+const handleSlide = (event) => {
+    if (!isSliding.value) return;
+    
+    event.preventDefault();
+    const clientX = event.type === 'touchmove' ? event.touches[0].clientX : event.clientX;
+    const deltaX = clientX - slideStartX.value;
+    
+    // Constrain slide position
+    const newPosition = Math.max(0, Math.min(deltaX, maxSlideDistance.value));
+    slidePosition.value = newPosition;
+    slideProgress.value = (newPosition / maxSlideDistance.value) * 100;
+    
+    // Check if slide is complete (95% of the way)
+    if (slideProgress.value >= 95 && !isSlideComplete.value) {
+        completeSlide();
+    }
+};
+
+const endSlide = () => {
+    if (!isSliding.value) return;
+    
+    // Remove event listeners
+    document.removeEventListener('mousemove', handleSlide);
+    document.removeEventListener('mouseup', endSlide);
+    document.removeEventListener('touchmove', handleSlide);
+    document.removeEventListener('touchend', endSlide);
+    
+    if (!isSlideComplete.value) {
+        // Reset slide if not complete
+        resetSlide();
+    }
+};
+
+const completeSlide = () => {
+    isSlideComplete.value = true;
+    isSliding.value = false;
+    slidePosition.value = maxSlideDistance.value;
+    slideProgress.value = 100;
+    
+    // Add haptic feedback if available
+    if (navigator.vibrate) {
+        navigator.vibrate([100, 50, 100]);
+    }
+    
+    // Complete marking as safe after a short delay
+    completionTimer = setTimeout(() => {
+        markAsSafe();
+    }, 800);
+};
+
+const resetSlide = () => {
+    if (completionTimer) {
+        clearTimeout(completionTimer);
+        completionTimer = null;
+    }
+    isSliding.value = false;
+    slidePosition.value = 0;
+    slideProgress.value = 0;
+    isSlideComplete.value = false;
 };
 
 const handleGoBack = () => {
@@ -1840,8 +2098,26 @@ const handleGoBack = () => {
     position: relative;
 }
 
-.action-buttons .v-btn {
-    min-height: 48px;
+.action-btn {
+    min-height: 44px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.action-buttons .d-flex {
+    gap: 8px;
+}
+
+/* Cancel reason chips */
+.cancel-reason-chip {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cancel-reason-chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* No Rescue State */
@@ -1882,6 +2158,196 @@ const handleGoBack = () => {
 @media (max-width: 600px) {
     .content-area {
         padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 130px) !important;
+    }
+}
+
+/* Action Container (matching rescuer layout) */
+.action-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 50px);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    margin-top: 8px;
+}
+
+.action-container:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* Primary Action */
+.primary-action {
+    width: 100%;
+}
+
+/* Secondary Actions */
+.secondary-actions {
+    width: 100%;
+}
+
+.action-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.secondary-btn {
+    height: 52px !important;
+    font-weight: 600;
+    font-size: 0.95rem !important;
+    text-transform: none;
+    letter-spacing: 0.3px;
+    transition: all 0.2s ease;
+    border-width: 2px !important;
+}
+
+.flex-btn {
+    flex: 1;
+}
+
+.secondary-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.secondary-btn:active {
+    transform: translateY(0);
+    transition: transform 0.1s ease;
+}
+
+.cancel-btn {
+    border-color: #ef4444 !important;
+    color: #dc2626 !important;
+}
+
+.cancel-btn:hover {
+    background: rgba(239, 68, 68, 0.04) !important;
+    border-color: #dc2626 !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15) !important;
+}
+
+/* Slide to Confirm Component */
+.slide-to-confirm {
+    width: 100%;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+.slide-to-confirm:active {
+    cursor: grabbing;
+}
+
+.slide-track {
+    position: relative;
+    width: 100%;
+    height: 64px;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-radius: 32px;
+    border: 2px solid #e2e8f0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+}
+
+.slide-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    transition: width 0.2s ease;
+    border-radius: 30px;
+}
+
+.slide-thumb {
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 2;
+    cursor: grab;
+    flex-shrink: 0;
+}
+
+.slide-thumb .v-icon {
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.slide-thumb:active {
+    cursor: grabbing;
+}
+
+.slide-thumb.slide-active {
+    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+    transform: translateY(-50%) scale(1.05);
+}
+
+.slide-thumb.slide-complete {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+}
+
+.slide-text {
+    position: absolute;
+    left: 70px;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    text-align: center;
+    pointer-events: none;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slide-instruction {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #64748b;
+    letter-spacing: 0.3px;
+}
+
+.slide-success {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 0.3px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .slide-to-confirm {
+        cursor: default;
+    }
+    
+    .slide-thumb {
+        cursor: default;
+    }
+    
+    .slide-thumb:active {
+        cursor: default;
     }
 }
 

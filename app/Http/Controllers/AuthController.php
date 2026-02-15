@@ -847,6 +847,22 @@ class AuthController extends Controller
                 ], 422);
             }
             
+            // Check if ID is already taken by another user (excluding current user)
+            $existingUser = User::where('id', '!=', $user->id)
+                ->where(function($query) use ($idNumber) {
+                    $query->where('student_id', $idNumber)
+                          ->orWhere('faculty_id', $idNumber)
+                          ->orWhere('staff_id', $idNumber)
+                          ->orWhere('rescuer_id', $idNumber);
+                })->first();
+            
+            if ($existingUser) {
+                return response()->json([
+                    'message' => 'This ID is already taken or recorded by another user',
+                    'errors' => ['id_number' => ['This student/staff/rescuer ID is already taken or recorded.']]
+                ], 422);
+            }
+            
             // Determine role based on ID number pattern
             $firstDigit = $idNumber[0];
             
@@ -902,6 +918,22 @@ class AuthController extends Controller
 
         // Update user
         $user->update($data);
+
+        // Check if profile is now complete and clear the must_update_profile flag
+        if (\Schema::hasColumn('users', 'must_update_profile') && $user->must_update_profile) {
+            $user->refresh();
+            $requiredFields = ['first_name', 'last_name', 'phone', 'emergency_contact_name', 'emergency_contact_phone', 'blood_type'];
+            $profileComplete = true;
+            foreach ($requiredFields as $field) {
+                if (empty($user->$field)) {
+                    $profileComplete = false;
+                    break;
+                }
+            }
+            if ($profileComplete) {
+                $user->update(['must_update_profile' => false]);
+            }
+        }
 
         return response()->json($user);
     }
@@ -1751,6 +1783,22 @@ class AuthController extends Controller
         $firstDigit = substr($idNumber, 0, 1);
         $role = ($firstDigit === '2') ? 'student' : 'faculty';
         
+        // Check if ID is already taken by another user
+        $existingUser = User::where(function($query) use ($idNumber) {
+            $query->where('student_id', $idNumber)
+                  ->orWhere('faculty_id', $idNumber)
+                  ->orWhere('staff_id', $idNumber)
+                  ->orWhere('rescuer_id', $idNumber);
+        })->first();
+        
+        if ($existingUser) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This ID is already taken or recorded by another user.',
+                'errors' => ['id_number' => ['This student/staff/rescuer ID is already taken or recorded.']]
+            ], 422);
+        }
+        
         // Create the user
         $userData = [
             'email' => $googleUser['email'],
@@ -1835,7 +1883,104 @@ class AuthController extends Controller
         }
     }
 
+    /**
+     * Show the Terms & Conditions acceptance page
+     */
+    public function showTermsAcceptance(Request $request)
+    {
+        $user = $request->user();
+        
+        // If user has already accepted terms, redirect to dashboard
+        if ($user->terms_accepted_at) {
+            return $this->redirectToDashboard($user);
+        }
+        
+        return Inertia::render('User/TermsAcceptance');
+    }
 
+    /**
+     * Accept Terms & Conditions
+     */
+    public function acceptTerms(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'version' => 'required|string|max:20',
+        ]);
 
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid request.',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = $request->user();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated.'
+            ], 401);
+        }
+
+        try {
+            // Record the terms acceptance with compliance data
+            $user->update([
+                'terms_accepted_at' => Carbon::now(),
+                'terms_accepted_version' => $request->version,
+                'terms_accepted_ip' => $request->ip(),
+            ]);
+
+            // Log the acceptance for audit trail
+            \Log::info('Terms acceptance recorded', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'version' => $request->version,
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'timestamp' => Carbon::now()->toISOString(),
+            ]);
+
+            // Determine redirect based on role
+            $redirect = $this->getRedirectPath($user);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Terms and Conditions accepted successfully.',
+                'redirect' => $redirect
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Terms acceptance error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to record terms acceptance. Please try again.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get redirect path based on user role
+     */
+    private function getRedirectPath(User $user): string
+    {
+        if ($user->isAdmin == 1 || $user->isAdmin === true || $user->role === 'admin') {
+            return '/admin/dashboard';
+        } elseif ($user->role === 'rescuer') {
+            return '/rescuer/dashboard';
+        } else {
+            return '/user/scanner';
+        }
+    }
+
+    /**
+     * Redirect user to their appropriate dashboard
+     */
+    private function redirectToDashboard(User $user)
+    {
+        $path = $this->getRedirectPath($user);
+        return redirect($path);
+    }
 
 }

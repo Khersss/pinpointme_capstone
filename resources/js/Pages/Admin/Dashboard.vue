@@ -107,6 +107,26 @@
                             </v-card-text>
                         </v-card>
                     </v-col>
+                    <v-col cols="12" sm="6" lg="3">
+                        <v-card class="stat-card stat-card-error stat-card-clickable" rounded="xl" elevation="4" @click="openStatDialog('cancelled')">
+                            <div class="stat-card-overlay"></div>
+                            <v-card-text class="position-relative">
+                                <div class="d-flex align-center justify-space-between">
+                                    <div>
+                                        <p class="text-white text-caption mb-1 opacity-80">Cancelled</p>
+                                        <h2 class="text-h3 font-weight-bold text-white">{{ statusCounts.cancelled || 0 }}</h2>
+                                        <v-chip color="rgba(255,255,255,0.2)" size="x-small" class="mt-2 text-white">
+                                            <v-icon start size="12">mdi-close-circle</v-icon>
+                                            Cancelled
+                                        </v-chip>
+                                    </div>
+                                    <v-avatar size="64" color="rgba(255,255,255,0.2)">
+                                        <v-icon size="36" color="white">mdi-close-circle-outline</v-icon>
+                                    </v-avatar>
+                                </div>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
                 </v-row>
 
                 <!-- Rescuer Status Cards -->
@@ -376,6 +396,14 @@
                                 {{ item.rescuer_name }}
                             </span>
                         </div>
+                        <!-- Cancellation Reason -->
+                        <div v-if="item.cancellation_reason" class="mt-2 pa-2 rounded bg-red-lighten-5">
+                            <div class="d-flex align-center text-caption text-red-darken-2 font-weight-bold mb-1">
+                                <v-icon size="13" class="mr-1" color="error">mdi-close-circle</v-icon>
+                                Cancellation Reason
+                            </div>
+                            <p class="text-caption text-grey-darken-2 mb-0" style="line-height: 1.4;">{{ item.cancellation_reason }}</p>
+                        </div>
                     </div>
                 </v-card-text>
 
@@ -408,7 +436,7 @@ const isMobile = computed(() => mobile.value);
 const props = defineProps({
     statusCounts: {
         type: Object,
-        default: () => ({ total: 0, pending: 0, in_progress: 0, completed: 0 })
+        default: () => ({ total: 0, pending: 0, in_progress: 0, completed: 0, cancelled: 0 })
     },
     rescuesByBuilding: {
         type: Array,
@@ -504,6 +532,11 @@ const STAT_CONFIG = {
         icon: 'mdi-shield-check',
         statuses: ['completed', 'rescued', 'safe'],
     },
+    cancelled: {
+        title: 'Cancelled Requests',
+        icon: 'mdi-close-circle-outline',
+        statuses: ['cancelled'],
+    },
 };
 
 const statDialogConfig = computed(() => STAT_CONFIG[statDialog.value.type] || STAT_CONFIG.total);
@@ -535,6 +568,8 @@ const openStatDialog = async (type) => {
                 location: [r.building?.name, r.floor?.floor_name, r.room?.room_name].filter(Boolean).join(' › ') || 'Unknown',
                 rescuer_name: r.rescuer ? `${r.rescuer.first_name || ''} ${r.rescuer.last_name || ''}`.trim() : null,
                 created_at: r.created_at,
+                cancellation_reason: r.cancellation_reason || null,
+                cancelled_at: r.cancelled_at || null,
             }));
     } catch (err) {
         console.error('Error fetching stat details:', err);
@@ -630,6 +665,10 @@ const formatDate = (dateString) => {
     background: linear-gradient(135deg, #43A047 0%, #388E3C 50%, #2E7D32 100%) !important;
 }
 
+.stat-card-error {
+    background: linear-gradient(135deg, #E53935 0%, #D32F2F 50%, #C62828 100%) !important;
+}
+
 /* Clickable stat cards */
 .stat-card-clickable {
     cursor: pointer;
@@ -665,6 +704,9 @@ const formatDate = (dateString) => {
 }
 .stat-dialog-header-completed {
     background: linear-gradient(135deg, #43A047 0%, #2E7D32 100%);
+}
+.stat-dialog-header-cancelled {
+    background: linear-gradient(135deg, #E53935 0%, #C62828 100%);
 }
 
 .text-white-50 {

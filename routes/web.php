@@ -54,6 +54,9 @@ Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 // Forced password change page (requires auth but allows force_password_change users)
 Route::middleware(['auth'])->group(function () {
     Route::get('/change-password', [AuthController::class, 'showChangePassword'])->name('change-password');
+    
+    // Terms & Conditions Acceptance page (requires auth but bypasses terms check)
+    Route::get('/terms-acceptance', [AuthController::class, 'showTermsAcceptance'])->name('terms-acceptance');
 });
 
 // ============================================================
@@ -67,6 +70,9 @@ Route::prefix('api')->withoutMiddleware([Csrf::class])->group(function () {
     Route::post('/auth/send-password-change-otp', [AuthController::class, 'sendPasswordChangeOtp']);
     Route::post('/auth/verify-password-change-otp', [AuthController::class, 'verifyPasswordChangeOtp']);
     Route::post('/auth/complete-password-change', [AuthController::class, 'completePasswordChange']);
+    
+    // Terms & Conditions acceptance endpoint (requires auth)
+    Route::post('/accept-terms', [AuthController::class, 'acceptTerms'])->middleware('auth');
     
     // Buildings with floors and rooms - for location scanner
     Route::get('/buildings', [BuildingController::class, 'apiIndex']);

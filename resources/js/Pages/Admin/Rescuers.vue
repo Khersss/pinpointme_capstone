@@ -486,7 +486,21 @@
                             maxlength="11"
                             @input="formData.phone = formData.phone.replace(/\\D/g, '')"
                         />
-                        
+                        <v-text-field
+                            v-model="formData.rescuer_id"
+                            label="Rescuer ID (9 digits)"
+                            variant="outlined"
+                            density="compact"
+                            :rules="[rules.rescuerId]"
+                            :hint="`Must be exactly 9 digits (${(formData.rescuer_id || '').replace(/\\D/g, '').length}/9)`"
+                            persistent-hint
+                            placeholder="123456789"
+                            class="mb-3"
+                            type="text"
+                            inputmode="numeric"
+                            maxlength="9"
+                            @input="formData.rescuer_id = formData.rescuer_id.replace(/\\D/g, '')"
+                        />
                         
                         <!-- OTP Activation Notice for new rescuers -->
                         <v-alert 
@@ -534,7 +548,7 @@
                         <v-tabs-window-item value="upload">
                             <v-alert type="info" variant="tonal" class="mb-4" density="compact">
                                 <strong>File Format:</strong> Upload an Excel (.xlsx, .xls) or CSV file with the following columns: 
-                                <code>first_name, last_name, email, phone</code>
+                                <code>rescuer_id, first_name, last_name, email, phone</code>
                             </v-alert>
                             
                             <div class="d-flex gap-2 mb-4">
@@ -581,12 +595,23 @@
                         <!-- Manual Entry Tab -->
                         <v-tabs-window-item value="manual">
                             <v-alert type="info" variant="tonal" class="mb-4" density="compact">
-                                Enter rescuer details below. Click "Add Row" to add more rescuers.
+                                Enter rescuer details below. Click "Add Row" to add more rescuers. Rescuer ID must be 9 digits.
                             </v-alert>
 
                             <div v-for="(row, index) in manualBulkData" :key="index" class="mb-3">
                                 <v-row align="center" dense>
-                                    <v-col cols="3">
+                                    <v-col cols="2">
+                                        <v-text-field
+                                            v-model="row.rescuer_id"
+                                            label="Rescuer ID"
+                                            variant="outlined"
+                                            density="compact"
+                                            hide-details
+                                            maxlength="9"
+                                            @input="row.rescuer_id = row.rescuer_id.replace(/\D/g, '')"
+                                        />
+                                    </v-col>
+                                    <v-col cols="2">
                                         <v-text-field
                                             v-model="row.first_name"
                                             label="First Name"
@@ -595,7 +620,7 @@
                                             hide-details
                                         />
                                     </v-col>
-                                    <v-col cols="3">
+                                    <v-col cols="2">
                                         <v-text-field
                                             v-model="row.last_name"
                                             label="Last Name"
@@ -604,7 +629,7 @@
                                             hide-details
                                         />
                                     </v-col>
-                                    <v-col cols="4">
+                                    <v-col cols="5">
                                         <v-text-field
                                             v-model="row.email"
                                             label="Email"
@@ -914,6 +939,7 @@ const formData = ref({
     last_name: '',
     email: '',
     phone: '',
+    rescuer_id: '',
     status: 'available'
 });
 
@@ -939,6 +965,25 @@ const rules = {
         // Ensure it's purely numeric (no letters)
         if (!/^\d{11}$/.test(cleaned)) {
             return 'Must contain only numbers';
+        }
+        
+        return true;
+    },
+    // Rescuer ID validation - exactly 9 digits
+    rescuerId: (v) => {
+        if (!v) return 'Rescuer ID is required';
+        
+        // Remove all non-digit characters
+        const cleaned = v.replace(/\D/g, '');
+        
+        // Must be exactly 9 digits
+        if (cleaned.length !== 9) {
+            return `Rescuer ID must be exactly 9 digits (${cleaned.length}/9)`;
+        }
+        
+        // Ensure it's purely numeric (no letters)
+        if (!/^\d{9}$/.test(cleaned)) {
+            return 'Rescuer ID must contain only numbers';
         }
         
         return true;
@@ -973,6 +1018,7 @@ const headers = [
 ];
 
 const bulkPreviewHeaders = [
+    { title: 'Rescuer ID', key: 'rescuer_id' },
     { title: 'First Name', key: 'first_name' },
     { title: 'Last Name', key: 'last_name' },
     { title: 'Email', key: 'email' },
@@ -1047,6 +1093,7 @@ const openAddDialog = () => {
         last_name: '',
         email: '',
         phone: '',
+        rescuer_id: '',
         status: 'available'
     };
     dialog.value = true;
@@ -1063,7 +1110,7 @@ const openBulkDialog = () => {
     bulkTab.value = 'upload';
     bulkFile.value = null;
     bulkPreviewData.value = [];
-    manualBulkData.value = [{ first_name: '', last_name: '', email: '', phone: '' }];
+    manualBulkData.value = [{ rescuer_id: '', first_name: '', last_name: '', email: '', phone: '' }];
     bulkDialog.value = true;
 };
 
@@ -1078,6 +1125,13 @@ const viewProfile = (rescuer) => {
 };
 
 const saveRescuer = async () => {
+    // Validate rescuer ID - required
+    const rescuerIdValidation = rules.rescuerId(formData.value.rescuer_id);
+    if (rescuerIdValidation !== true) {
+        showSnackbar(rescuerIdValidation, 'error');
+        return;
+    }
+    
     // Validate phone number if provided
     if (formData.value.phone) {
         const phoneValidation = rules.phoneNumber(formData.value.phone);
@@ -1092,8 +1146,12 @@ const saveRescuer = async () => {
         const url = isEditing.value ? `/admin/rescuers/${selectedRescuer.value.id}` : '/admin/rescuers';
         const method = isEditing.value ? 'PUT' : 'POST';
         
+        // Clean rescuer_id to only digits
+        const cleanedRescuerId = (formData.value.rescuer_id || '').replace(/\D/g, '');
+        
         const submitData = {
             ...formData.value,
+            rescuer_id: cleanedRescuerId,
             send_otp: !isEditing.value
         };
         
@@ -1268,6 +1326,7 @@ const previewBulkFile = async (file) => {
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
         
         bulkPreviewData.value = jsonData.map(row => ({
+            rescuer_id: row.rescuer_id || row['Rescuer ID'] || row['ID'] || '',
             first_name: row.first_name || row['First Name'] || '',
             last_name: row.last_name || row['Last Name'] || '',
             email: row.email || row['Email'] || '',
@@ -1309,6 +1368,7 @@ const processBulkAdd = async () => {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
                     },
                     body: JSON.stringify({
+                        rescuer_id: (row.rescuer_id || '').toString().replace(/\D/g, ''),
                         first_name: row.first_name,
                         last_name: row.last_name,
                         email: row.email,
@@ -1341,8 +1401,8 @@ const processBulkAdd = async () => {
 
 const downloadTemplate = (format) => {
     const templateData = [
-        { first_name: 'John', last_name: 'Doe', email: 'john.doe@sdca.edu.ph', phone: '09171234567' },
-        { first_name: 'Jane', last_name: 'Smith', email: 'jane.smith@sdca.edu.ph', phone: '09181234567' }
+        { rescuer_id: '123456789', first_name: 'John', last_name: 'Doe', email: 'john.doe@sdca.edu.ph', phone: '09171234567' },
+        { rescuer_id: '987654321', first_name: 'Jane', last_name: 'Smith', email: 'jane.smith@sdca.edu.ph', phone: '09181234567' }
     ];
     
     const worksheet = XLSX.utils.json_to_sheet(templateData);
@@ -1357,7 +1417,7 @@ const downloadTemplate = (format) => {
 };
 
 const addManualRow = () => {
-    manualBulkData.value.push({ first_name: '', last_name: '', email: '', phone: '' });
+    manualBulkData.value.push({ rescuer_id: '', first_name: '', last_name: '', email: '', phone: '' });
 };
 
 const removeManualRow = (index) => {

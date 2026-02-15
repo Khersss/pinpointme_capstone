@@ -130,6 +130,13 @@ export async function markRescueSafe(rescueRequestId) {
     return apiFetch(`/api/rescue-requests/${rescueRequestId}/mark-safe`, { method: 'POST' });
 }
 
+export async function cancelRescueRequest(rescueRequestId, reason) {
+    return apiFetch(`/api/rescue-requests/${rescueRequestId}/cancel`, {
+        method: 'POST',
+        body: JSON.stringify({ cancellation_reason: reason }),
+    });
+}
+
 export async function updateRescueRequest(rescueRequestId, payload) {
     return apiFetch(`/api/rescue-requests/${rescueRequestId}`, {
         method: 'PUT',

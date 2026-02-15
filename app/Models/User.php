@@ -56,6 +56,9 @@ class User extends Authenticatable
         'contact_number',
         'email_verified_at',
         'emergency_contact_relationship',
+        'terms_accepted_at',
+        'terms_accepted_version',
+        'terms_accepted_ip',
     ];
 
     /**
@@ -89,6 +92,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'terms_accepted_at' => 'datetime',
         ];
     }
 

@@ -32,6 +32,7 @@ class AdminController extends Controller
             'pending' => $rescueRequests->where('status', 'pending')->count(),
             'in_progress' => $rescueRequests->whereIn('status', ['accepted', 'in_progress', 'en_route'])->count(),
             'completed' => $rescueRequests->whereIn('status', ['completed', 'rescued', 'safe'])->count(),
+            'cancelled' => $rescueRequests->where('status', 'cancelled')->count(),
         ];
 
         // Rescues by building
@@ -86,6 +87,8 @@ class AdminController extends Controller
                 'location' => $r->building?->name . ' - ' . $r->floor?->floor_name . ' - ' . $r->room?->room_name,
                 'requester_name' => $r->firstName ? "{$r->firstName} {$r->lastName}" : ($r->requester ? "{$r->requester->first_name} {$r->requester->last_name}" : 'Anonymous'),
                 'created_at' => $r->created_at->toISOString(),
+                'cancellation_reason' => $r->cancellation_reason,
+                'cancelled_at' => $r->cancelled_at?->toISOString(),
             ]);
 
         // User statistics
@@ -326,14 +329,36 @@ class AdminController extends Controller
             'email' => 'required|email|unique:users,email',
             'role' => 'required|in:student,faculty,staff',
             'phone' => 'nullable|string|regex:/^09[0-9]{9}$/|size:11',
-            'student_id' => 'nullable|string',
-            'faculty_id' => 'nullable|string',
-            'staff_id' => 'nullable|string',
-            'id_number' => 'nullable|string',
+            'student_id' => 'nullable|string|size:9|regex:/^[0-9]{9}$/',
+            'faculty_id' => 'nullable|string|size:9|regex:/^[0-9]{9}$/',
+            'staff_id' => 'nullable|string|size:9|regex:/^[0-9]{9}$/',
+            'id_number' => 'nullable|string|size:9|regex:/^[0-9]{9}$/',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        // Get the ID number based on role
+        $idNumber = $request->student_id ?? $request->faculty_id ?? $request->staff_id ?? $request->id_number;
+        
+        // Validate ID uniqueness across all ID fields (student_id, faculty_id, staff_id, rescuer_id)
+        if ($idNumber) {
+            $existingUser = User::where(function($query) use ($idNumber) {
+                $query->where('student_id', $idNumber)
+                      ->orWhere('faculty_id', $idNumber)
+                      ->orWhere('staff_id', $idNumber)
+                      ->orWhere('rescuer_id', $idNumber);
+            })->first();
+            
+            if ($existingUser) {
+                $idFieldName = $request->role === 'student' ? 'student_id' : 
+                              ($request->role === 'faculty' ? 'faculty_id' : 'staff_id');
+                return response()->json([
+                    'success' => false,
+                    'errors' => [$idFieldName => ['This ID is already taken or recorded by another user (student/staff/rescuer).']]
+                ], 422);
+            }
         }
 
         // Validate SDCA email domain (only in production)
@@ -356,9 +381,9 @@ class AdminController extends Controller
             'email' => $request->email,
             'role' => $request->role,
             'phone' => $request->phone,
-            'student_id' => $request->student_id ?? $request->id_number,
-            'faculty_id' => $request->faculty_id,
-            'staff_id' => $request->staff_id,
+            'student_id' => $request->role === 'student' ? $idNumber : null,
+            'faculty_id' => $request->role === 'faculty' ? $idNumber : null,
+            'staff_id' => $request->role === 'staff' ? $idNumber : null,
             'password' => Hash::make($tempPassword),
             'status' => $isLocal ? 'active' : 'pending',
             'otp_verified' => $isLocal,
@@ -441,13 +466,14 @@ class AdminController extends Controller
             'last_name' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|unique:users,email,' . $id,
             'role' => 'sometimes|in:student,faculty,staff,rescuer',
-            'status' => 'sometimes|string|in:available,on_rescue,off_duty,unavailable,pending',
+            'status' => 'sometimes|string|in:available,on_rescue,off_duty,unavailable,pending,active',
             'phone' => 'nullable|string|regex:/^09[0-9]{9}$/|size:11',
             'phone_number' => 'nullable|string|regex:/^09[0-9]{9}$/|size:11',
             'contact_number' => 'nullable|string|regex:/^09[0-9]{9}$/|size:11',
-            'student_id' => 'nullable|string|size:9',
-            'faculty_id' => 'nullable|string|size:9',
-            'staff_id' => 'nullable|string|size:9',
+            'student_id' => 'nullable|string|size:9|regex:/^[0-9]{9}$/',
+            'faculty_id' => 'nullable|string|size:9|regex:/^[0-9]{9}$/',
+            'staff_id' => 'nullable|string|size:9|regex:/^[0-9]{9}$/',
+            'rescuer_id' => 'nullable|string|size:9|regex:/^[0-9]{9}$/',
         ]);
 
         if ($validator->fails()) {
@@ -459,18 +485,31 @@ class AdminController extends Controller
         
         $updateData = $request->only(['first_name', 'last_name', 'email', 'role', 'status']);
         
-        // Handle ID fields based on role - clean to only 9 digits
-        if ($request->has('student_id') && $request->student_id) {
-            $cleanedId = preg_replace('/\D/', '', $request->student_id);
-            $updateData['student_id'] = substr($cleanedId, 0, 9);
-        }
-        if ($request->has('faculty_id') && $request->faculty_id) {
-            $cleanedId = preg_replace('/\D/', '', $request->faculty_id);
-            $updateData['faculty_id'] = substr($cleanedId, 0, 9);
-        }
-        if ($request->has('staff_id') && $request->staff_id) {
-            $cleanedId = preg_replace('/\D/', '', $request->staff_id);
-            $updateData['staff_id'] = substr($cleanedId, 0, 9);
+        // Handle ID fields based on role - clean to only 9 digits and validate uniqueness
+        $idFields = ['student_id', 'faculty_id', 'staff_id', 'rescuer_id'];
+        foreach ($idFields as $idField) {
+            if ($request->has($idField) && $request->$idField) {
+                $cleanedId = preg_replace('/\D/', '', $request->$idField);
+                $cleanedId = substr($cleanedId, 0, 9);
+                
+                // Validate cross-table uniqueness (excluding current user)
+                $existingUser = User::where('id', '!=', $id)
+                    ->where(function($query) use ($cleanedId) {
+                        $query->where('student_id', $cleanedId)
+                              ->orWhere('faculty_id', $cleanedId)
+                              ->orWhere('staff_id', $cleanedId)
+                              ->orWhere('rescuer_id', $cleanedId);
+                    })->first();
+                
+                if ($existingUser) {
+                    return response()->json([
+                        'success' => false,
+                        'errors' => [$idField => ['This ID is already taken or recorded by another user (student/staff/rescuer).']]
+                    ], 422);
+                }
+                
+                $updateData[$idField] = $cleanedId;
+            }
         }
         
         if ($phoneValue !== null) {
@@ -524,10 +563,27 @@ class AdminController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'phone' => 'nullable|string|regex:/^09[0-9]{9}$/|size:11',
+            'rescuer_id' => 'required|string|size:9|regex:/^[0-9]{9}$/',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        // Validate rescuer_id uniqueness across all ID fields (student_id, faculty_id, staff_id, rescuer_id)
+        $rescuerId = $request->rescuer_id;
+        $existingUser = User::where(function($query) use ($rescuerId) {
+            $query->where('student_id', $rescuerId)
+                  ->orWhere('faculty_id', $rescuerId)
+                  ->orWhere('staff_id', $rescuerId)
+                  ->orWhere('rescuer_id', $rescuerId);
+        })->first();
+        
+        if ($existingUser) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['rescuer_id' => ['This ID is already taken or recorded by another user (student/staff/rescuer).']]
+            ], 422);
         }
 
         // Validate SDCA email domain (only in production)
@@ -550,6 +606,7 @@ class AdminController extends Controller
             'email' => $request->email,
             'role' => 'rescuer',
             'phone' => $request->phone,
+            'rescuer_id' => $rescuerId,
             'password' => Hash::make($tempPassword),
             'status' => $isLocal ? 'available' : 'pending',
             'otp_verified' => $isLocal,

@@ -617,6 +617,62 @@ class RescueRequestController extends Controller
     }
 
     /**
+     * Cancel a rescue request with a reason
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     */
+    public function cancelRequest(Request $request, $id)
+    {
+        $rescueRequest = RescueRequest::findOrFail($id);
+
+        // Only allow cancellation if still pending or just assigned
+        if (!in_array($rescueRequest->status, ['pending', 'open', 'assigned', 'accepted'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This rescue request can no longer be cancelled because the rescuer is already en route or on scene.',
+            ], 422);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'cancellation_reason' => 'required|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $rescueRequest->update([
+            'status' => 'cancelled',
+            'cancellation_reason' => $request->cancellation_reason,
+            'cancelled_at' => now(),
+        ]);
+
+        // If a rescuer was assigned, set them back to available
+        if ($rescueRequest->assigned_rescuer) {
+            $rescuer = \App\Models\User::find($rescueRequest->assigned_rescuer);
+            if ($rescuer) {
+                $rescuer->update(['status' => 'active']);
+            }
+        }
+
+        if (request()->expectsJson() || request()->is('api/*')) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Rescue request cancelled successfully',
+                'data' => $rescueRequest->load(['building', 'floor', 'room', 'requester', 'rescuer'])
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Rescue request cancelled');
+    }
+
+    /**
      * Generate unique rescue code
      *
      * @return string
@@ -638,11 +694,6 @@ class RescueRequestController extends Controller
      */
     private function userMustUpdateProfile($user): bool
     {
-        // Check if user has must_update_profile flag (from registration)
-        if (\Schema::hasColumn('users', 'must_update_profile') && $user->must_update_profile) {
-            return true;
-        }
-
         // Check if essential profile fields are missing
         $requiredFields = [
             'first_name',
@@ -657,6 +708,11 @@ class RescueRequestController extends Controller
             if (empty($user->$field)) {
                 return true;
             }
+        }
+
+        // All fields are filled — if the flag is still set, clear it now
+        if (\Schema::hasColumn('users', 'must_update_profile') && $user->must_update_profile) {
+            $user->update(['must_update_profile' => false]);
         }
 
         return false;

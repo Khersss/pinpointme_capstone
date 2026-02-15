@@ -113,9 +113,7 @@
                                         :disabled="isLoading"
                                         maxlength="9"
                                         @input="formatIdNumber"
-                                        hint="If starts with 2 = Student, other digits = Faculty"
-                                        persistent-hint
-                                        prepend-inner-icon="mdi-identifier"
+                                        
                                     />
                                     <v-chip 
                                         v-if="userRole" 

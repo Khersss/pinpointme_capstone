@@ -204,24 +204,24 @@
                         <!-- Quick Action Cards -->
                         <div class="action-cards mb-4">
                             <!-- QR Scan Card - Hidden on mobile/tablet (use bottom nav instead) -->
-                            <div class="action-card primary hide-on-mobile" @click="startQrScan" :class="{ disabled: isScanning }">
+                            <div class="action-card primary hide-on-mobile" @click="!isProfileComplete ? null : startQrScan" :class="{ disabled: isScanning || !isProfileComplete }">
                                 <div class="action-icon">
                                     <v-icon size="36" color="white">mdi-qrcode-scan</v-icon>
                                 </div>
                                 <div class="action-text">
-                                    <h3>Scan QR Code</h3>
-                                    <p>Quick location detection</p>
+                                    <h3>{{ !isProfileComplete ? 'Complete Profile' : 'Scan QR Code' }}</h3>
+                                    <p>{{ !isProfileComplete ? 'Profile required first' : 'Quick location detection' }}</p>
                                 </div>
                                 <v-progress-circular v-if="isScanning" indeterminate size="24" color="white" />
                                 <v-icon v-else color="white" size="20">mdi-chevron-right</v-icon>
                             </div>
-                            <div class="action-card success" @click="toggleVoiceInput">
+                            <div class="action-card success" @click="!isProfileComplete ? null : toggleVoiceInput" :class="{ disabled: !isProfileComplete }">
                                 <div class="action-icon" :class="{ recording: isRecording }">
                                     <v-icon size="36" color="white">{{ isRecording ? 'mdi-microphone-off' : 'mdi-microphone' }}</v-icon>
                                 </div>
                                 <div class="action-text">
-                                    <h3>{{ isRecording ? 'Stop Recording' : 'Voice Command' }}</h3>
-                                    <p>{{ isRecording ? formatRecordingTime : 'Say location & emergency' }}</p>
+                                    <h3>{{ !isProfileComplete ? 'Complete Profile' : isRecording ? 'Stop Recording' : 'Voice Command' }}</h3>
+                                    <p>{{ !isProfileComplete ? 'Profile required first' : isRecording ? formatRecordingTime : 'Say location & emergency' }}</p>
                                 </div>
                                 <v-progress-circular v-if="isProcessingAudio" indeterminate size="24" color="white" />
                                 <v-icon v-else color="white" size="20">mdi-chevron-right</v-icon>
@@ -379,7 +379,7 @@
                         </v-expansion-panels>
 
                         <!-- Emergency Form -->
-                        <v-card id="emergency-form-section" class="mb-4 rounded-xl emergency-form-card" elevation="0">
+                        <v-card id="emergency-form-section" class="mb-4 rounded-xl emergency-form-card" elevation="8">
                             <div class="emergency-form-header">
                                 <v-icon color="white" size="24" class="mr-2">mdi-alert-circle</v-icon>
                                 <span>Emergency Details (Optional)</span>
@@ -407,6 +407,7 @@
                                                 prepend-inner-icon="mdi-account"
                                                 hide-details
                                                 placeholder="Your first name"
+                                                :readonly="!isProfileComplete"
                                             />
                                         </v-col>
                                         <v-col cols="6">
@@ -418,6 +419,7 @@
                                                 prepend-inner-icon="mdi-account"
                                                 hide-details
                                                 placeholder="Your last name"
+                                                :readonly="!isProfileComplete"
                                             />
                                         </v-col>
                                         <v-col cols="12">
@@ -430,6 +432,7 @@
                                                 hide-details
                                                 class="mt-3"
                                                 placeholder="Briefly describe the situation if you can"
+                                                :readonly="!isProfileComplete"
                                             />
                                             <div class="text-caption text-grey mt-1 d-flex align-center">
                                                 <v-icon size="12" class="mr-1">mdi-translate</v-icon>
@@ -447,6 +450,7 @@
                                                 hide-details
                                                 class="mt-3"
                                                 clearable
+                                                :readonly="!isProfileComplete"
                                             />
                                         </v-col>
                                         <v-col cols="6">
@@ -460,6 +464,7 @@
                                                 hide-details
                                                 class="mt-3"
                                                 clearable
+                                                :readonly="!isProfileComplete"
                                             />
                                         </v-col>
                                         <v-col cols="12">
@@ -475,6 +480,7 @@
                                                 closable-chips
                                                 hide-details
                                                 class="mt-3"
+                                                :readonly="!isProfileComplete"
                                             />
                                         </v-col>
                                         <v-col cols="12" v-if="emergencyForm.injuries?.includes('other')">
@@ -486,6 +492,7 @@
                                                 prepend-inner-icon="mdi-pencil"
                                                 hide-details
                                                 class="mt-3"
+                                                :readonly="!isProfileComplete"
                                             />
                                         </v-col>
                                         
@@ -624,12 +631,13 @@
                                     variant="flat"
                                     block
                                     :loading="isSubmitting"
+                                    :disabled="!isProfileComplete"
                                     @click="submitRescueRequest"
                                     class="rounded-xl submit-btn"
                                     elevation="2"
                                 >
-                                    <v-icon start>mdi-send</v-icon>
-                                    Request Rescue
+                                    <v-icon start>{{ !isProfileComplete ? 'mdi-account-alert' : 'mdi-send' }}</v-icon>
+                                    {{ !isProfileComplete ? 'Complete Profile to Enable' : 'Request Rescue' }}
                                 </v-btn>
                             </v-card-actions>
                         </v-card>
@@ -1021,6 +1029,27 @@ const userProfilePicture = computed(() => {
     return getProfilePictureUrl(picturePath);
 });
 
+// Check if user profile is complete
+const isProfileComplete = computed(() => {
+    if (!userData.value) return false;
+    
+    // Check basic personal information
+    const hasBasicInfo = userData.value.first_name && 
+                        userData.value.last_name && 
+                        userData.value.contact_number;
+    
+    // Check emergency contact information
+    const hasEmergencyContact = userData.value.emergency_contact_name &&
+                               userData.value.emergency_contact_phone &&
+                               userData.value.emergency_contact_relation;
+    
+    // Check medical information - at least blood type should be provided
+    const hasMedicalInfo = userData.value.blood_type;
+    
+    // All sections must be complete for profile to be considered complete
+    return hasBasicInfo && hasEmergencyContact && hasMedicalInfo;
+});
+
 // Navigate to profile
 const goToProfile = () => {
     router.visit('/user/profile');
@@ -1378,7 +1407,13 @@ onMounted(async () => {
         role: user.role || 'student',
         isAdmin: user.isAdmin === true || user.isAdmin === 1 || user.role === 'admin',
         profile_picture: user.profile_picture || null,
-        contact_number: user.contact_number || '',
+        contact_number: user.contact_number || user.phone_number || '',
+        emergency_contact_name: user.emergency_contact_name || '',
+        emergency_contact_phone: user.emergency_contact_phone || '',
+        emergency_contact_relation: user.emergency_contact_relation || '',
+        blood_type: user.blood_type || '',
+        allergies: user.allergies || '',
+        medical_conditions: user.medical_conditions || '',
     };
     
     // Also save to localStorage for components that need it
@@ -2999,6 +3034,20 @@ const applyLocationInference = async (inference) => {
 
 // Submit Rescue Request
 const submitRescueRequest = async () => {
+    // Check profile completion first
+    if (!isProfileComplete.value) {
+        showNotification(
+            'Please complete your profile information first. Go to Profile > Personal Information, Emergency Contact, and Medical Details.',
+            'warning'
+        );
+        
+        // Redirect to profile page
+        setTimeout(() => {
+            router.visit('/user/profile');
+        }, 2000);
+        return;
+    }
+
     if (!canSubmit.value) {
         showNotification('Please select a location first', 'warning');
         return;
@@ -4559,5 +4608,32 @@ const showNotification = (message, color = 'info') => {
 input, textarea {
     -webkit-user-select: auto;
     user-select: auto;
+}
+
+/* Profile Completion Notice */
+.profile-completion-alert {
+    border-left: 4px solid #FF9800 !important;
+    animation: profileAlert 2s ease-in-out infinite alternate;
+}
+
+@keyframes profileAlert {
+    0% { box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3); }
+    100% { box-shadow: 0 4px 16px rgba(255, 152, 0, 0.6); }
+}
+
+/* Mobile optimizations for profile alert */
+@media (max-width: 600px) {
+    .profile-completion-alert :deep(.v-alert__prepend) {
+        align-items: flex-start;
+        padding-top: 8px;
+    }
+    
+    .profile-completion-alert :deep(.v-alert__append) {
+        margin-top: 16px;
+    }
+    
+    .requirement-list {
+        font-size: 0.85rem;
+    }
 }
 </style>

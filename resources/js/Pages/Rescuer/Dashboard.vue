@@ -102,7 +102,10 @@
                         <v-icon>mdi-menu</v-icon>
                     </v-btn>
                     <div class="header-title">
-                        <h1>PinPointMe</h1>
+                        <div class="title-with-icon">
+                            <v-icon size="24" class="mr-2">mdi-view-dashboard</v-icon>
+                            <h1>PinPointMe</h1>
+                        </div>
                         <p>COMING YOUR WAY.</p>
                     </div>
                     <v-btn icon variant="text" @click="refreshData" class="refresh-btn">
@@ -1010,9 +1013,13 @@ const formatElapsedTime = (timestamp) => {
     const date = new Date(timestamp);
     const now = new Date();
     const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffSecs = Math.floor((diffMs % 60000) / 1000);
-    return `${diffMins}:${diffSecs.toString().padStart(2, '0')}`;
+    const totalMinutes = Math.floor(diffMs / 60000);
+    
+    // Format as hours:minutes instead of minutes:seconds
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    return `${hours}:${minutes.toString().padStart(2, '0')}`;
 };
 
 const formatTime = (timestamp) => {
@@ -1129,7 +1136,17 @@ const showNotification = (message, color = 'info') => {
 
 .header-title {
     flex: 1;
-    text-align: center;
+    text-align: left;
+}
+
+.title-with-icon {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.title-with-icon .v-icon {
+    color: white;
 }
 
 .header-title h1 {
@@ -1455,7 +1472,7 @@ const showNotification = (message, color = 'info') => {
 }
 
 /* Responsive visibility */
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
     /* On mobile/tablet: hide desktop menu button, content doesn't need bottom padding on desktop */
     .desktop-only {
         display: none;

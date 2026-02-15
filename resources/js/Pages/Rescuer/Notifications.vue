@@ -7,7 +7,10 @@
                     <v-icon>mdi-menu</v-icon>
                 </v-btn>
                 <div class="header-title">
-                    <h1>Notifications</h1>
+                    <div class="title-with-icon">
+                        <v-icon size="24" class="mr-2">mdi-bell</v-icon>
+                        <h1>Notifications</h1>
+                    </div>
                     <p v-if="pendingCount > 0">{{ pendingCount }} pending rescue{{ pendingCount !== 1 ? 's' : '' }}</p>
                 </div>
                 <v-btn 
@@ -493,7 +496,7 @@ onUnmounted(() => {
     display: flex;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
     .desktop-only {
         display: none !important;
     }
@@ -501,7 +504,17 @@ onUnmounted(() => {
 
 .header-title {
     flex: 1;
-    text-align: center;
+    text-align: left;
+}
+
+.title-with-icon {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.title-with-icon .v-icon {
+    color: white;
 }
 
 .header-title h1 {

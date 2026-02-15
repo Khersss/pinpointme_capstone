@@ -312,65 +312,122 @@
                 <!-- Action Buttons -->
                 <div class="action-section">
                     <!-- Pending or Assigned Status - Accept & Start in one action -->
-                    <div v-if="currentStatus === 'pending' || currentStatus === 'assigned'" class="action-buttons">
-                        <v-btn
-                            color="success"
-                            size="x-large"
-                            block
-                            rounded="lg"
-                            @click="acceptRescue"
-                            :loading="updating"
-                            class="main-action-btn"
-                        >
-                            <v-icon start size="24">mdi-run-fast</v-icon>
-                            Accept & Start Rescue
-                        </v-btn>
+                    <div v-if="currentStatus === 'pending' || currentStatus === 'assigned'" class="action-container">
+                        <div class="primary-action">
+                            <v-btn
+                                color="success"
+                                size="x-large"
+                                block
+                                rounded="xl"
+                                @click="acceptRescue"
+                                :loading="updating"
+                                class="main-action-btn accept-btn"
+                                elevation="3"
+                            >
+                                <v-icon start size="22">mdi-run-fast</v-icon>
+                                <span class="btn-text">Accept & Start Rescue</span>
+                            </v-btn>
+                        </div>
+                        
+                        <!-- Cancel option for assigned status -->
+                        <div v-if="currentStatus === 'assigned'" class="secondary-actions">
+                            <v-btn
+                                variant="outlined"
+                                color="error"
+                                size="large"
+                                rounded="xl"
+                                @click="showCancelDialog = true; cancellationReason = ''"
+                                class="secondary-btn cancel-btn"
+                            >
+                                <v-icon start size="18">mdi-close-circle-outline</v-icon>
+                                <span>Cancel Assignment</span>
+                            </v-btn>
+                        </div>
                     </div>
 
                     <!-- In Progress Status -->
-                    <div v-else-if="currentStatus === 'in_progress'" class="action-buttons">
-                        <v-btn
-                            color="success"
-                            size="x-large"
-                            block
-                            rounded="lg"
-                            @click="showCompleteDialog = true"
-                            :loading="updating"
-                            class="main-action-btn safe-btn"
-                        >
-                            <v-icon start size="24">mdi-shield-check</v-icon>
-                            Mark as Safe
-                        </v-btn>
-                        <v-btn
-                            variant="outlined"
-                            color="primary"
-                            block
-                            @click="openChat"
-                            class="secondary-btn"
-                        >
-                            <v-icon start>mdi-message-text</v-icon>
-                            Message User
-                        </v-btn>
+                    <div v-else-if="currentStatus === 'in_progress'" class="action-container">
+                        <div class="primary-action">
+                            <!-- Slide to confirm Mark as Safe -->
+                            <div class="slide-to-confirm" @mousedown="startSlide" @touchstart="startSlide">
+                                <div class="slide-track">
+                                    <div class="slide-progress" :style="{ width: slideProgress + '%' }"></div>
+                                    <div 
+                                        class="slide-thumb" 
+                                        :class="{ 'slide-complete': isSlideComplete, 'slide-active': isSliding }"
+                                        :style="{ transform: `translateX(${slidePosition}px)` }"
+                                    >
+                                        <v-icon size="24" color="white">
+                                            {{ isSlideComplete ? 'mdi-check' : 'mdi-shield-check' }}
+                                        </v-icon>
+                                    </div>
+                                    <div class="slide-text">
+                                        <span v-if="!isSlideComplete" class="slide-instruction">
+                                            {{ isSliding ? 'Keep sliding...' : 'Slide to mark as safe' }}
+                                        </span>
+                                        <span v-else class="slide-success">
+                                            Person marked as safe!
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="secondary-actions">
+                            <div class="action-row">
+                                <v-btn
+                                    variant="tonal"
+                                    color="primary"
+                                    size="large"
+                                    rounded="xl"
+                                    @click="openChat"
+                                    class="secondary-btn flex-btn"
+                                    flex
+                                >
+                                    <v-icon start size="18">mdi-message-text-outline</v-icon>
+                                    <span>Message</span>
+                                </v-btn>
+                                
+                                <v-btn
+                                    variant="outlined"
+                                    color="error"
+                                    size="large"
+                                    rounded="xl"
+                                    @click="showCancelDialog = true; cancellationReason = ''"
+                                    class="secondary-btn cancel-btn flex-btn"
+                                    flex
+                                >
+                                    <v-icon start size="18">mdi-close-circle-outline</v-icon>
+                                    <span>Cancel</span>
+                                </v-btn>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Completed Status -->
-                    <div v-else-if="currentStatus === 'rescued' || currentStatus === 'safe' || currentStatus === 'completed'" class="action-buttons completed">
+                    <div v-else-if="currentStatus === 'rescued' || currentStatus === 'safe' || currentStatus === 'completed'" class="action-container completed-container">
                         <div class="completed-banner">
-                            <v-icon size="48" color="success">mdi-check-circle</v-icon>
-                            <h3>Rescue Completed</h3>
-                            <p>The person has been marked as safe.</p>
+                            <div class="completion-icon">
+                                <v-icon size="64" color="success">mdi-check-circle</v-icon>
+                            </div>
+                            <h3 class="completion-title">Rescue Completed Successfully</h3>
+                            <p class="completion-subtitle">The person has been marked as safe and secure.</p>
                         </div>
-                        <v-btn
-                            color="primary"
-                            size="large"
-                            block
-                            variant="tonal"
-                            rounded="lg"
-                            @click="goBack"
-                        >
-                            <v-icon start>mdi-arrow-left</v-icon>
-                            Back to Dashboard
-                        </v-btn>
+                        
+                        <div class="primary-action">
+                            <v-btn
+                                color="primary"
+                                size="large"
+                                rounded="xl"
+                                @click="goBack"
+                                class="back-btn"
+                                variant="tonal"
+                                block
+                            >
+                                <v-icon start size="20">mdi-arrow-left</v-icon>
+                                <span>Back to Dashboard</span>
+                            </v-btn>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -409,9 +466,16 @@
         <!-- Cancel Dialog -->
         <v-dialog v-model="showCancelDialog" max-width="400">
             <v-card>
-                <v-card-title class="text-h6">Cancel Rescue</v-card-title>
+                <v-card-title class="text-h6">
+                    {{ currentStatus === 'assigned' ? 'Cancel Assignment' : 'Cancel Rescue' }}
+                </v-card-title>
                 <v-card-text>
-                    <p class="mb-4">Are you sure you want to cancel this rescue? The request will be made available for other rescuers.</p>
+                    <p class="mb-4">
+                        {{ currentStatus === 'assigned' 
+                            ? 'Are you sure you want to cancel this assignment? The request will be made available for other rescuers.' 
+                            : 'Are you sure you want to cancel this rescue? The request will be made available for other rescuers.' 
+                        }}
+                    </p>
                     <v-textarea
                         v-model="cancellationReason"
                         label="Reason for cancellation"
@@ -424,7 +488,9 @@
                 </v-card-text>
                 <v-card-actions>
                     <v-spacer />
-                    <v-btn variant="text" @click="showCancelDialog = false">Keep Rescue</v-btn>
+                    <v-btn variant="text" @click="showCancelDialog = false; cancellationReason = ''">
+                        {{ currentStatus === 'assigned' ? 'Keep Assignment' : 'Keep Rescue' }}
+                    </v-btn>
                     <v-btn
                         color="error"
                         variant="flat"
@@ -432,7 +498,7 @@
                         :loading="updating"
                         :disabled="!cancellationReason"
                     >
-                        Cancel Rescue
+                        {{ currentStatus === 'assigned' ? 'Cancel Assignment' : 'Cancel Rescue' }}
                     </v-btn>
                 </v-card-actions>
             </v-card>
@@ -626,6 +692,15 @@ const completionNotes = ref('');
 const cancellationReason = ref('');
 const pollingInterval = ref(null);
 const unreadMessageCount = ref(0);
+
+// Slide to confirm state
+const isSliding = ref(false);
+const slidePosition = ref(0);
+const slideProgress = ref(0);
+const isSlideComplete = ref(false);
+const slideStartX = ref(0);
+const maxSlideDistance = ref(0);
+const completionTimer = ref(null);
 
 const snackbar = ref({
     show: false,
@@ -974,6 +1049,7 @@ const completeRescue = async () => {
         if (data) {
             showSnackbar('Person marked as safe!', 'success');
             showCompleteDialog.value = false;
+            resetSlide(); // Reset slide state
             localStorage.removeItem('lastRescueRequestId');
             setTimeout(() => router.visit('/rescuer/dashboard'), 1500);
         }
@@ -995,7 +1071,7 @@ const cancelRescue = async () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 status: 'cancelled',
-                additional_info: cancellationReason.value,
+                cancellation_reason: cancellationReason.value,
                 assigned_rescuer: null,
             }),
         });
@@ -1190,16 +1266,19 @@ const getElapsedTime = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
+    const totalMinutes = Math.floor(diffMs / 60000);
     
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} min ago`;
+    if (totalMinutes < 1) return 'Just now';
     
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
+    // Format as hours:minutes instead of minutes:seconds
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
     
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays}d ago`;
+    if (hours === 0) {
+        return `${minutes} min ago`;
+    } else {
+        return `${hours}:${minutes.toString().padStart(2, '0')}`;
+    }
 };
 
 const formatTimestamp = (dateString) => {
@@ -1210,6 +1289,90 @@ const formatTimestamp = (dateString) => {
 
 const showSnackbar = (message, color = 'success') => {
     snackbar.value = { show: true, message, color };
+};
+
+// Slide to confirm functionality
+const startSlide = (event) => {
+    if (updating.value || isSlideComplete.value) return;
+    
+    event.preventDefault();
+    isSliding.value = true;
+    
+    const clientX = event.type === 'touchstart' ? event.touches[0].clientX : event.clientX;
+    slideStartX.value = clientX;
+    
+    // Calculate max slide distance (button width minus thumb width)
+    const slideTrack = event.currentTarget.querySelector('.slide-track');
+    maxSlideDistance.value = slideTrack.clientWidth - 80; // 80px is thumb width
+    
+    // Add event listeners
+    document.addEventListener('mousemove', handleSlide);
+    document.addEventListener('mouseup', endSlide);
+    document.addEventListener('touchmove', handleSlide, { passive: false });
+    document.addEventListener('touchend', endSlide);
+};
+
+const handleSlide = (event) => {
+    if (!isSliding.value) return;
+    
+    event.preventDefault();
+    const clientX = event.type === 'touchmove' ? event.touches[0].clientX : event.clientX;
+    const deltaX = clientX - slideStartX.value;
+    
+    // Constrain slide position
+    const newPosition = Math.max(0, Math.min(deltaX, maxSlideDistance.value));
+    slidePosition.value = newPosition;
+    slideProgress.value = (newPosition / maxSlideDistance.value) * 100;
+    
+    // Check if slide is complete (95% of the way)
+    if (slideProgress.value >= 95 && !isSlideComplete.value) {
+        completeSlide();
+    }
+};
+
+const endSlide = () => {
+    if (!isSliding.value) return;
+    
+    // Remove event listeners
+    document.removeEventListener('mousemove', handleSlide);
+    document.removeEventListener('mouseup', endSlide);
+    document.removeEventListener('touchmove', handleSlide);
+    document.removeEventListener('touchend', endSlide);
+    
+    if (!isSlideComplete.value) {
+        // Reset slide if not complete
+        isSliding.value = false;
+        slidePosition.value = 0;
+        slideProgress.value = 0;
+    }
+};
+
+const completeSlide = () => {
+    isSlideComplete.value = true;
+    isSliding.value = false;
+    slidePosition.value = maxSlideDistance.value;
+    slideProgress.value = 100;
+    
+    // Add haptic feedback if available
+    if (navigator.vibrate) {
+        navigator.vibrate([100, 50, 100]);
+    }
+    
+    // Complete the rescue after a short delay
+    completionTimer.value = setTimeout(() => {
+        completeRescue();
+    }, 800);
+};
+
+const resetSlide = () => {
+    if (completionTimer.value) {
+        clearTimeout(completionTimer.value);
+        completionTimer.value = null;
+    }
+    isSliding.value = false;
+    slidePosition.value = 0;
+    slideProgress.value = 0;
+    isSlideComplete.value = false;
 };
 
 // Check if text appears to be in English (simple heuristic)
@@ -1270,6 +1433,15 @@ onUnmounted(() => {
     if (pollingInterval.value) {
         clearInterval(pollingInterval.value);
     }
+    // Clean up slide timer
+    if (completionTimer.value) {
+        clearTimeout(completionTimer.value);
+    }
+    // Remove any lingering event listeners
+    document.removeEventListener('mousemove', handleSlide);
+    document.removeEventListener('mouseup', endSlide);
+    document.removeEventListener('touchmove', handleSlide);
+    document.removeEventListener('touchend', endSlide);
 });
 </script>
 
@@ -1677,71 +1849,273 @@ onUnmounted(() => {
 
 /* Action Section */
 .action-section {
-    margin-top: 28px;
-    padding-top: 8px;
+    margin-top: 24px;
+    padding: 0;
 }
 
-.action-buttons {
+.action-container {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.action-container:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* Slide to Confirm Component */
+.slide-to-confirm {
+    width: 100%;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+.slide-to-confirm:active {
+    cursor: grabbing;
+}
+
+.slide-track {
+    position: relative;
+    width: 100%;
+    height: 64px;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-radius: 32px;
+    border: 2px solid #e2e8f0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+}
+
+.slide-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    transition: width 0.2s ease;
+    border-radius: 30px;
+}
+
+.slide-thumb {
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 2;
+    cursor: grab;
+}
+
+.slide-thumb .v-icon {
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.slide-thumb:active {
+    cursor: grabbing;
+}
+
+.slide-thumb.slide-active {
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    transform: translateY(-50%) scale(1.05);
+}
+
+.slide-thumb.slide-complete {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+}
+
+.slide-text {
+    position: absolute;
+    left: 70px;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    text-align: center;
+    pointer-events: none;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slide-instruction {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #64748b;
+    letter-spacing: 0.3px;
+}
+
+.slide-success {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 0.3px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Slide animations */
+@keyframes slideComplete {
+    0% { transform: translateY(-50%) scale(1.05); }
+    50% { transform: translateY(-50%) scale(1.1); }
+    100% { transform: translateY(-50%) scale(1); }
+}
+
+.slide-thumb.slide-complete {
+    animation: slideComplete 0.4s ease-out;
+}
+
+/* Primary Action */
+.primary-action {
+    width: 100%;
 }
 
 .main-action-btn {
-    height: 58px !important;
-    font-size: 1.05rem !important;
-    font-weight: 700 !important;
+    height: 64px !important;
+    font-weight: 700;
+    font-size: 1.1rem !important;
     letter-spacing: 0.5px;
+    text-transform: none;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-    border-radius: 16px !important;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
 }
 
 .main-action-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
-.safe-btn {
+.main-action-btn:active {
+    transform: translateY(0);
+    transition: transform 0.1s ease;
+}
+
+.main-action-btn[disabled] {
+    opacity: 0.6;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.accept-btn {
     background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
 }
 
+.accept-btn:hover {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+}
+
+.safe-btn {
+    background: linear-gradient(135deg, #22c55e 0%, #059669 100%) !important;
+}
+
+.safe-btn:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+}
+
+.btn-text {
+    font-weight: 700;
+}
+
+/* Secondary Actions */
+.secondary-actions {
+    width: 100%;
+}
+
+.action-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
 .secondary-btn {
-    height: 48px !important;
-    border-radius: 14px !important;
-    font-weight: 600 !important;
+    height: 52px !important;
+    font-weight: 600;
+    font-size: 0.95rem !important;
+    text-transform: none;
+    letter-spacing: 0.3px;
     transition: all 0.2s ease;
+    border-width: 2px !important;
+}
+
+.flex-btn {
+    flex: 1;
 }
 
 .secondary-btn:hover {
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* Completed State */
-.action-buttons.completed {
+.secondary-btn:active {
+    transform: translateY(0);
+    transition: transform 0.1s ease;
+}
+
+.cancel-btn {
+    border-color: #ef4444 !important;
+    color: #dc2626 !important;
+}
+
+.cancel-btn:hover {
+    background: rgba(239, 68, 68, 0.04) !important;
+    border-color: #dc2626 !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15) !important;
+}
+
+/* Completed Status */
+.completed-container {
     text-align: center;
+    padding: 32px 20px;
 }
 
 .completed-banner {
-    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-    border-radius: 20px;
-    padding: 36px 24px;
-    margin-bottom: 18px;
-    border: 1px solid rgba(34, 197, 94, 0.2);
+    margin-bottom: 24px;
 }
 
-.completed-banner h3 {
-    margin: 14px 0 10px 0;
-    font-size: 1.35rem;
-    color: #166534;
+.completion-icon {
+    margin-bottom: 16px;
+}
+
+.completion-title {
+    font-size: 1.4rem;
     font-weight: 700;
+    color: #16a34a;
+    margin: 0 0 8px;
+    line-height: 1.3;
 }
 
-.completed-banner p {
+.completion-subtitle {
+    color: #64748b;
+    font-size: 1rem;
     margin: 0;
-    color: #22c55e;
-    font-size: 0.95rem;
-    font-weight: 500;
+    line-height: 1.5;
+}
+
+.back-btn {
+    height: 56px !important;
+    font-weight: 600;
+    font-size: 1rem !important;
+    letter-spacing: 0.3px;
 }
 
 /* Emergency Contact Section */
@@ -1909,14 +2283,99 @@ onUnmounted(() => {
         border-radius: 16px;
     }
     
+    /* Mobile-optimized action buttons */
+    .action-container {
+        padding: 16px;
+        gap: 14px;
+        border-radius: 20px;
+    }
+    
+    .slide-track {
+        height: 60px;
+        border-radius: 30px;
+    }
+    
+    .slide-thumb {
+        width: 52px;
+        height: 52px;
+        left: 4px;
+    }
+    
+    .slide-instruction,
+    .slide-success {
+        font-size: 0.85rem;
+    }
+    
     .main-action-btn {
-        height: 54px !important;
-        font-size: 1rem !important;
+        height: 60px !important;
+        font-size: 1.05rem !important;
+    }
+    
+    .secondary-btn {
+        height: 48px !important;
+        font-size: 0.9rem !important;
+    }
+    
+    .action-row {
+        gap: 10px;
+    }
+    
+    /* Stack buttons on very small screens */
+    .action-row {
+        flex-direction: row;
+    }
+    
+    .flex-btn {
+        min-height: 48px;
+    }
+    
+    .completion-title {
+        font-size: 1.2rem;
+    }
+    
+    .completion-subtitle {
+        font-size: 0.9rem;
     }
     
     .media-grid {
         grid-template-columns: repeat(3, 1fr);
         gap: 8px;
+    }
+}
+
+@media (max-width: 400px) {
+    /* Very small screens - stack secondary buttons */
+    .action-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .flex-btn {
+        width: 100%;
+    }
+    
+    .secondary-btn {
+        height: 50px !important;
+    }
+    
+    .main-action-btn {
+        height: 58px !important;
+        font-size: 1rem !important;
+    }
+    
+    .slide-track {
+        height: 56px;
+        border-radius: 28px;
+    }
+    
+    .slide-thumb {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .slide-instruction,
+    .slide-success {
+        font-size: 0.8rem;
     }
 }
 
@@ -1937,5 +2396,43 @@ onUnmounted(() => {
 .secondary-btn:focus-visible {
     outline: 3px solid rgba(54, 116, 181, 0.5);
     outline-offset: 2px;
+}
+
+/* Loading states */
+.main-action-btn.v-btn--loading {
+    transform: none !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+}
+
+.secondary-btn.v-btn--loading {
+    transform: none !important;
+}
+
+/* Improved action container on mobile */
+@media (hover: none) and (pointer: coarse) {
+    .slide-to-confirm {
+        cursor: default;
+    }
+    
+    .slide-thumb {
+        cursor: default;
+    }
+    
+    .slide-thumb:active {
+        cursor: default;
+    }
+    
+    .main-action-btn:hover,
+    .secondary-btn:hover {
+        transform: none;
+    }
+    
+    .main-action-btn:active {
+        transform: scale(0.98);
+    }
+    
+    .secondary-btn:active {
+        transform: scale(0.98);
+    }
 }
 </style>

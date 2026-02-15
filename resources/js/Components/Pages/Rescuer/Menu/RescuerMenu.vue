@@ -133,43 +133,55 @@ onMounted(() => {
 });
 
 const handleLogout = async () => {
-    // Set user as inactive in Firebase (keep FCM token for offline notifications)
-    try {
-        const storedData = JSON.parse(localStorage.getItem('userData') || '{}');
-        if (storedData.id) {
-            await setUserActiveStatus(storedData.id, false);
-            console.log('[Logout] User marked as inactive in Firebase');
-        }
-    } catch (e) {
-        console.error('[Logout] Error setting user inactive:', e);
-    }
-
-    // Clear all localStorage data
+    // 1. Clear ALL local storage & session data FIRST
+    const storedData = JSON.parse(localStorage.getItem('userData') || '{}');
     localStorage.removeItem('userData');
     localStorage.removeItem('authToken');
     localStorage.removeItem('token');
     localStorage.removeItem('lastRescueCode');
     localStorage.removeItem('lastRescueRequestId');
     localStorage.removeItem('lastRescueRequestTime');
+    localStorage.removeItem('rescuerSettings');
+    localStorage.removeItem('activeRescue');
     localStorage.removeItem('conversationId');
     localStorage.removeItem('chatId');
+    sessionStorage.clear();
 
+    // 2. Fire-and-forget: set user inactive in Firebase (don't block logout)
+    if (storedData.id) {
+        setUserActiveStatus(storedData.id, false).catch(e => 
+            console.error('[Logout] Firebase inactive error:', e)
+        );
+    }
+
+    // 3. Call backend logout with timeout
     try {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+
         await fetch('/logout', {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': csrfToken,
+                'Content-Type': 'application/json',
                 'Accept': 'application/json',
+                ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {})
             },
-            credentials: 'include'
+            credentials: 'include',
+            signal: controller.signal
         });
+        clearTimeout(timeoutId);
     } catch (e) {
-        console.error('Logout error:', e);
+        console.warn('[Logout] Backend logout error (proceeding anyway):', e.message);
     }
-    
-    // Force redirect to login
-    window.location.href = '/login';
+
+    // 4. Clear cookies manually as fallback
+    document.cookie.split(';').forEach(c => {
+        document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/');
+    });
+
+    // 5. Force hard redirect to login
+    window.location.replace('/login');
 };
 </script>
 

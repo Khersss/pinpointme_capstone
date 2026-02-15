@@ -32,7 +32,9 @@ class RescueRequest extends Model
         'firstName',
         'lastName',
         'force_alert',
-        'force_alert_at'
+        'force_alert_at',
+        'cancellation_reason',
+        'cancelled_at'
     ];
 
     protected $casts = [
@@ -42,6 +44,7 @@ class RescueRequest extends Model
         'force_alert' => 'boolean',
         'force_alert_at' => 'datetime',
         'is_translated' => 'boolean',
+        'cancelled_at' => 'datetime',
     ];
 
     /**

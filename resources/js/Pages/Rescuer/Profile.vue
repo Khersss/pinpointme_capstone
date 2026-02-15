@@ -7,7 +7,10 @@
                     <v-icon>mdi-menu</v-icon>
                 </v-btn>
                 <div class="header-title">
-                    <h1>Profile</h1>
+                    <div class="title-with-icon">
+                        <v-icon size="24" class="mr-2">mdi-account-circle</v-icon>
+                        <h1>Profile</h1>
+                    </div>
                     <p>Manage your account</p>
                 </div>
                 <v-btn icon variant="text" @click="refreshStatus" class="placeholder-btn desktop-only" :loading="refreshingStatus">
@@ -25,7 +28,7 @@
                 <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
             </div>
 
-            <v-container v-else fluid class="pa-3 pa-sm-4">
+            <v-container v-else fluid class="profile-container">
                 <!-- Profile Header Card -->
                 <v-card 
                     class="mb-4 rounded-xl overflow-hidden" 
@@ -1533,33 +1536,8 @@ const deletePhoto = async () => {
 const handleLogout = async () => {
     loggingOut.value = true;
 
-    // Set user as inactive in Firebase (keep FCM token for offline notifications)
-    try {
-        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-        if (userData.id) {
-            await setUserActiveStatus(userData.id, false);
-            console.log('[Logout] User marked as inactive in Firebase');
-        }
-    } catch (e) {
-        console.error('[Logout] Error setting user inactive:', e);
-    }
-
-    try {
-        // Call backend logout API to invalidate session and api_token
-        await fetch('/logout', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
-            },
-            credentials: 'include'
-        });
-    } catch (error) {
-        console.error('Logout API error:', error);
-    }
-
-    // Clear ALL local storage data regardless of API result
+    // 1. Clear ALL local storage & session data FIRST to ensure clean state
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
     localStorage.removeItem('userData');
     localStorage.removeItem('authToken');
     localStorage.removeItem('token');
@@ -1568,15 +1546,43 @@ const handleLogout = async () => {
     localStorage.removeItem('activeRescue');
     localStorage.removeItem('conversationId');
     localStorage.removeItem('chatId');
-    
-    // Clear session storage as well
     sessionStorage.clear();
-    
-    loggingOut.value = false;
-    showLogoutDialog.value = false;
-    
-    // Hard redirect to fully reset app state (not Inertia SPA navigation)
-    window.location.href = '/login';
+
+    // 2. Fire-and-forget: set user inactive in Firebase (don't block logout)
+    if (userData.id) {
+        setUserActiveStatus(userData.id, false).catch(e => 
+            console.error('[Logout] Firebase inactive error:', e)
+        );
+    }
+
+    // 3. Call backend logout with timeout - don't let it block the redirect
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+        await fetch('/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {})
+            },
+            credentials: 'include',
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+    } catch (error) {
+        console.warn('[Logout] Backend logout error (proceeding anyway):', error.message);
+    }
+
+    // 4. Clear cookies manually as fallback
+    document.cookie.split(';').forEach(c => {
+        document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/');
+    });
+
+    // 5. Force hard redirect to login
+    window.location.replace('/login');
 };
 
 // Status display helpers
@@ -1687,7 +1693,17 @@ onUnmounted(() => {
 
 .header-title {
     flex: 1;
-    text-align: center;
+    text-align: left;
+}
+
+.title-with-icon {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.title-with-icon .v-icon {
+    color: white;
 }
 
 .header-title h1 {
@@ -1735,17 +1751,121 @@ onUnmounted(() => {
 
 /* Profile main layout */
 .profile-main {
-    padding-bottom: calc(89px + env(safe-area-inset-bottom, 0px));
     min-height: 100vh;
     min-height: 100dvh;
 }
 
-/* Desktop only visibility */
+/* Profile Container - mobile-first padding */
+.profile-container {
+    padding: 12px !important;
+    padding-bottom: 100px !important;
+}
+
+@media (min-width: 600px) {
+    .profile-container {
+        padding: 16px !important;
+        padding-bottom: 120px !important;
+    }
+    
+    .header-title h1 {
+        font-size: 1.25rem;
+    }
+    
+    .header-title p {
+        font-size: 0.75rem;
+    }
+}
+
+/* Mobile avatar size adjustment */
+.avatar-mobile {
+    width: 80px !important;
+    height: 80px !important;
+}
+
+@media (min-width: 600px) {
+    .avatar-mobile {
+        width: 120px !important;
+        height: 120px !important;
+    }
+}
+
+/* Section Cards - mobile-friendly */
+.section-card {
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Panel titles - mobile-friendly with larger touch targets */
+.panel-title-mobile {
+    padding: 14px 12px !important;
+    min-height: 60px !important;
+}
+
+@media (min-width: 600px) {
+    .panel-title-mobile {
+        padding: 16px 24px !important;
+        min-height: auto !important;
+    }
+}
+
+/* Panel content - mobile-friendly padding */
+.panel-content-mobile {
+    padding: 4px 0 !important;
+}
+
+:deep(.v-expansion-panel-text__wrapper) {
+    padding: 0 12px 16px !important;
+}
+
+@media (min-width: 600px) {
+    :deep(.v-expansion-panel-text__wrapper) {
+        padding: 0 24px 24px !important;
+    }
+}
+
+/* Mobile input fields - larger touch targets */
+.mobile-input :deep(.v-field) {
+    min-height: 48px !important;
+}
+
+.mobile-input :deep(.v-field__input) {
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+    font-size: 0.9375rem !important;
+}
+
+/* Mobile buttons - better touch targets */
+.mobile-btn {
+    min-height: 48px !important;
+    font-weight: 600 !important;
+}
+
+/* Logout button styling */
+.logout-btn {
+    min-height: 52px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px;
+}
+
+/* Settings list mobile styling */
+.settings-list {
+    margin: 0 -4px;
+}
+
+.setting-item {
+    background: rgba(0, 0, 0, 0.02);
+    min-height: 64px !important;
+}
+
+.setting-item:active {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Desktop-only elements (hidden on mobile/tablet) */
 .desktop-only {
     display: flex;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
     .desktop-only {
         display: none !important;
     }
@@ -1754,19 +1874,7 @@ onUnmounted(() => {
 /* Mobile responsive adjustments */
 @media (max-width: 600px) {
     .profile-main {
-        padding-bottom: calc(130px + env(safe-area-inset-bottom, 0px)) !important;
-    }
-    
-    .header-content {
-        padding: 8px 12px;
-    }
-    
-    .header-title h1 {
-        font-size: 1.1rem;
-    }
-    
-    .header-title p {
-        font-size: 0.7rem;
+        padding-bottom: 120px !important;
     }
     
     /* Ensure container has proper spacing */
@@ -1784,11 +1892,26 @@ onUnmounted(() => {
     .profile-action-buttons .v-btn {
         min-height: 44px;
     }
+    
+    /* Ensure buttons stack nicely on very small screens */
+    .d-flex.flex-column.flex-sm-row .v-btn {
+        margin-bottom: 8px !important;
+    }
+}
+
+@media (max-width: 1024px) {
+    .v-main {
+        margin-left: 0 !important;
+    }
+    
+    .v-main :deep(.v-container) {
+        max-width: 100% !important;
+    }
 }
 
 @media (max-width: 400px) {
     .profile-main {
-        padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-bottom: 110px !important;
     }
     
     .header-content {

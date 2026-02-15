@@ -385,7 +385,7 @@ const handleNewMessages = (newCount, totalCount) => {
 
 // Helpers
 const isActiveStatus = (status) => {
-    return ['pending', 'assigned', 'en_route', 'in_progress', 'on_scene'].includes(status);
+    return ['pending', 'accepted', 'assigned', 'en_route', 'in_progress'].includes(status);
 };
 
 const getNotificationTitle = (notification) => {

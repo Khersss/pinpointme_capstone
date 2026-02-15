@@ -151,10 +151,7 @@
                                         maxlength="9"
                                         @input="formatIdNumber"
                                     ></v-text-field>
-                                    <p v-if="editData.id_number && isValidIdNumber" class="text-caption mt-1 px-2" :class="userRoleFromId === 'student' ? 'text-primary' : 'text-success'">
-                                        <v-icon size="14" class="mr-1">{{ userRoleFromId === 'student' ? 'mdi-school' : 'mdi-account-tie' }}</v-icon>
-                                        This ID belongs to a <strong>{{ userRoleFromId === 'student' ? 'Student' : 'Faculty' }}</strong>
-                                    </p>
+                                   
                                 </v-col>
                             </v-row>
                         </v-form>
@@ -1828,33 +1825,8 @@ const deletePhoto = async () => {
 const handleLogout = async () => {
     loggingOut.value = true;
 
-    // Set user as inactive in Firebase (keep FCM token for offline notifications)
-    try {
-        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-        if (userData.id) {
-            await setUserActiveStatus(userData.id, false);
-            console.log('[Logout] User marked as inactive in Firebase');
-        }
-    } catch (e) {
-        console.error('[Logout] Error setting user inactive:', e);
-    }
-
-    try {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-        await fetch('/logout', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': csrfToken
-            },
-            credentials: 'include'
-        });
-    } catch (error) {
-        console.error('Logout API error:', error);
-    }
-    
-    // Clear all localStorage data
+    // 1. Clear ALL local storage & session data FIRST to ensure clean state
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
     localStorage.removeItem('userData');
     localStorage.removeItem('authToken');
     localStorage.removeItem('token');
@@ -1866,15 +1838,43 @@ const handleLogout = async () => {
     localStorage.removeItem('conversationId');
     localStorage.removeItem('chatId');
     localStorage.removeItem('activeRescue');
-    
-    // Clear session storage
     sessionStorage.clear();
 
-    loggingOut.value = false;
-    showLogoutDialog.value = false;
-    
-    // Force redirect to login
-    window.location.href = '/login';
+    // 2. Fire-and-forget: set user inactive in Firebase (don't block logout)
+    if (userData.id) {
+        setUserActiveStatus(userData.id, false).catch(e => 
+            console.error('[Logout] Firebase inactive error:', e)
+        );
+    }
+
+    // 3. Call backend logout with timeout - don't let it block the redirect
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+        await fetch('/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {})
+            },
+            credentials: 'include',
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+    } catch (error) {
+        console.warn('[Logout] Backend logout error (proceeding anyway):', error.message);
+    }
+
+    // 4. Clear cookies manually as fallback
+    document.cookie.split(';').forEach(c => {
+        document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/');
+    });
+
+    // 5. Force hard redirect to login
+    window.location.replace('/login');
 };
 
 const goBack = () => {

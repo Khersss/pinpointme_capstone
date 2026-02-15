@@ -125,55 +125,99 @@
                 <p class="nc-empty-title">No urgent alerts</p>
                 <p class="nc-empty-sub">Requests that need force alerts will appear here</p>
             </div>
-            <div
-                v-for="notif in forceAlertNotifications"
-                :key="notif.id"
-                class="nc-item nc-item-urgent"
-                :class="{ 'nc-item-unread': !notif.read }"
-                @click="markActivityRead(notif)"
-            >
-                <div class="nc-item-bar nc-bar-error"></div>
-                <div class="nc-item-icon nc-icon-error">
-                    <v-icon size="16" color="white">mdi-alarm-light</v-icon>
+            <div v-else>
+                <div
+                    v-for="notif in paginatedForceAlertNotifications"
+                    :key="notif.id"
+                    class="nc-item nc-item-urgent"
+                    :class="{ 'nc-item-unread': !notif.read }"
+                    @click="markActivityRead(notif)"
+                >
+                    <div class="nc-item-bar nc-bar-error"></div>
+                    <div class="nc-item-icon nc-icon-error">
+                        <v-icon size="16" color="white">mdi-alarm-light</v-icon>
+                    </div>
+                    <div class="nc-item-content">
+                        <div class="nc-item-top">
+                            <span class="nc-item-title">{{ notif.title }}</span>
+                            <span v-if="!notif.read" class="nc-unread-dot"></span>
+                        </div>
+                        <div class="nc-item-msg">{{ notif.message }}</div>
+                        <div v-if="notif.request" class="nc-item-detail">
+                            <span v-if="notif.request.rescue_code" class="nc-detail-code">
+                                <v-icon size="10">mdi-pound</v-icon>
+                                {{ notif.request.rescue_code }}
+                            </span>
+                            <span v-if="notif.request.firstName || notif.request.lastName" class="nc-detail-name">
+                                <v-icon size="10">mdi-account</v-icon>
+                                {{ `${notif.request.firstName || ''} ${notif.request.lastName || ''}`.trim() }}
+                            </span>
+                        </div>
+                        <div class="nc-item-footer">
+                            <span class="nc-item-time">
+                                <v-icon size="10">mdi-clock-outline</v-icon>
+                                {{ formatTimeAgo(notif.time) }}
+                            </span>
+                            <span v-if="notif.request" class="nc-urgency-chip" :class="`nc-urgency-${(notif.request.urgency_level || 'medium').toLowerCase()}`">
+                                {{ (notif.request.urgency_level || 'Medium') }}
+                            </span>
+                            <!-- Show safe badge if rescued/completed -->
+                            <span v-if="notif.request && ['rescued', 'completed', 'safe'].includes(notif.request.status)" class="nc-safe-chip">
+                                <v-icon size="10">mdi-shield-check</v-icon> Safe
+                            </span>
+                            <!-- Show cancelled badge if cancelled -->
+                            <span v-else-if="notif.request && notif.request.status === 'cancelled'" class="nc-cancelled-chip">
+                                <v-icon size="10">mdi-close-circle</v-icon> Cancelled
+                            </span>
+                            <!-- Force alert button - disabled if not pending -->
+                            <button
+                                v-else-if="notif.canForceAlert && !notif.forceAlerted && notif.request.status === 'pending'"
+                                class="nc-force-btn nc-force-btn-large"
+                                :class="{ 'nc-force-loading': forceAlertLoading === notif.request.id }"
+                                :title="getThresholdLabel(notif.request)"
+                                @click.stop="sendForceAlert(notif.request)"
+                            >
+                                <v-icon size="14">mdi-alarm-light</v-icon>
+                                <span>Send Force Alert</span>
+                            </button>
+                            <!-- Disabled force alert button for non-pending -->
+                            <button
+                                v-else-if="notif.canForceAlert && !notif.forceAlerted && notif.request.status !== 'pending'"
+                                class="nc-force-btn nc-force-btn-large nc-force-disabled"
+                                disabled
+                                title="Cannot send force alert - request no longer pending"
+                            >
+                                <v-icon size="14">mdi-alarm-off</v-icon>
+                                <span>Force Alert</span>
+                            </button>
+                            <span v-else-if="notif.forceAlerted" class="nc-alerted-chip">
+                                <v-icon size="10">mdi-check</v-icon> Alerted
+                            </span>
+                        </div>
+                    </div>
                 </div>
-                <div class="nc-item-content">
-                    <div class="nc-item-top">
-                        <span class="nc-item-title">{{ notif.title }}</span>
-                        <span v-if="!notif.read" class="nc-unread-dot"></span>
-                    </div>
-                    <div class="nc-item-msg">{{ notif.message }}</div>
-                    <div v-if="notif.request" class="nc-item-detail">
-                        <span v-if="notif.request.rescue_code" class="nc-detail-code">
-                            <v-icon size="10">mdi-pound</v-icon>
-                            {{ notif.request.rescue_code }}
-                        </span>
-                        <span v-if="notif.request.firstName || notif.request.lastName" class="nc-detail-name">
-                            <v-icon size="10">mdi-account</v-icon>
-                            {{ `${notif.request.firstName || ''} ${notif.request.lastName || ''}`.trim() }}
-                        </span>
-                    </div>
-                    <div class="nc-item-footer">
-                        <span class="nc-item-time">
-                            <v-icon size="10">mdi-clock-outline</v-icon>
-                            {{ formatTimeAgo(notif.time) }}
-                        </span>
-                        <span v-if="notif.request" class="nc-urgency-chip" :class="`nc-urgency-${(notif.request.urgency_level || 'medium').toLowerCase()}`">
-                            {{ (notif.request.urgency_level || 'Medium') }}
-                        </span>
-                        <button
-                            v-if="notif.canForceAlert && !notif.forceAlerted"
-                            class="nc-force-btn nc-force-btn-large"
-                            :class="{ 'nc-force-loading': forceAlertLoading === notif.request.id }"
-                            :title="getThresholdLabel(notif.request)"
-                            @click.stop="sendForceAlert(notif.request)"
-                        >
-                            <v-icon size="14">mdi-alarm-light</v-icon>
-                            <span>Send Force Alert</span>
-                        </button>
-                        <span v-else-if="notif.forceAlerted" class="nc-alerted-chip">
-                            <v-icon size="10">mdi-check</v-icon> Alerted
-                        </span>
-                    </div>
+                
+                <!-- Pagination Controls for Force Alerts -->
+                <div v-if="forceAlertTotalPages > 1" class="nc-pagination">
+                    <button 
+                        class="nc-page-btn" 
+                        :class="{ 'nc-page-disabled': forceAlertCurrentPage === 1 }"
+                        :disabled="forceAlertCurrentPage === 1"
+                        @click="forceAlertCurrentPage = Math.max(1, forceAlertCurrentPage - 1)"
+                    >
+                        <v-icon size="14">mdi-chevron-left</v-icon>
+                    </button>
+                    
+                    <span class="nc-page-info">{{ forceAlertCurrentPage }} of {{ forceAlertTotalPages }}</span>
+                    
+                    <button 
+                        class="nc-page-btn" 
+                        :class="{ 'nc-page-disabled': forceAlertCurrentPage === forceAlertTotalPages }"
+                        :disabled="forceAlertCurrentPage === forceAlertTotalPages"
+                        @click="forceAlertCurrentPage = Math.min(forceAlertTotalPages, forceAlertCurrentPage + 1)"
+                    >
+                        <v-icon size="14">mdi-chevron-right</v-icon>
+                    </button>
                 </div>
             </div>
         </div>
@@ -187,59 +231,103 @@
                 <p class="nc-empty-title">No activity yet</p>
                 <p class="nc-empty-sub">Rescue request updates will appear here</p>
             </div>
-            <div
-                v-for="notif in activityNotifications"
-                :key="notif.id"
-                class="nc-item"
-                :class="{ 'nc-item-unread': !notif.read }"
-                @click="markActivityRead(notif)"
-            >
-                <div class="nc-item-bar" :class="`nc-bar-${notif.color}`"></div>
-                <div class="nc-item-icon" :class="`nc-icon-${notif.color}`">
-                    <v-icon size="16" color="white">{{ notif.icon }}</v-icon>
+            <div v-else>
+                <div
+                    v-for="notif in paginatedNotifications"
+                    :key="notif.id"
+                    class="nc-item"
+                    :class="{ 'nc-item-unread': !notif.read }"
+                    @click="markActivityRead(notif)"
+                >
+                    <div class="nc-item-bar" :class="`nc-bar-${notif.color}`"></div>
+                    <div class="nc-item-icon" :class="`nc-icon-${notif.color}`">
+                        <v-icon size="16" color="white">{{ notif.icon }}</v-icon>
+                    </div>
+                    <div class="nc-item-content">
+                        <div class="nc-item-top">
+                            <span class="nc-item-title">{{ notif.title }}</span>
+                            <span v-if="!notif.read" class="nc-unread-dot"></span>
+                        </div>
+                        <div class="nc-item-msg">{{ notif.message }}</div>
+                        <div v-if="notif.request" class="nc-item-detail">
+                            <span v-if="notif.request.rescue_code" class="nc-detail-code">
+                                <v-icon size="10">mdi-pound</v-icon>
+                                {{ notif.request.rescue_code }}
+                            </span>
+                            <span v-if="notif.request.firstName || notif.request.lastName" class="nc-detail-name">
+                                <v-icon size="10">mdi-account</v-icon>
+                                {{ `${notif.request.firstName || ''} ${notif.request.lastName || ''}`.trim() }}
+                            </span>
+                        </div>
+                        <div class="nc-item-footer">
+                            <span class="nc-item-time">
+                                <v-icon size="10">mdi-clock-outline</v-icon>
+                                {{ formatTimeAgo(notif.time) }}
+                            </span>
+                            <span v-if="notif.type === 'pending' && notif.request" class="nc-urgency-chip" :class="`nc-urgency-${(notif.request.urgency_level || 'medium').toLowerCase()}`">
+                                {{ (notif.request.urgency_level || 'Medium') }}
+                            </span>
+                            <!-- Show safe badge if rescued/completed -->
+                            <span v-if="notif.request && ['rescued', 'completed', 'safe'].includes(notif.request.status)" class="nc-safe-chip">
+                                <v-icon size="10">mdi-shield-check</v-icon> Safe
+                            </span>
+                            <!-- Show cancelled badge if cancelled -->
+                            <span v-else-if="notif.request && notif.request.status === 'cancelled'" class="nc-cancelled-chip">
+                                <v-icon size="10">mdi-close-circle</v-icon> Cancelled
+                            </span>
+                            <!-- Force alert button - only for pending requests -->
+                            <button
+                                v-else-if="notif.type === 'pending' && notif.canForceAlert && !notif.forceAlerted && notif.request.status === 'pending'"
+                                class="nc-force-btn"
+                                :class="{ 'nc-force-loading': forceAlertLoading === notif.request.id }"
+                                :title="getThresholdLabel(notif.request)"
+                                @click.stop="sendForceAlert(notif.request)"
+                            >
+                                <v-icon size="12">mdi-alarm-light</v-icon>
+                                <span>Force Alert</span>
+                            </button>
+                            <!-- Disabled force alert button for non-pending -->
+                            <button
+                                v-else-if="notif.type === 'pending' && notif.canForceAlert && !notif.forceAlerted && notif.request.status !== 'pending'"
+                                class="nc-force-btn nc-force-disabled"
+                                disabled
+                                title="Cannot send force alert - request no longer pending"
+                            >
+                                <v-icon size="12">mdi-alarm-off</v-icon>
+                                <span>Force Alert</span>
+                            </button>
+                            <span v-else-if="notif.type === 'pending' && !notif.canForceAlert && !notif.forceAlerted && getForceAlertCountdown(notif.request)" class="nc-countdown-chip">
+                                <v-icon size="10">mdi-timer-sand</v-icon>
+                                {{ getForceAlertCountdown(notif.request) }}
+                            </span>
+                            <span v-else-if="notif.forceAlerted" class="nc-alerted-chip">
+                                <v-icon size="10">mdi-check</v-icon> Alerted
+                            </span>
+                        </div>
+                    </div>
                 </div>
-                <div class="nc-item-content">
-                    <div class="nc-item-top">
-                        <span class="nc-item-title">{{ notif.title }}</span>
-                        <span v-if="!notif.read" class="nc-unread-dot"></span>
-                    </div>
-                    <div class="nc-item-msg">{{ notif.message }}</div>
-                    <div v-if="notif.request" class="nc-item-detail">
-                        <span v-if="notif.request.rescue_code" class="nc-detail-code">
-                            <v-icon size="10">mdi-pound</v-icon>
-                            {{ notif.request.rescue_code }}
-                        </span>
-                        <span v-if="notif.request.firstName || notif.request.lastName" class="nc-detail-name">
-                            <v-icon size="10">mdi-account</v-icon>
-                            {{ `${notif.request.firstName || ''} ${notif.request.lastName || ''}`.trim() }}
-                        </span>
-                    </div>
-                    <div class="nc-item-footer">
-                        <span class="nc-item-time">
-                            <v-icon size="10">mdi-clock-outline</v-icon>
-                            {{ formatTimeAgo(notif.time) }}
-                        </span>
-                        <span v-if="notif.type === 'pending' && notif.request" class="nc-urgency-chip" :class="`nc-urgency-${(notif.request.urgency_level || 'medium').toLowerCase()}`">
-                            {{ (notif.request.urgency_level || 'Medium') }}
-                        </span>
-                        <button
-                            v-if="notif.type === 'pending' && notif.canForceAlert && !notif.forceAlerted"
-                            class="nc-force-btn"
-                            :class="{ 'nc-force-loading': forceAlertLoading === notif.request.id }"
-                            :title="getThresholdLabel(notif.request)"
-                            @click.stop="sendForceAlert(notif.request)"
-                        >
-                            <v-icon size="12">mdi-alarm-light</v-icon>
-                            <span>Force Alert</span>
-                        </button>
-                        <span v-else-if="notif.type === 'pending' && !notif.canForceAlert && !notif.forceAlerted && getForceAlertCountdown(notif.request)" class="nc-countdown-chip">
-                            <v-icon size="10">mdi-timer-sand</v-icon>
-                            {{ getForceAlertCountdown(notif.request) }}
-                        </span>
-                        <span v-else-if="notif.forceAlerted" class="nc-alerted-chip">
-                            <v-icon size="10">mdi-check</v-icon> Alerted
-                        </span>
-                    </div>
+                
+                <!-- Pagination Controls -->
+                <div v-if="totalPages > 1" class="nc-pagination">
+                    <button 
+                        class="nc-page-btn" 
+                        :class="{ 'nc-page-disabled': currentPage === 1 }"
+                        :disabled="currentPage === 1"
+                        @click="currentPage = Math.max(1, currentPage - 1)"
+                    >
+                        <v-icon size="14">mdi-chevron-left</v-icon>
+                    </button>
+                    
+                    <span class="nc-page-info">{{ currentPage }} of {{ totalPages }}</span>
+                    
+                    <button 
+                        class="nc-page-btn" 
+                        :class="{ 'nc-page-disabled': currentPage === totalPages }"
+                        :disabled="currentPage === totalPages"
+                        @click="currentPage = Math.min(totalPages, currentPage + 1)"
+                    >
+                        <v-icon size="14">mdi-chevron-right</v-icon>
+                    </button>
                 </div>
             </div>
         </div>
@@ -253,70 +341,95 @@
                 <p class="nc-empty-title">No conversations</p>
                 <p class="nc-empty-sub">Messages between users and rescuers will appear here</p>
             </div>
-            <div
-                v-for="conv in adminConversations"
-                :key="conv.id"
-                class="nc-conv"
-                :class="{ 'nc-conv-open': expandedConv === conv.id, 'nc-conv-new': conv._hasNewMsg }"
-            >
-                <div class="nc-conv-header" @click="toggleConversation(conv)">
-                    <div class="nc-conv-avatars">
-                        <div class="nc-avatar nc-avatar-user">{{ getConvInitials(conv, 'user') }}</div>
-                        <div class="nc-avatar nc-avatar-rescuer">{{ getConvInitials(conv, 'rescuer') }}</div>
-                    </div>
-                    <div class="nc-conv-info">
-                        <div class="nc-conv-name">{{ getConvParticipantNames(conv) }}</div>
-                        <div class="nc-conv-preview" v-if="conv.last_message">
-                            <span class="nc-conv-sender">{{ conv.last_message?.sender_name }}:</span>
-                            {{ truncate(conv.last_message?.content, 35) }}
+            <div v-else>
+                <div
+                    v-for="conv in paginatedAdminConversations"
+                    :key="conv.id"
+                    class="nc-conv"
+                    :class="{ 'nc-conv-open': expandedConv === conv.id, 'nc-conv-new': conv._hasNewMsg }"
+                >
+                    <div class="nc-conv-header" @click="toggleConversation(conv)">
+                        <div class="nc-conv-avatars">
+                            <div class="nc-avatar nc-avatar-user">{{ getConvInitials(conv, 'user') }}</div>
+                            <div class="nc-avatar nc-avatar-rescuer">{{ getConvInitials(conv, 'rescuer') }}</div>
                         </div>
-                        <div class="nc-conv-tags">
-                            <span
-                                v-if="conv.rescue_request?.rescue_code"
-                                class="nc-tag"
-                                :class="`nc-tag-${getStatusColor(conv.rescue_request?.status)}`"
-                            >
-                                {{ conv.rescue_request.rescue_code }}
+                        <div class="nc-conv-info">
+                            <div class="nc-conv-name">{{ getConvParticipantNames(conv) }}</div>
+                            <div class="nc-conv-preview" v-if="conv.last_message">
+                                <span class="nc-conv-sender">{{ conv.last_message?.sender_name }}:</span>
+                                {{ truncate(conv.last_message?.content, 35) }}
+                            </div>
+                            <div class="nc-conv-tags">
+                                <span
+                                    v-if="conv.rescue_request?.rescue_code"
+                                    class="nc-tag"
+                                    :class="`nc-tag-${getStatusColor(conv.rescue_request?.status)}`"
+                                >
+                                    {{ conv.rescue_request.rescue_code }}
+                                </span>
+                                <span class="nc-conv-time">{{ formatTimeAgo(conv.updated_at) }}</span>
+                            </div>
+                        </div>
+                        <div class="nc-conv-right">
+                            <span v-if="conv.total_messages" class="nc-msg-count">
+                                {{ conv.total_messages }}
+                                <v-icon size="11">mdi-message-text</v-icon>
                             </span>
-                            <span class="nc-conv-time">{{ formatTimeAgo(conv.updated_at) }}</span>
+                            <v-icon size="16" class="nc-conv-chevron" :class="{ 'nc-chevron-up': expandedConv === conv.id }">
+                                mdi-chevron-down
+                            </v-icon>
                         </div>
                     </div>
-                    <div class="nc-conv-right">
-                        <span v-if="conv.total_messages" class="nc-msg-count">
-                            {{ conv.total_messages }}
-                            <v-icon size="11">mdi-message-text</v-icon>
-                        </span>
-                        <v-icon size="16" class="nc-conv-chevron" :class="{ 'nc-chevron-up': expandedConv === conv.id }">
-                            mdi-chevron-down
-                        </v-icon>
-                    </div>
+                    <v-expand-transition>
+                        <div v-if="expandedConv === conv.id" class="nc-conv-body" @click.stop>
+                            <div class="nc-conv-body-label">
+                                <v-icon size="12">mdi-eye-outline</v-icon>
+                                Read-only view
+                            </div>
+                            <div v-if="loadingMessages" class="nc-conv-loading">
+                                <v-progress-circular indeterminate size="22" width="2" color="#3674B5"></v-progress-circular>
+                            </div>
+                            <div v-else class="nc-msg-list">
+                                <div
+                                    v-for="msg in expandedMessages"
+                                    :key="msg.id"
+                                    class="nc-msg"
+                                    :class="getParticipantType(conv, msg.sender_id) === 'rescuer' ? 'nc-msg-right' : 'nc-msg-left'"
+                                >
+                                    <div class="nc-msg-name">{{ msg.sender_name || 'Unknown' }}</div>
+                                    <div class="nc-msg-bubble">{{ msg.content }}</div>
+                                    <div class="nc-msg-time">{{ formatMsgTime(msg.sent_at) }}</div>
+                                </div>
+                                <div v-if="expandedMessages.length === 0" class="nc-conv-empty-msg">
+                                    No messages yet
+                                </div>
+                            </div>
+                        </div>
+                    </v-expand-transition>
                 </div>
-                <v-expand-transition>
-                    <div v-if="expandedConv === conv.id" class="nc-conv-body" @click.stop>
-                        <div class="nc-conv-body-label">
-                            <v-icon size="12">mdi-eye-outline</v-icon>
-                            Read-only view
-                        </div>
-                        <div v-if="loadingMessages" class="nc-conv-loading">
-                            <v-progress-circular indeterminate size="22" width="2" color="#3674B5"></v-progress-circular>
-                        </div>
-                        <div v-else class="nc-msg-list">
-                            <div
-                                v-for="msg in expandedMessages"
-                                :key="msg.id"
-                                class="nc-msg"
-                                :class="getParticipantType(conv, msg.sender_id) === 'rescuer' ? 'nc-msg-right' : 'nc-msg-left'"
-                            >
-                                <div class="nc-msg-name">{{ msg.sender_name || 'Unknown' }}</div>
-                                <div class="nc-msg-bubble">{{ msg.content }}</div>
-                                <div class="nc-msg-time">{{ formatMsgTime(msg.sent_at) }}</div>
-                            </div>
-                            <div v-if="expandedMessages.length === 0" class="nc-conv-empty-msg">
-                                No messages yet
-                            </div>
-                        </div>
-                    </div>
-                </v-expand-transition>
+                
+                <!-- Pagination Controls for Messages -->
+                <div v-if="messagesTotalPages > 1" class="nc-pagination">
+                    <button 
+                        class="nc-page-btn" 
+                        :class="{ 'nc-page-disabled': messagesCurrentPage === 1 }"
+                        :disabled="messagesCurrentPage === 1"
+                        @click="messagesCurrentPage = Math.max(1, messagesCurrentPage - 1)"
+                    >
+                        <v-icon size="14">mdi-chevron-left</v-icon>
+                    </button>
+                    
+                    <span class="nc-page-info">{{ messagesCurrentPage }} of {{ messagesTotalPages }}</span>
+                    
+                    <button 
+                        class="nc-page-btn" 
+                        :class="{ 'nc-page-disabled': messagesCurrentPage === messagesTotalPages }"
+                        :disabled="messagesCurrentPage === messagesTotalPages"
+                        @click="messagesCurrentPage = Math.min(messagesTotalPages, messagesCurrentPage + 1)"
+                    >
+                        <v-icon size="14">mdi-chevron-right</v-icon>
+                    </button>
+                </div>
             </div>
         </div>
     </v-navigation-drawer>
@@ -538,6 +651,7 @@ const showToast = (title, message, options = {}) => {
 const pendingRequests = ref([]);
 const previousPendingCount = ref(0);
 const previousPendingIds = ref([]);
+const previousAllRequests = ref([]); // Track all requests to detect status changes
 const forceAlertLoading = ref(null);
 const notifiedThresholdIds = ref(new Set());
 let pollingInterval = null;
@@ -553,6 +667,62 @@ const loadSavedNotifications = () => {
 
 const activityNotifications = ref(loadSavedNotifications());
 const readNotifIds = ref(new Set(JSON.parse(localStorage.getItem('adminReadNotifs') || '[]')));
+
+// Pagination for activity notifications
+const currentPage = ref(1);
+const pageSize = 10;
+const totalPages = computed(() => Math.ceil(sortedActivityNotifications.value.length / pageSize));
+
+// Pagination for messages
+const messagesCurrentPage = ref(1);
+const messagesTotalPages = computed(() => Math.ceil(sortedAdminConversations.value.length / pageSize));
+
+// Pagination for force alerts
+const forceAlertCurrentPage = ref(1);
+const forceAlertTotalPages = computed(() => Math.ceil(sortedForceAlertNotifications.value.length / pageSize));
+
+// Sort notifications by time (newest first) and paginate
+const sortedActivityNotifications = computed(() => {
+    return [...activityNotifications.value].sort((a, b) => new Date(b.time) - new Date(a.time));
+});
+
+const paginatedNotifications = computed(() => {
+    const start = (currentPage.value - 1) * pageSize;
+    const end = start + pageSize;
+    return sortedActivityNotifications.value.slice(start, end);
+});
+
+// Sort and paginate messages (conversations)
+const sortedAdminConversations = computed(() => {
+    return [...adminConversations.value].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+});
+
+const paginatedAdminConversations = computed(() => {
+    const start = (messagesCurrentPage.value - 1) * pageSize;
+    const end = start + pageSize;
+    return sortedAdminConversations.value.slice(start, end);
+});
+
+// Sort and paginate force alert notifications
+const sortedForceAlertNotifications = computed(() => {
+    const urgent = sortedActivityNotifications.value.filter(n =>
+        n.type === 'pending' &&
+        n.request &&
+        canForceAlertByUrgency(n.request) // Keep all that meet urgency threshold, regardless of current status
+    );
+    const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    return urgent.sort((a, b) => {
+        const urgencyA = (a.request?.urgency_level || 'medium').toLowerCase();
+        const urgencyB = (b.request?.urgency_level || 'medium').toLowerCase();
+        return (priorityOrder[urgencyA] ?? 2) - (priorityOrder[urgencyB] ?? 2);
+    });
+});
+
+const paginatedForceAlertNotifications = computed(() => {
+    const start = (forceAlertCurrentPage.value - 1) * pageSize;
+    const end = start + pageSize;
+    return sortedForceAlertNotifications.value.slice(start, end);
+});
 
 // Apply saved read state
 activityNotifications.value.forEach(n => {
@@ -597,22 +767,11 @@ const popupAlert = ref({
 
 // ── Computed counts ──
 const forceAlertNotifications = computed(() => {
-    const urgent = activityNotifications.value.filter(n =>
-        n.type === 'pending' &&
-        n.request &&
-        n.request.status === 'pending' &&
-        canForceAlertByUrgency(n.request)
-    );
-    const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-    return urgent.sort((a, b) => {
-        const urgencyA = (a.request?.urgency_level || 'medium').toLowerCase();
-        const urgencyB = (b.request?.urgency_level || 'medium').toLowerCase();
-        return (priorityOrder[urgencyA] ?? 2) - (priorityOrder[urgencyB] ?? 2);
-    });
+    return sortedForceAlertNotifications.value;
 });
 
 const unreadActivityCount = computed(() =>
-    activityNotifications.value.filter(n => !n.read).length
+    sortedActivityNotifications.value.filter(n => !n.read).length
 );
 
 const unreadMessageBadge = computed(() =>
@@ -671,11 +830,24 @@ const formatTimeAgo = (dateString) => {
     const now = new Date();
     const diffMs = now - date;
     const diffMin = Math.floor(diffMs / 60000);
-    if (diffMin < 1) return 'Just now';
-    if (diffMin < 60) return `${diffMin}m ago`;
-    const diffHr = Math.floor(diffMin / 60);
-    if (diffHr < 24) return `${diffHr}h ago`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    
+    let relativeTime = '';
+    if (diffMin < 1) relativeTime = 'Just now';
+    else if (diffMin < 60) relativeTime = `${diffMin}m ago`;
+    else {
+        const diffHr = Math.floor(diffMin / 60);
+        if (diffHr < 24) relativeTime = `${diffHr}h ago`;
+        else relativeTime = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+    
+    // Add actual time
+    const actualTime = date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+    });
+    
+    return `${relativeTime} • ${actualTime}`;
 };
 
 const formatMsgTime = (dateString) => {
@@ -700,9 +872,22 @@ const getStatusColor = (status) => {
 // ── Activity notification helpers ──
 const addActivityNotification = (id, title, message, icon, color, type = 'info', request = null) => {
     if (activityNotifications.value.find(n => n.id === id)) return;
+    
+    // Use the request's actual timestamp instead of current time
+    let notificationTime = new Date().toISOString(); // fallback
+    if (request) {
+        // Use created_at for new requests, updated_at for status changes
+        if (type === 'pending') {
+            notificationTime = request.created_at || notificationTime;
+        } else {
+            // For status changes (progress, completed, cancelled), use updated_at or created_at
+            notificationTime = request.updated_at || request.created_at || notificationTime;
+        }
+    }
+    
     activityNotifications.value.unshift({
         id, title, message, icon, color, type,
-        time: new Date().toISOString(),
+        time: notificationTime,
         read: readNotifIds.value.has(id),
         request,
         requestId: request?.id || null,
@@ -712,6 +897,9 @@ const addActivityNotification = (id, title, message, icon, color, type = 'info',
     if (activityNotifications.value.length > 100) {
         activityNotifications.value = activityNotifications.value.slice(0, 100);
     }
+    // Reset to first page when new notifications arrive
+    currentPage.value = 1;
+    forceAlertCurrentPage.value = 1;
     saveNotifications();
 };
 
@@ -761,7 +949,12 @@ const toggleConversation = async (conv) => {
         return;
     }
     expandedConv.value = conv.id;
+    // Mark conversation as read and reset message flag
     conv._hasNewMsg = false;
+    // Remove from previous counts to reset badge
+    delete previousConvMessageCounts.value[conv.id];
+    previousConvMessageCounts.value[conv.id] = conv.total_messages || 0;
+    
     loadingMessages.value = true;
     try {
         const response = await getConversationMessages(conv.id);
@@ -820,32 +1013,52 @@ const fetchPendingRequests = async () => {
             setTimeout(() => { popupAlert.value.show = false; }, 10000);
         }
 
-        // Build activity notifications from ALL rescue requests
+        // Only add notifications for NEW rescue requests or STATUS CHANGES
+        // Compare with previous state to avoid duplicates
         all.forEach(req => {
             const name = `${req.firstName || ''} ${req.lastName || ''}`.trim() || 'Someone';
             const location = getReqLocation(req);
             const status = req.status;
-
-            if (status === 'pending') {
-                addActivityNotification(`rescue-pending-${req.id}`, `${name} needs help!`, `📍 ${location}`, 'mdi-alert-circle', 'warning', 'pending', req);
-            } else if (status === 'accepted' || status === 'in_progress' || status === 'en_route') {
-                addActivityNotification(`rescue-progress-${req.id}`, 'Rescue in progress', `${name} — ${location}`, 'mdi-run-fast', 'info', 'progress', req);
-            } else if (status === 'rescued' || status === 'completed' || status === 'safe') {
-                addActivityNotification(`rescue-done-${req.id}`, 'Rescue completed', `${name} has been rescued at ${location}`, 'mdi-check-circle', 'success', 'completed', req);
-            }
-        });
-
-        // Update force-alert status for pending notifications
-        activityNotifications.value.forEach(n => {
-            if (n.type === 'pending' && n.request) {
-                const fresh = pending.find(r => r.id === n.request.id);
-                if (fresh) {
-                    n.canForceAlert = canForceAlertByUrgency(fresh);
-                    n.forceAlerted = fresh.force_alert || false;
-                    n.request = fresh; // Update with fresh data
+            const reqId = req.id;
+            
+            // Find previous state of this request
+            const previousReq = previousAllRequests.value.find(r => r.id === reqId);
+            const previousStatus = previousReq?.status;
+            
+            // Only create notifications for new requests or status changes
+            if (!previousReq || previousStatus !== status) {
+                // Remove any existing notifications for this request to avoid duplicates
+                activityNotifications.value = activityNotifications.value.filter(
+                    n => !n.requestId || n.requestId !== reqId
+                );
+                
+                // Add new notification based on current status
+                if (status === 'pending') {
+                    addActivityNotification(`rescue-pending-${reqId}`, `${name} needs help!`, `📍 ${location}`, 'mdi-alert-circle', 'warning', 'pending', req);
+                } else if (status === 'accepted' || status === 'in_progress' || status === 'en_route') {
+                    addActivityNotification(`rescue-progress-${reqId}`, 'Rescue in progress', `${name} — ${location}`, 'mdi-run-fast', 'info', 'progress', req);
+                } else if (status === 'rescued' || status === 'completed' || status === 'safe') {
+                    addActivityNotification(`rescue-done-${reqId}`, 'Rescue completed', `${name} has been rescued at ${location}`, 'mdi-check-circle', 'success', 'completed', req);
+                } else if (status === 'cancelled') {
+                    addActivityNotification(`rescue-cancelled-${reqId}`, 'Rescue cancelled', `Request for ${name} at ${location} was cancelled`, 'mdi-close-circle', 'error', 'cancelled', req);
                 }
             }
         });
+
+        // Update ALL existing notifications with fresh request data
+        activityNotifications.value.forEach(n => {
+            if (n.request && n.request.id) {
+                const fresh = all.find(r => r.id === n.request.id);
+                if (fresh) {
+                    n.request = fresh;
+                    n.canForceAlert = n.type === 'pending' && fresh.status === 'pending' && canForceAlertByUrgency(fresh);
+                    n.forceAlerted = fresh.force_alert || false;
+                }
+            }
+        });
+        
+        // Store current state for next comparison
+        previousAllRequests.value = JSON.parse(JSON.stringify(all));
         saveNotifications();
 
         // Auto-notify admin for threshold breaches
@@ -892,7 +1105,35 @@ const fetchAdminConversations = async () => {
                 conv._hasNewMsg = true;
                 const lastMsg = conv.last_message;
                 const senderName = lastMsg?.sender_name || 'Someone';
-                addActivityNotification(`msg-${conv.id}-${currentCount}`, `New message from ${senderName}`, `${truncate(lastMsg?.content, 60)}`, 'mdi-message-text', 'primary', 'message');
+                
+                // Use the conversation's updated_at time or last message time instead of current time
+                const messageTime = conv.updated_at || lastMsg?.sent_at || new Date().toISOString();
+                
+                // Create a custom notification with proper timestamp
+                const existingNotif = activityNotifications.value.find(n => n.id === `msg-${conv.id}-${currentCount}`);
+                if (!existingNotif) {
+                    activityNotifications.value.unshift({
+                        id: `msg-${conv.id}-${currentCount}`,
+                        title: `New message from ${senderName}`,
+                        message: `${truncate(lastMsg?.content, 60)}`,
+                        icon: 'mdi-message-text',
+                        color: 'primary',
+                        type: 'message',
+                        time: messageTime, // Use actual message time
+                        read: readNotifIds.value.has(`msg-${conv.id}-${currentCount}`),
+                        request: null,
+                        requestId: null,
+                        canForceAlert: false,
+                        forceAlerted: false,
+                    });
+                    if (activityNotifications.value.length > 100) {
+                        activityNotifications.value = activityNotifications.value.slice(0, 100);
+                    }
+                    // Reset to first page when new notifications arrive
+                    currentPage.value = 1;
+                    messagesCurrentPage.value = 1;
+                    saveNotifications();
+                }
 
                 if (!showNotificationPanel.value) {
                     popupAlert.value = {
@@ -913,6 +1154,7 @@ const fetchAdminConversations = async () => {
                     setTimeout(() => { popupAlert.value.show = false; }, 6000);
                 }
             } else {
+                // Preserve existing new message state, but don't increment count
                 const existing = adminConversations.value.find(c => c.id === conv.id);
                 conv._hasNewMsg = existing?._hasNewMsg || false;
             }
@@ -992,6 +1234,25 @@ onMounted(() => {
 
 onUnmounted(() => {
     stopPolling();
+});
+
+// Watch for notification panel opening to reset message badges
+watch(() => showNotificationPanel.value, (isOpen) => {
+    if (isOpen && notifTab.value === 'messages') {
+        // Reset all conversation new message flags when messages tab is viewed
+        adminConversations.value.forEach(conv => {
+            if (conv._hasNewMsg) {
+                conv._hasNewMsg = false;
+            }
+        });
+    }
+});
+
+// Watch for tab changes to reset pagination
+watch(() => notifTab.value, () => {
+    currentPage.value = 1;
+    messagesCurrentPage.value = 1;
+    forceAlertCurrentPage.value = 1;
 });
 
 // Expose showToast so parent pages can use it
@@ -1225,6 +1486,16 @@ defineExpose({ showToast, showNotificationPanel, notifTab });
     box-shadow: 0 2px 6px rgba(198, 40, 40, 0.25);
 }
 .nc-force-btn:hover { transform: scale(1.04); box-shadow: 0 3px 10px rgba(198, 40, 40, 0.35); }
+.nc-force-disabled { 
+    opacity: 0.4 !important; 
+    cursor: not-allowed !important; 
+    background: linear-gradient(135deg, #9E9E9E, #757575) !important;
+    box-shadow: none !important;
+}
+.nc-force-disabled:hover { 
+    transform: none !important; 
+    box-shadow: none !important; 
+}
 
 .nc-force-btn-large {
     display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: none; border-radius: 10px;
@@ -1234,6 +1505,16 @@ defineExpose({ showToast, showNotificationPanel, notifTab });
 }
 .nc-force-btn-large:hover { transform: scale(1.05); box-shadow: 0 4px 14px rgba(198, 40, 40, 0.45); }
 .nc-force-btn-large:active { transform: scale(0.98); }
+.nc-force-disabled { 
+    opacity: 0.4 !important; 
+    cursor: not-allowed !important; 
+    background: linear-gradient(135deg, #9E9E9E, #757575) !important;
+    box-shadow: none !important;
+}
+.nc-force-disabled:hover { 
+    transform: none !important; 
+    box-shadow: none !important; 
+}
 
 .nc-item-urgent { background: linear-gradient(135deg, rgba(239, 83, 80, 0.04), rgba(198, 40, 40, 0.04)); border-color: rgba(239, 83, 80, 0.2); border-width: 1.5px; }
 .nc-item-urgent:hover { background: linear-gradient(135deg, rgba(239, 83, 80, 0.06), rgba(198, 40, 40, 0.06)); box-shadow: 0 3px 12px rgba(239, 83, 80, 0.15); }
@@ -1242,6 +1523,8 @@ defineExpose({ showToast, showNotificationPanel, notifTab });
 .nc-force-loading { opacity: 0.6; pointer-events: none; }
 
 .nc-alerted-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 6px; background: rgba(198, 40, 40, 0.08); color: #C62828; font-size: 10.5px; font-weight: 600; }
+.nc-safe-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 6px; background: rgba(76, 175, 80, 0.1); color: #2E7D32; font-size: 10.5px; font-weight: 600; }
+.nc-cancelled-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 6px; background: rgba(183, 28, 28, 0.08); color: #B71C1C; font-size: 10.5px; font-weight: 600; }
 .nc-countdown-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 6px; background: rgba(255, 152, 0, 0.1); color: #E65100; font-size: 10.5px; font-weight: 600; }
 
 .nc-urgency-chip { display: inline-flex; align-items: center; padding: 1px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; }
@@ -1303,4 +1586,51 @@ defineExpose({ showToast, showNotificationPanel, notifTab });
 .nc-msg-left .nc-msg-time { text-align: left; }
 .nc-msg-right .nc-msg-time { text-align: right; }
 .nc-conv-empty-msg { text-align: center; font-size: 12.5px; color: #90A4AE; padding: 16px 0; }
+
+/* ── Pagination Controls ── */
+.nc-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px;
+    border-top: 1px solid #eef1f5;
+    background: #fafbfd;
+    margin-top: 8px;
+}
+
+.nc-page-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #546E7A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.nc-page-btn:hover:not(.nc-page-disabled) {
+    background: #3674B5;
+    color: white;
+    border-color: #3674B5;
+}
+
+.nc-page-disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.nc-page-info {
+    font-size: 12px;
+    font-weight: 600;
+    color: #546E7A;
+    padding: 0 8px;
+    min-width: 60px;
+    text-align: center;
+}
 </style>
