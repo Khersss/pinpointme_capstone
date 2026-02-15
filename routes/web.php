@@ -50,6 +50,26 @@ Route::middleware(['guest'])->group(function () {
     Route::post('/auth/google/verify-otp', [AuthController::class, 'googleVerifyOtp']);
 });
 
+// Native Google OAuth from APK (no CSRF, no guest middleware)
+Route::post('/auth/google/callback/native', [AuthController::class, 'handleNativeGoogle'])
+    ->withoutMiddleware([Csrf::class])
+    ->name('auth.google.callback.native');
+
+// Debug route to check Google OAuth configuration (remove in production)
+Route::get('/debug/google-config', function() {
+    if (app()->environment('production')) {
+        abort(404);
+    }
+    
+    return response()->json([
+        'google_client_id' => config('services.google.client_id') ? 'SET (' . substr(config('services.google.client_id'), 0, 10) . '...)' : 'NOT SET',
+        'google_client_secret' => config('services.google.client_secret') ? 'SET' : 'NOT SET',
+        'google_redirect' => config('services.google.redirect'),
+        'app_url' => config('app.url'),
+        'environment' => app()->environment(),
+    ]);
+})->name('debug.google.config');
+
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 

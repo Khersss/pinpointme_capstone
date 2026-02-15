@@ -1,0 +1,13 @@
+{
+  "appId": "com.pinpointme.app",
+  "appName": "PinPointMe",
+  "webDir": "public",
+  "plugins": {
+    "GoogleAuth": {
+      "scopes": ["profile", "email"],
+      "serverClientId": "211467236100-pk584t59ut5ohg09j241jvou3nql65ho.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": true
+    }
+  }
+}
+

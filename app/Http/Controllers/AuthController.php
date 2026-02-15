@@ -16,9 +16,11 @@ use App\Traits\ActivityLoggerTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Carbon\Carbon;
 
@@ -1663,15 +1665,50 @@ class AuthController extends Controller
     public function handleGoogleCallback(Request $request)
     {
         try {
+            // Log the incoming request for debugging
+            \Log::info('Google OAuth callback received', [
+                'query_params' => $request->query(),
+                'has_code' => $request->has('code'),
+                'has_error' => $request->has('error'),
+                'error' => $request->get('error'),
+                'error_description' => $request->get('error_description')
+            ]);
+
+            // Check if there was an OAuth error
+            if ($request->has('error')) {
+                \Log::error('Google OAuth error in callback', [
+                    'error' => $request->get('error'),
+                    'error_description' => $request->get('error_description')
+                ]);
+                return redirect('/login')->withErrors([
+                    'google' => 'Google authentication was cancelled or failed: ' . $request->get('error_description', $request->get('error'))
+                ]);
+            }
+
+            // Check if we have an authorization code
+            if (!$request->has('code')) {
+                \Log::error('Google OAuth callback missing authorization code');
+                return redirect('/login')->withErrors([
+                    'google' => 'Google authentication failed - no authorization code received.'
+                ]);
+            }
+
             $googleUser = \Laravel\Socialite\Facades\Socialite::driver('google')
                 ->redirectUrl(config('services.google.redirect'))
                 ->user();
+            
+            \Log::info('Google user data retrieved', [
+                'email' => $googleUser->getEmail(),
+                'name' => $googleUser->getName(),
+                'id' => $googleUser->getId()
+            ]);
             
             // Verify SDCA domain
             $email = strtolower($googleUser->getEmail());
             $domain = substr($email, strpos($email, '@') + 1);
             
             if ($domain !== 'sdca.edu.ph') {
+                \Log::warning('Non-SDCA email attempted Google login', ['email' => $email]);
                 return redirect('/login')->withErrors([
                     'google' => 'Only SDCA email addresses (@sdca.edu.ph) are allowed to sign in with Google.'
                 ]);
@@ -1707,22 +1744,184 @@ class AuthController extends Controller
                 }
             }
             
-            // New user - store Google data in session and redirect to complete registration
-            $request->session()->put('google_user', [
+            // New user - create user directly from Google data
+            $newUser = User::create([
                 'google_id' => $googleUser->getId(),
                 'email' => $email,
                 'first_name' => $googleUser->offsetGet('given_name') ?? $googleUser->getName(),
                 'last_name' => $googleUser->offsetGet('family_name') ?? '',
+                'username' => strtok($email, '@'), // Use email prefix as username
+                'role' => 'student', // Default role for Google users
+                'password' => Hash::make(Str::random(16)), // Temporary random password
+                'must_change_password' => true,
+                'force_password_change' => true,
                 'profile_picture' => $googleUser->getAvatar(),
                 'google_token' => $googleUser->token,
+                'status' => 'active',
+                'is_able_to_login' => true,
+                'last_login_at' => Carbon::now(),
             ]);
             
-            return redirect('/auth/google/complete');
+            // Log in the newly created user
+            Auth::login($newUser);
+            $request->session()->regenerate();
+            
+            // Redirect directly to change password page
+            return redirect('/change-password');
             
         } catch (\Exception $e) {
-            \Log::error('Google OAuth error: ' . $e->getMessage());
+            \Log::error('Google OAuth error in handleGoogleCallback', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'google_config' => [
+                    'client_id' => config('services.google.client_id') ? 'SET' : 'NOT SET',
+                    'client_secret' => config('services.google.client_secret') ? 'SET' : 'NOT SET',
+                    'redirect' => config('services.google.redirect'),
+                ],
+                'request_data' => [
+                    'has_code' => request()->has('code'),
+                    'has_error' => request()->has('error'),
+                    'error' => request()->get('error'),
+                ]
+            ]);
+            
+            // Provide more specific error message based on the exception
+            $errorMessage = 'Failed to authenticate with Google. ';
+            if (str_contains($e->getMessage(), 'Client error')) {
+                $errorMessage .= 'Google configuration error. Please contact support.';
+            } elseif (str_contains($e->getMessage(), 'invalid_client')) {
+                $errorMessage .= 'Google OAuth client configuration is invalid.';
+            } elseif (str_contains($e->getMessage(), 'redirect_uri_mismatch')) {
+                $errorMessage .= 'OAuth redirect URI mismatch.';
+            } else {
+                $errorMessage .= 'Please try again or contact support if the issue persists.';
+            }
+            
             return redirect('/login')->withErrors([
-                'google' => 'Failed to authenticate with Google. Please try again.'
+                'google' => $errorMessage
+            ]);
+        }
+    }
+
+    /**
+     * Handle Google OAuth from native APK with ID token
+     */
+    public function handleNativeGoogle(Request $request)
+    {
+        try {
+            $token = $request->input('token');
+            $email = $request->input('email');
+
+            if (!$token || !$email) {
+                \Log::error('Native Google: Missing token or email');
+                return redirect('/login')->withErrors([
+                    'google' => 'Invalid request. Missing token or email.'
+                ]);
+            }
+
+            // Verify ID token with Google's tokeninfo endpoint
+            $response = Http::get('https://oauth2.googleapis.com/tokeninfo', [
+                'id_token' => $token
+            ]);
+
+            if (!$response->successful()) {
+                \Log::error('Native Google: Token verification failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
+                return redirect('/login')->withErrors([
+                    'google' => 'Google token verification failed. Please try again.'
+                ]);
+            }
+
+            $tokenData = $response->json();
+            
+            // Verify token email matches the submitted email
+            if (strtolower($tokenData['email'] ?? '') !== strtolower($email)) {
+                \Log::error('Native Google: Email mismatch', [
+                    'token_email' => $tokenData['email'] ?? 'none',
+                    'submitted_email' => $email
+                ]);
+                return redirect('/login')->withErrors([
+                    'google' => 'Email verification failed.'
+                ]);
+            }
+
+            // Extract user data from the verified token
+            $email = strtolower($tokenData['email']);
+            $googleUserId = $tokenData['sub'];
+            $firstName = $tokenData['given_name'] ?? '';
+            $lastName = $tokenData['family_name'] ?? '';
+            $avatar = $tokenData['picture'] ?? null;
+            
+            // Verify SDCA domain
+            $domain = substr($email, strpos($email, '@') + 1);
+            
+            if ($domain !== 'sdca.edu.ph') {
+                return redirect('/login')->withErrors([
+                    'google' => 'Only SDCA email addresses (@sdca.edu.ph) are allowed.'
+                ]);
+            }
+
+            // Check if user already exists
+            $user = User::where('email', $email)->first();
+            
+            if ($user) {
+                // Existing user - update and login
+                $user->update([
+                    'google_id' => $googleUserId,
+                    'profile_picture' => $avatar ?? $user->profile_picture,
+                    'last_login_at' => Carbon::now(),
+                ]);
+                
+                Auth::login($user);
+                $request->session()->regenerate();
+                
+                // Check if user needs to complete profile
+                if ($user->must_update_profile) {
+                    return redirect('/user/profile');
+                }
+                
+                // Redirect based on role
+                if ($user->isAdmin == 1 || $user->isAdmin === true || $user->role === 'admin') {
+                    return redirect('/admin/dashboard');
+                } elseif ($user->role === 'rescuer') {
+                    return redirect('/rescuer/dashboard');
+                } else {
+                    return redirect('/user/scanner');
+                }
+            } else {
+                // New user - create account directly
+                $newUser = User::create([
+                    'google_id' => $googleUserId,
+                    'email' => $email,
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'username' => strtok($email, '@'),
+                    'role' => 'student',
+                    'password' => Hash::make(Str::random(16)),
+                    'must_change_password' => true,
+                    'force_password_change' => true,
+                    'profile_picture' => $avatar,
+                    'status' => 'active',
+                    'is_able_to_login' => true,
+                    'last_login_at' => Carbon::now(),
+                ]);
+                
+                Auth::login($newUser);
+                $request->session()->regenerate();
+                
+                return redirect('/change-password');
+            }
+            
+        } catch (\Exception $e) {
+            \Log::error('Native Google OAuth error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect('/login')->withErrors([
+                'google' => 'Authentication failed. Please try again.'
             ]);
         }
     }
@@ -2049,10 +2248,14 @@ class AuthController extends Controller
                 \Log::error('Failed to send Google registration temp password email: ' . $e->getMessage());
             }
             
+            // Auto-login the user so they can go directly to change-password
+            Auth::login($user);
+            $request->session()->regenerate();
+            
             return response()->json([
                 'success' => true,
-                'message' => 'Account created successfully! Please log in with your temporary password.',
-                'redirect' => '/login'
+                'message' => 'Account created successfully! Please set your password.',
+                'redirect' => '/change-password'
             ]);
             
         } catch (\Exception $e) {

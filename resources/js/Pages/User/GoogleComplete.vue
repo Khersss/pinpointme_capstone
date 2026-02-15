@@ -214,37 +214,20 @@
                     <!-- Step 3: Success -->
                     <div v-else-if="step === 3" class="form-content text-center">
                         <v-icon size="72" color="success" class="mb-4">mdi-check-circle</v-icon>
-                        <h2 class="form-title text-success">Email Verified!</h2>
+                        <h2 class="form-title text-success">Account Created!</h2>
                         <p class="form-subtitle">
-                            Your account has been created. We've sent a <strong>temporary password</strong> to your email.
+                            Your account has been verified successfully. Now let's set up your password to secure your account.
                         </p>
-
-                        <v-alert
-                            type="info"
-                            variant="tonal"
-                            class="mb-4 text-left"
-                            density="compact"
-                        >
-                            <div class="text-caption">
-                                <v-icon size="16" class="mr-1">mdi-information</v-icon>
-                                <strong>Next steps:</strong>
-                                <ol class="mt-1 ml-2" style="line-height: 1.8;">
-                                    <li>Check your email for the temporary password</li>
-                                    <li>Log in with your email and temporary password</li>
-                                    <li>You'll be asked to set a new password</li>
-                                </ol>
-                            </div>
-                        </v-alert>
 
                         <v-btn
                             color="primary"
                             block
                             size="large"
-                            @click="redirectToApp"
+                            @click="redirectToSetPassword"
                             class="submit-btn"
                         >
-                            <v-icon start size="20">mdi-login</v-icon>
-                            Continue to PinPointMe
+                            <v-icon start size="20">mdi-lock-reset</v-icon>
+                            Set a Password
                         </v-btn>
                     </div>
 
@@ -457,9 +440,14 @@ const verifyOtp = async () => {
     }
 };
 
-// Redirect to app
+// Redirect to set password page
+const redirectToSetPassword = () => {
+    window.location.href = '/change-password';
+};
+
+// Redirect to app (fallback)
 const redirectToApp = () => {
-    window.location.href = '/login';
+    window.location.href = '/change-password';
 };
 
 // Handle cancel

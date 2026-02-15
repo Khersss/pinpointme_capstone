@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PinPointMe</string>
+    <string name="title_activity_main">PinPointMe</string>
+    <string name="package_name">com.pinpointme.app</string>
+    <string name="custom_url_scheme">com.pinpointme.app</string>
+    <string name="server_client_id">211467236100-pk584t59ut5ohg09j241jvou3nql65ho.apps.googleusercontent.com</string>
+</resources>

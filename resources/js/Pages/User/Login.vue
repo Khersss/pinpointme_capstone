@@ -619,6 +619,10 @@ import { router, useForm, usePage } from '@inertiajs/vue3';
 import { initializePushNotifications, isPushSupported, getNotificationPermission } from '@/Utilities/pushNotifications';
 import { initializeFCMForUser } from '@/Utilities/firebase';
 
+// Capacitor & Google Auth
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { Capacitor } from '@capacitor/core';
+
 const page = usePage();
 
 // Check if user is already authenticated from Inertia shared data
@@ -796,11 +800,75 @@ const handleLogout = () => {
 };
 
 // Handle Google OAuth login
-const handleGoogleLogin = () => {
+const handleGoogleLogin = async () => {
     isGoogleLoading.value = true;
     googleError.value = '';
-    // Redirect to Google OAuth endpoint
-    window.location.href = '/auth/google';
+
+    // Check if the app is running as a Native APK
+    if (Capacitor.isNativePlatform()) {
+        try {
+            // 1. Trigger the Native Android Google Picker
+            const result = await GoogleAuth.signIn();
+            
+            // 2. Send the ID token to our Laravel backend via fetch
+            // Use the full server URL for API calls when running as native app
+            const apiUrl = 'https://pinpointme.app/auth/google/callback/native';
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'text/html',
+                },
+                body: JSON.stringify({
+                    token: result.authentication.idToken,
+                    email: result.email
+                }),
+                redirect: 'follow',
+                credentials: 'include'
+            });
+            
+            // The backend returns a redirect - follow it
+            if (response.redirected) {
+                // For native apps, we need to handle the redirect manually
+                const redirectUrl = response.url;
+                console.log('Redirect to:', redirectUrl);
+                
+                // Parse the redirect URL to determine where to navigate
+                if (redirectUrl.includes('/admin/dashboard')) {
+                    window.location.href = 'https://pinpointme.app/admin/dashboard';
+                } else if (redirectUrl.includes('/rescuer/dashboard')) {
+                    window.location.href = 'https://pinpointme.app/rescuer/dashboard';
+                } else if (redirectUrl.includes('/change-password')) {
+                    window.location.href = 'https://pinpointme.app/change-password';
+                } else {
+                    window.location.href = 'https://pinpointme.app/user/scanner';
+                }
+            } else if (response.ok) {
+                // Fallback: go to default dashboard
+                window.location.href = 'https://pinpointme.app/user/scanner';
+            } else {
+                const text = await response.text();
+                console.error('Native Google response error:', response.status, text);
+                
+                // Try to extract error message from HTML response
+                if (text.includes('google')) {
+                    const errorMatch = text.match(/google[^<]*([^<]+)/i);
+                    googleError.value = errorMatch ? errorMatch[1] : 'Login failed. Please try again.';
+                } else {
+                    googleError.value = 'Login failed. Please try again.';
+                }
+                isGoogleLoading.value = false;
+            }
+            
+        } catch (error) {
+            console.error('Google Auth Error:', error);
+            isGoogleLoading.value = false;
+            googleError.value = 'Google sign-in was cancelled or failed. ' + error.message;
+        }
+    } else {
+        // Standard Web Redirect for browser users
+        window.location.href = '/auth/google';
+    }
 };
 
 const handleLogin = async () => {
