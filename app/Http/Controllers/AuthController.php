@@ -865,10 +865,10 @@ class AuthController extends Controller
             'id_number' => 'sometimes|string|digits:9',
             'emergency_contact_name' => 'sometimes|string|max:255',
             'emergency_contact_phone' => 'sometimes|string|max:13', // Allow +639XXXXXXXXX format
-            'emergency_contact_relation' => 'sometimes|string|max:255',
-            'blood_type' => 'sometimes|string|in:A+,A-,B+,B-,AB+,AB-,O+,O-,Unknown',
-            'allergies' => 'sometimes|string',
-            'medical_conditions' => 'sometimes|string',
+            'emergency_contact_relation' => 'sometimes|nullable|string|max:255',
+            'blood_type' => 'sometimes|nullable|string|in:A+,A-,B+,B-,AB+,AB-,O+,O-,Unknown',
+            'allergies' => 'sometimes|nullable|string',
+            'medical_conditions' => 'sometimes|nullable|string',
             'current_password' => 'sometimes|string|min:8',
             'password' => 'sometimes|string|min:8|confirmed',
         ]);

@@ -1,8 +1,8 @@
 <template>
   <v-app>
     <v-main class="change-password-bg">
-      <v-container fluid class="fill-height pa-0">
-        <v-row align="center" justify="center" class="fill-height ma-0">
+      <v-container fluid class="change-password-container pa-0">
+        <v-row align="center" justify="center" class="change-password-row ma-0">
           <v-col cols="12" sm="10" md="6" lg="5" xl="4" class="d-flex align-center justify-center">
 
             <!-- Main Card -->
@@ -622,6 +622,15 @@ onUnmounted(() => {
   position: relative;
 }
 
+.change-password-container {
+  min-height: 100vh;
+  padding: 16px !important;
+}
+
+.change-password-row {
+  min-height: 100vh;
+}
+
 .change-password-bg::before {
   content: '';
   position: absolute;
@@ -837,20 +846,59 @@ onUnmounted(() => {
 
 /* Responsive */
 @media (max-width: 600px) {
+  .change-password-container {
+    min-height: auto;
+    padding: 12px !important;
+    padding-top: 20px !important;
+    padding-bottom: 20px !important;
+  }
+  
+  .change-password-row {
+    min-height: auto;
+    align-items: flex-start !important;
+  }
+
   .card-header {
-    padding: 22px 20px 20px;
+    padding: 18px 16px 16px;
   }
   
   .header-title {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+  }
+
+  .header-subtitle {
+    font-size: 0.78rem;
+  }
+
+  .header-icon-wrap {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 10px;
   }
 
   .requirements-list {
     grid-template-columns: 1fr;
+    gap: 4px;
+    margin-bottom: 16px !important;
   }
   
   .card-body {
-    padding: 20px !important;
+    padding: 16px !important;
+  }
+
+  .password-card {
+    margin-top: 8px;
+    margin-bottom: 8px;
+  }
+
+  .strength-bar-wrap {
+    margin-bottom: 16px !important;
+  }
+
+  .action-btn {
+    height: 44px !important;
+    font-size: 0.9rem;
   }
 }
 </style>

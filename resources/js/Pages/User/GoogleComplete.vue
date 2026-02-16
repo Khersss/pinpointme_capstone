@@ -174,9 +174,10 @@ onMounted(() => {
     min-height: 100vh;
     min-height: 100dvh;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    padding: clamp(12px, 3vw, 24px);
+    padding: clamp(8px, 2vw, 16px);
+    padding-top: clamp(16px, 4vw, 32px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
@@ -188,7 +189,7 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: clamp(12px, 3vw, 20px);
+    gap: clamp(8px, 2vw, 12px);
 }
 
 /* =================================================================
@@ -200,7 +201,7 @@ onMounted(() => {
 }
 
 .brand-logo {
-    max-width: clamp(180px, 50vw, 260px);
+    max-width: clamp(140px, 40vw, 200px);
     height: auto;
     object-fit: contain;
     filter: drop-shadow(0 2px 8px rgba(54, 116, 181, 0.15));
@@ -403,17 +404,17 @@ onMounted(() => {
    ================================================================= */
 @media (max-width: 359px) {
     .verify-viewport {
-        padding: 8px;
+        padding: 4px;
         align-items: flex-start;
-        padding-top: 16px;
+        padding-top: 12px;
     }
 
     .verify-container {
-        gap: 8px;
+        gap: 6px;
     }
 
     .brand-logo {
-        max-width: 150px;
+        max-width: 120px;
     }
 
     .profile-strip {
@@ -437,15 +438,15 @@ onMounted(() => {
 @media (max-height: 640px) {
     .verify-viewport {
         align-items: flex-start;
-        padding-top: 8px;
+        padding-top: 6px;
     }
 
     .brand-logo {
-        max-width: 140px;
+        max-width: 120px;
     }
 
     .verify-container {
-        gap: 8px;
+        gap: 6px;
     }
 
     .icon-bg {

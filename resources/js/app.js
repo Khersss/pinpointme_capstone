@@ -2,108 +2,43 @@ import { createApp, h } from "vue";
 import { createInertiaApp } from "@inertiajs/vue3";
 import Layout from "@/App.vue";
 import vuetify from "./vuetify";
-import { registerServiceWorker } from "./Utilities/pushNotifications";
-import { initDarkMode } from "./Composables/useDarkMode";
+import { registerSW } from 'virtual:pwa-register';
 
-// Import global dark mode stylesheet
-import "../css/dark-mode.css";
-
-// Initialize dark mode from persisted preference (before rendering)
-initDarkMode();
-
-// Add global error handler for debugging white screen issues
-window.addEventListener('error', (event) => {
-    console.error('[App] Global error:', event.error);
+// Register Service Worker
+const updateSW = registerSW({
+    onNeedRefresh() {
+        if (confirm('New content available. Reload?')) {
+            updateSW(true);
+        }
+    },
+    onOfflineReady() {
+        console.log('App ready to work offline');
+    },
 });
-
-window.addEventListener('unhandledrejection', (event) => {
-    console.error('[App] Unhandled promise rejection:', event.reason);
-});
-
-console.log('[App] Starting app initialization...');
-
-// Register service workers immediately for push notifications
-// This needs to happen early so push notifications work even when app is closed
-if ('serviceWorker' in navigator) {
-    // Register the main push notification service worker
-    registerServiceWorker()
-        .then(registration => {
-            if (registration) {
-                console.log('[App] Main service worker registered for push notifications');
-            }
-        })
-        .catch(error => {
-            console.error('[App] Main service worker registration failed:', error);
-        });
-    
-    // Register Firebase messaging service worker (wrapped in try-catch)
-    try {
-        navigator.serviceWorker.register('/firebase-messaging-sw.js')
-            .then(registration => {
-                console.log('[App] Firebase messaging service worker registered');
-            })
-            .catch(error => {
-                console.error('[App] Firebase messaging service worker registration failed:', error);
-            });
-    } catch (error) {
-        console.error('[App] Firebase service worker registration error:', error);
-    }
-}
 
 createInertiaApp({
     resolve: (name) => {
-        try {
-            console.log('[App] Resolving page:', name);
-            const pages = import.meta.glob("./Pages/**/*.vue", { eager: true });
-            const page = pages[`./Pages/${name}.vue`];
+        const pages = import.meta.glob("./Pages/**/*.vue", { eager: true });
+        const page = pages[`./Pages/${name}.vue`];
 
-            if (!page) {
-                console.error('[App] Page not found:', name);
-                throw new Error(`Page not found: ${name}`);
-            }
-
-            if (page.default.layout === undefined) {
-                page.default.layout = Layout;
-            }
-
-            console.log('[App] Page resolved successfully:', name);
-            return page;
-        } catch (error) {
-            console.error('[App] Error resolving page:', name, error);
-            throw error;
+        if (page.default.layout === undefined) {
+            page.default.layout = Layout;
         }
+
+        return page;
     },
     setup({ el, App, props, plugin }) {
-        try {
-            console.log('[App] Setting up Vue app...');
-            const app = createApp({ render: () => h(App, props) });
+        const app = createApp({ render: () => h(App, props) });
 
-            const components = import.meta.glob("./Components/Customs/**/*.vue", {
-                eager: true,
-            });
+        const components = import.meta.glob("./Components/Customs/**/*.vue", {
+            eager: true,
+        });
 
-            Object.entries(components).forEach(([path, definition]) => {
-                const filename = path.split("/").pop().replace(".vue", "");
-                app.component(filename, definition.default);
-            });
+        Object.entries(components).forEach(([path, definition]) => {
+            const filename = path.split("/").pop().replace(".vue", "");
+            app.component(filename, definition.default);
+        });
 
-            console.log('[App] Installing plugins...');
-            app.use(plugin).use(vuetify);
-            
-            console.log('[App] Mounting app...');
-            app.mount(el);
-            
-            console.log('[App] App mounted successfully!');
-        } catch (error) {
-            console.error('[App] Setup error:', error);
-            throw error;
-        }
-    }
-}).catch(error => {
-    console.error('[App] Inertia app creation failed:', error);
-    // Create a simple fallback display
-    const el = document.getElementById('app');
-    if (el) {
-        el.innerHTML = '<div style="padding: 20px; color: red;">App failed to load. Check console for details.</div>';
+        app.use(plugin).use(vuetify).mount(el);
     }
 });

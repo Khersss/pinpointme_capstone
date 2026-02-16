@@ -155,7 +155,7 @@
                                         class="mb-3 mobile-input"
                                         prepend-inner-icon="mdi-card-account-details-outline"
                                         placeholder="Enter 9-digit ID number"
-                                        hint="Student/Faculty ID (9 digits)"
+                                        :hint="isValidIdNumber ? (editData.id_number.startsWith('20') ? '✓ Student ID detected' : '✓ Faculty/Staff ID detected') : '9-digit ID number'"
                                         persistent-hint
                                         maxlength="9"
                                         @input="formatIdNumber"
@@ -1153,14 +1153,11 @@ const userRoleFromId = computed(() => {
     const id = editData.id_number;
     if (!id || !/^\d{9}$/.test(id)) return null;
     
-    // Get the first digit
-    const firstDigit = id.charAt(0);
-    
-    // If starts with digit 2, it's a student
-    if (firstDigit === '2') {
+    // If starts with "20", it's a student
+    if (id.startsWith('20')) {
         return 'student';
     }
-    // Otherwise (starts with 1,3,4,5,6,7,8,9), it's faculty
+    // Otherwise, it's faculty
     return 'faculty';
 });
 
@@ -1495,7 +1492,7 @@ const saveEmergencyContact = async () => {
         const updateData = {
             emergency_contact_name: (editData.emergency_contact_name && editData.emergency_contact_name.trim()) ? editData.emergency_contact_name.trim() : '',
             emergency_contact_phone: (editData.emergency_contact_phone && editData.emergency_contact_phone.trim()) ? editData.emergency_contact_phone.trim() : '',
-            emergency_contact_relation: (editData.emergency_contact_relation && editData.emergency_contact_relation.trim()) ? editData.emergency_contact_relation.trim() : ''
+            emergency_contact_relation: (editData.emergency_contact_relation && editData.emergency_contact_relation.trim()) ? editData.emergency_contact_relation.trim() : null
         };
 
         console.log('Updating emergency contact with data:', updateData);
@@ -1544,7 +1541,7 @@ const saveMedicalInfo = async () => {
         const updateData = {
             blood_type: editData.blood_type || null,
             allergies: (editData.allergies && editData.allergies.trim()) ? editData.allergies.trim() : '',
-            medical_conditions: (editData.medical_conditions && editData.medical_conditions.trim()) ? editData.medical_conditions.trim() : ''
+            medical_conditions: (editData.medical_conditions && editData.medical_conditions.trim()) ? editData.medical_conditions.trim() : null
         };
 
         console.log('Updating medical info with data:', updateData);
