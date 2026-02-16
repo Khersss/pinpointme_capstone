@@ -11,21 +11,44 @@
           {{ success ? 'Account Verified!' : 'Verification Failed' }}
         </h2>
         <p class="form-subtitle text-center mb-4">{{ message }}</p>
-        
-        <v-alert
-          v-if="success"
-          type="info"
-          variant="tonal"
-          density="compact"
-          class="mb-4 text-left"
-          rounded="lg"
-        >
-          <div style="font-size: 0.85rem; line-height: 1.5;">
-            <v-icon size="16" class="mr-1">mdi-information-outline</v-icon>
-            You may now close this tab and go back to the <strong>PinPointMe app</strong> or your <strong>browser</strong> to sign in with your SDCA Google account.
-          </div>
-        </v-alert>
 
+        <!-- Success: auto-redirect countdown -->
+        <template v-if="success">
+          <v-alert
+            type="success"
+            variant="tonal"
+            density="compact"
+            class="mb-4 text-left"
+            rounded="lg"
+          >
+            <div style="font-size: 0.85rem; line-height: 1.5;">
+              <v-icon size="16" class="mr-1">mdi-login</v-icon>
+              Redirecting you to the login page in <strong>{{ countdown }}</strong> second{{ countdown !== 1 ? 's' : '' }}...
+            </div>
+          </v-alert>
+
+          <v-progress-linear
+            :model-value="progressValue"
+            color="success"
+            rounded
+            height="6"
+            class="mb-3"
+          />
+
+          <v-btn
+            color="primary"
+            variant="flat"
+            block
+            size="large"
+            class="submit-btn"
+            @click="goToLogin"
+          >
+            <v-icon start>mdi-login</v-icon>
+            Go to Login Now
+          </v-btn>
+        </template>
+
+        <!-- Failure alert -->
         <v-alert
           v-if="!success"
           type="warning"
@@ -45,16 +68,39 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { usePage } from '@inertiajs/vue3';
+
+const REDIRECT_SECONDS = 5;
 
 const page = usePage();
 const success = computed(() => page.props.success);
 const message = computed(() => page.props.message);
 
+const countdown = ref(REDIRECT_SECONDS);
+const progressValue = computed(() => ((REDIRECT_SECONDS - countdown.value) / REDIRECT_SECONDS) * 100);
+
+let timer = null;
+
 const goToLogin = () => {
   window.location.href = '/login';
 };
+
+onMounted(() => {
+  if (success.value) {
+    timer = setInterval(() => {
+      countdown.value--;
+      if (countdown.value <= 0) {
+        clearInterval(timer);
+        goToLogin();
+      }
+    }, 1000);
+  }
+});
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer);
+});
 </script>
 
 <style scoped>
