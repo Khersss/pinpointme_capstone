@@ -223,6 +223,7 @@ class AdminController extends Controller
             'on_rescue' => $activeRescueCount,
             'off_duty' => $allRescuers->where('status', 'off_duty')->count(),
             'unavailable' => $allRescuers->where('status', 'unavailable')->count(),
+            'pending' => $allRescuers->where('status', 'pending')->count(),
         ];
 
         // Get recent audit trail for rescuers
@@ -680,6 +681,177 @@ class AdminController extends Controller
         ]);
 
         return response()->json(['success' => true, 'data' => $rescuer]);
+    }
+
+    /**
+     * Get pending rescuer applications (for admin notifications)
+     */
+    public function pendingRescuers(Request $request)
+    {
+        $pendingRescuers = User::where('role', 'rescuer')
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($rescuer) {
+                $tags = json_decode($rescuer->tags, true) ?? [];
+                return [
+                    'id' => $rescuer->id,
+                    'first_name' => $rescuer->first_name,
+                    'last_name' => $rescuer->last_name,
+                    'email' => $rescuer->email,
+                    'phone' => $rescuer->phone,
+                    'organization' => $tags['organization'] ?? null,
+                    'otp_verified' => (bool) $rescuer->otp_verified,
+                    'email_verified_at' => $rescuer->email_verified_at,
+                    'created_at' => $rescuer->created_at->toISOString(),
+                    'is_external' => !str_ends_with($rescuer->email, '@sdca.edu.ph'),
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $pendingRescuers,
+            'count' => $pendingRescuers->count(),
+        ]);
+    }
+
+    /**
+     * Approve a pending rescuer application
+     */
+    public function approveRescuer(Request $request, $id)
+    {
+        $rescuer = User::where('id', $id)
+            ->where('role', 'rescuer')
+            ->where('status', 'pending')
+            ->firstOrFail();
+
+        $rescuer->update([
+            'status' => 'available',
+            'is_able_to_login' => true,
+        ]);
+
+        // Record audit trail
+        AuditTrail::create([
+            'user_id' => auth()->id(),
+            'action' => 'update',
+            'entity_type' => 'rescuer',
+            'entity_id' => $rescuer->id,
+            'description' => "Approved rescuer application: {$rescuer->first_name} {$rescuer->last_name}",
+        ]);
+
+        // Send approval notification email
+        try {
+            $firstName = $rescuer->first_name;
+            $email = $rescuer->email;
+            \Mail::send([], [], function ($message) use ($email, $firstName) {
+                $message->to($email)
+                    ->subject('PinPointMe - Rescuer Application Approved!')
+                    ->html("
+                        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                            <div style='background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%); padding: 30px; text-align: center;'>
+                                <h1 style='color: white; margin: 0; font-size: 28px;'>Application Approved!</h1>
+                                <p style='color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;'>Welcome to the PinPointMe Rescue Team</p>
+                            </div>
+                            <div style='padding: 30px; background-color: #f8f9fa;'>
+                                <h2 style='color: #333; margin-bottom: 20px;'>Congratulations, {$firstName}!</h2>
+                                <p style='color: #666; font-size: 16px; line-height: 1.6;'>Your rescuer account has been reviewed and <strong style='color: #2E7D32;'>approved</strong> by an administrator.</p>
+                                <p style='color: #666; font-size: 16px; line-height: 1.6;'>You now have full access to the PinPointMe rescue system. You can:</p>
+                                <ul style='color: #666; font-size: 15px; line-height: 2;'>
+                                    <li>Receive and respond to rescue requests</li>
+                                    <li>View rescue locations on the map</li>
+                                    <li>Communicate with users in need</li>
+                                    <li>Access the full rescuer dashboard</li>
+                                </ul>
+                                <div style='background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2E7D32;'>
+                                    <p style='color: #2E7D32; margin: 0; font-size: 14px;'>
+                                        <strong>You can now log in</strong> with your email and the temporary password sent during registration.
+                                    </p>
+                                </div>
+                            </div>
+                            <div style='background: #333; padding: 20px; text-align: center;'>
+                                <p style='color: #ccc; margin: 0; font-size: 14px;'>PinPointMe Emergency Rescue System</p>
+                            </div>
+                        </div>
+                    ");
+            });
+        } catch (\Exception $e) {
+            \Log::error('Failed to send rescuer approval email: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Rescuer {$rescuer->first_name} {$rescuer->last_name} has been approved.",
+            'data' => $rescuer,
+        ]);
+    }
+
+    /**
+     * Decline a pending rescuer application
+     */
+    public function declineRescuer(Request $request, $id)
+    {
+        $rescuer = User::where('id', $id)
+            ->where('role', 'rescuer')
+            ->where('status', 'pending')
+            ->firstOrFail();
+
+        $reason = $request->input('reason', 'Your application did not meet our requirements at this time.');
+
+        // Record audit trail before deletion
+        AuditTrail::create([
+            'user_id' => auth()->id(),
+            'action' => 'delete',
+            'entity_type' => 'rescuer',
+            'entity_id' => $rescuer->id,
+            'description' => "Declined rescuer application: {$rescuer->first_name} {$rescuer->last_name}. Reason: {$reason}",
+        ]);
+
+        // Send decline notification email
+        try {
+            $firstName = $rescuer->first_name;
+            $email = $rescuer->email;
+            \Mail::send([], [], function ($message) use ($email, $firstName, $reason) {
+                $message->to($email)
+                    ->subject('PinPointMe - Rescuer Application Update')
+                    ->html("
+                        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                            <div style='background: linear-gradient(135deg, #E65100 0%, #BF360C 100%); padding: 30px; text-align: center;'>
+                                <h1 style='color: white; margin: 0; font-size: 28px;'>Application Update</h1>
+                                <p style='color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;'>PinPointMe Rescue Team</p>
+                            </div>
+                            <div style='padding: 30px; background-color: #f8f9fa;'>
+                                <h2 style='color: #333; margin-bottom: 20px;'>Hi {$firstName},</h2>
+                                <p style='color: #666; font-size: 16px; line-height: 1.6;'>Thank you for your interest in joining the PinPointMe rescue team. After review, we were unable to approve your application at this time.</p>
+                                <div style='background: #fff3e0; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #E65100;'>
+                                    <p style='color: #E65100; margin: 0; font-size: 14px;'>
+                                        <strong>Reason:</strong> {$reason}
+                                    </p>
+                                </div>
+                                <p style='color: #666; font-size: 16px; line-height: 1.6;'>If you believe this was in error or have additional information to provide, please contact the administrator.</p>
+                            </div>
+                            <div style='background: #333; padding: 20px; text-align: center;'>
+                                <p style='color: #ccc; margin: 0; font-size: 14px;'>PinPointMe Emergency Rescue System</p>
+                            </div>
+                        </div>
+                    ");
+            });
+        } catch (\Exception $e) {
+            \Log::error('Failed to send rescuer decline email: ' . $e->getMessage());
+        }
+
+        // Mark as declined instead of deleting — rescuer will see the decline reason on login
+        $rescuer->update([
+            'status' => 'declined',
+            'tags' => json_encode(array_merge(
+                json_decode($rescuer->tags ?? '{}', true) ?: [],
+                ['decline_reason' => $reason, 'declined_at' => now()->toDateTimeString()]
+            )),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Rescuer application has been declined and the applicant has been notified.",
+        ]);
     }
 
     /**

@@ -145,9 +145,163 @@
                 </div>
             </div>
 
-            <!-- Admin Restriction Warning -->
+            <!-- Pending Approval Full Screen -->
+            <div v-if="isPendingApproval" class="pending-approval-overlay" :class="{ 'declined-overlay': isDeclined }">
+                <div class="pending-approval-content">
+                    <!-- Brand Header -->
+                    <div class="pending-brand-header">
+                        <div class="brand-logo-container">
+                            <img src="/images/Icons/ppm_logo.png" alt="PinPointMe Logo" class="brand-logo" />
+                        </div>
+                        <h1 class="brand-title">PinPointMe</h1>
+                        <p class="brand-subtitle">EMERGENCY RESCUE SYSTEM</p>
+                    </div>
+
+                    <!-- PENDING STATE: Status Icon & Message -->
+                    <template v-if="!isDeclined">
+                        <div class="status-section">
+                             
+                            
+                            <h2 class="status-title">Account Under Review</h2>
+                            <p class="status-description">
+                                Your rescuer application has been submitted successfully. 
+                                Our administrators are currently reviewing your credentials and will approve your account shortly.
+                            </p>
+                        </div>
+
+                        <!-- Info Cards -->
+                        <div class="info-cards-container">
+                            <div class="info-card">
+                                <div class="info-card-content">
+                                    <v-icon size="20" color="#3674B5" class="info-icon">mdi-check-circle</v-icon>
+                                    <div class="info-text">
+                                        <span class="info-label">Email Verified</span>
+                                        <span class="info-value">Account activated</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-card-content">
+                                    <v-icon size="20" color="#FF9800" class="info-icon">mdi-clock-outline</v-icon>
+                                    <div class="info-text">
+                                        <span class="info-label">Status</span>
+                                        <span class="info-value">Pending Admin Approval</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-card-content">
+                                    <v-icon size="20" color="#26a69a" class="info-icon">mdi-email-outline</v-icon>
+                                    <div class="info-text">
+                                        <span class="info-label">Notification</span>
+                                        <span class="info-value">You'll be notified via email</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="action-buttons">
+                            <v-btn 
+                                class="primary-action-btn" 
+                                color="#3674B5" 
+                                variant="flat"
+                                size="large"
+                                @click="checkApprovalStatus" 
+                                :loading="checkingApproval"
+                                rounded="lg"
+                            >
+                                <v-icon start size="20">mdi-refresh</v-icon>
+                                Check Approval Status
+                            </v-btn>
+                            
+                            <v-btn 
+                                class="secondary-action-btn"
+                                variant="outlined" 
+                                color="#666"
+                                size="large" 
+                                @click.prevent="handleLogout"
+                                rounded="lg"
+                            >
+                                <v-icon start size="18">mdi-logout</v-icon>
+                                Sign Out
+                            </v-btn>
+                        </div>
+
+                        <!-- Footer Note -->
+                        <div class="footer-note">
+                            <v-icon size="16" color="#999" class="mr-1">mdi-information-outline</v-icon>
+                            <span class="footer-text">Average approval time: 24-48 hours</span>
+                        </div>
+                    </template>
+
+                    <!-- DECLINED STATE -->
+                    <template v-else>
+                        <div class="status-section">
+                            <div class="status-icon-wrapper">
+                                <div class="icon-background declined-icon-bg">
+                                    <v-icon size="48" color="white">mdi-account-cancel</v-icon>
+                                </div>
+                            </div>
+                            
+                            <h2 class="status-title declined-title">Application Declined</h2>
+                            <p class="status-description">
+                                We're sorry, but your rescuer application has been reviewed and was not approved at this time.
+                            </p>
+                        </div>
+
+                        <!-- Decline Reason Card -->
+                        <div class="info-cards-container">
+                            <div class="info-card declined-reason-card">
+                                <div class="info-card-content" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                                    <div class="d-flex align-center" style="gap: 8px;">
+                                        <v-icon size="20" color="#C62828" class="info-icon">mdi-alert-circle</v-icon>
+                                        <span class="info-label" style="margin-bottom: 0;">Reason for Decline</span>
+                                    </div>
+                                    <span class="info-value" style="font-size: 0.9rem; line-height: 1.5; color: #555;">{{ declineReason }}</span>
+                                </div>
+                            </div>
+
+                            <div class="info-card">
+                                <div class="info-card-content">
+                                    <v-icon size="20" color="#3674B5" class="info-icon">mdi-email-outline</v-icon>
+                                    <div class="info-text">
+                                        <span class="info-label">Need Help?</span>
+                                        <span class="info-value">Contact the administrator for more information or to appeal this decision.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="action-buttons">
+                            <v-btn 
+                                class="secondary-action-btn"
+                                variant="outlined" 
+                                color="#666"
+                                size="large" 
+                                @click.prevent="handleLogout"
+                                rounded="lg"
+                            >
+                                <v-icon start size="18">mdi-logout</v-icon>
+                                Sign Out
+                            </v-btn>
+                        </div>
+
+                        <!-- Footer Note -->
+                        <div class="footer-note">
+                            <v-icon size="16" color="#999" class="mr-1">mdi-information-outline</v-icon>
+                            <span class="footer-text">If you have questions, please reach out to the system administrator</span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Admin Restriction Warning (for off_duty/unavailable) -->
             <v-alert
-                v-if="isRescuerRestricted"
+                v-else-if="isRescuerRestricted"
                 type="warning"
                 variant="tonal"
                 prominent
@@ -551,8 +705,82 @@ const rescuerStatus = ref(authUser.value?.status || 'available');
 // Check if rescuer is restricted (off_duty or unavailable)
 const isRescuerRestricted = computed(() => {
     const status = rescuerStatus.value?.toLowerCase();
-    return status === 'off_duty' || status === 'unavailable';
+    return status === 'off_duty' || status === 'unavailable' || status === 'pending' || status === 'declined';
 });
+
+// Check if rescuer is pending admin approval or declined
+const isPendingApproval = computed(() => {
+    const status = rescuerStatus.value?.toLowerCase();
+    return status === 'pending' || status === 'declined';
+});
+
+// Check if rescuer application was declined
+const isDeclined = computed(() => {
+    return rescuerStatus.value?.toLowerCase() === 'declined';
+});
+
+// Get decline reason from user tags
+const declineReason = computed(() => {
+    try {
+        const tags = JSON.parse(authUser.value?.tags || '{}');
+        return tags.decline_reason || 'No specific reason provided.';
+    } catch {
+        return 'No specific reason provided.';
+    }
+});
+
+// Check approval status (manual refresh)
+const checkingApproval = ref(false);
+const checkApprovalStatus = async () => {
+    checkingApproval.value = true;
+    try {
+        const resp = await fetch(`/api/users/${rescuerId.value}`, {
+            headers: { 'Accept': 'application/json' }
+        });
+        if (resp.ok) {
+            const data = await resp.json();
+            const user = data.data || data;
+            rescuerStatus.value = user.status;
+            // Update authUser tags so decline reason updates
+            if (user.tags) {
+                authUser.value = { ...authUser.value, tags: user.tags };
+            }
+            if (user.status === 'available' || user.status === 'off_duty') {
+                toastMessage.value = 'Your account has been approved! Welcome aboard!';
+                toastColor.value = 'success';
+                showToast.value = true;
+                setTimeout(() => window.location.reload(), 1500);
+            } else if (user.status === 'declined') {
+                toastMessage.value = 'Your application has been declined by an administrator.';
+                toastColor.value = 'error';
+                showToast.value = true;
+            } else {
+                toastMessage.value = 'Your application is still under review. Please check back later.';
+                toastColor.value = 'warning';
+                showToast.value = true;
+            }
+        }
+    } catch (err) {
+        console.error('Error checking approval:', err);
+    } finally {
+        checkingApproval.value = false;
+    }
+};
+
+const handleLogout = async () => {
+    try {
+        await fetch('/logout', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+                'Accept': 'application/json'
+            }
+        });
+        window.location.href = '/login';
+    } catch {
+        window.location.href = '/login';
+    }
+};
 
 // Eligibility check — rescuer can receive force alert only if ALL are true:
 // 1. No active rescue (active_request = none)
@@ -618,6 +846,8 @@ onUnmounted(() => {
         clearInterval(pollingInterval);
         pollingInterval = null;
     }
+    // Always stop force alert sound when leaving the dashboard
+    stopForceAlert();
 });
 
 // Start polling for new rescue requests
@@ -668,6 +898,15 @@ const pollForNewRequests = async () => {
         // Check for force-alert requests from admin
         // Only trigger for ELIGIBLE rescuers — skip entirely if busy or restricted
         const forceAlertRequests = currentPending.filter(r => r.force_alert === true || r.force_alert === 1);
+        
+        // ── Auto-stop force alert when no more force-alert pending requests exist ──
+        // This handles: rescuer accepted, request completed, request cancelled, etc.
+        if (forceAlertRequests.length === 0 && isForceAlertPlaying.value) {
+            console.log('[Dashboard] No more force-alert pending requests — stopping alarm');
+            stopForceAlert();
+            popupAlert.value.show = false;
+        }
+        
         if (forceAlertRequests.length > 0 && !isForceAlertPlaying.value && isEligibleForForceAlert.value && !isRescuerRestricted.value) {
             const req = forceAlertRequests[0];
             const name = req.firstName || 'Someone';
@@ -879,6 +1118,14 @@ const acceptRescue = async (request) => {
         
         // Handle API response errors
         if (response && !response.success) {
+            // ── Race condition: another rescuer already accepted this request ──
+            if (response.already_accepted) {
+                stopForceAlert();
+                popupAlert.value.show = false;
+                showNotification(response.message || 'This rescue has already been accepted by another rescuer.', 'warning');
+                await fetchRescueRequests(); // Refresh to remove from pending list
+                return;
+            }
             showNotification(response.message || 'Failed to accept rescue', 'error');
             return;
         }
@@ -891,6 +1138,16 @@ const acceptRescue = async (request) => {
         router.visit(`/rescuer/active/${request.id}`);
     } catch (error) {
         console.error('Failed to accept rescue:', error);
+        
+        // ── Race condition: handle 409 Conflict from backend ──
+        if (error?.status === 409 || error?.data?.already_accepted) {
+            stopForceAlert();
+            popupAlert.value.show = false;
+            showNotification(error.data?.message || 'This rescue has already been accepted by another rescuer.', 'warning');
+            await fetchRescueRequests();
+            return;
+        }
+        
         const errorMessage = error.data?.message || error.message || 'Failed to accept rescue';
         showNotification(errorMessage, 'error');
     } finally {
@@ -1077,6 +1334,382 @@ const showNotification = (message, color = 'info') => {
 </script>
 
 <style scoped>
+/* Pending Approval Overlay - Enhanced PinPointMe Design */
+.pending-approval-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(to bottom, #F8F0F0 0%, #FFFFFF 40%, #f8f8f8 50%, #D1F8EF 80%, #A1E3F9 100%);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px;
+}
+
+.pending-approval-overlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(ellipse at 20% 20%, rgba(161,227,249,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(209,248,239,0.12) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.pending-approval-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: clamp(24px, 5vw, 48px) clamp(16px, 4vw, 32px) clamp(20px, 4vw, 40px);
+    max-width: 500px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.97);
+    border-radius: clamp(16px, 3vw, 24px);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(161, 227, 249, 0.3);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(54, 116, 181, 0.1);
+    animation: slideInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    margin: auto;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(60px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Brand Header */
+.pending-brand-header {
+    margin-bottom: clamp(16px, 4vw, 32px);
+    padding-bottom: clamp(12px, 3vw, 24px);
+    border-bottom: 2px solid rgba(54, 116, 181, 0.1);
+}
+
+.brand-logo-container {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(44px, 10vw, 60px);
+    height: clamp(44px, 10vw, 60px);
+    background: linear-gradient(135deg, rgba(54, 116, 181, 0.15), rgba(54, 116, 181, 0.05));
+    border-radius: clamp(12px, 2vw, 16px);
+    margin-bottom: clamp(8px, 2vw, 16px);
+    box-shadow: 0 4px 20px rgba(54, 116, 181, 0.15);
+}
+
+.brand-title {
+    font-size: clamp(1.25rem, 5vw, 1.75rem);
+    font-weight: 700;
+    font-style: italic;
+    color: #3674B5;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.5px;
+}
+
+.brand-subtitle {
+    font-size: clamp(0.55rem, 1.5vw, 0.7rem);
+    font-weight: 600;
+    letter-spacing: clamp(1px, 0.5vw, 2px);
+    color: #666;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+/* Status Section */
+.status-section {
+    margin-bottom: clamp(16px, 4vw, 32px);
+}
+
+.status-icon-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-bottom: clamp(12px, 3vw, 24px);
+}
+
+.icon-background {
+    position: relative;
+    width: clamp(64px, 16vw, 96px);
+    height: clamp(64px, 16vw, 96px);
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 32px rgba(255, 152, 0, 0.3);
+    z-index: 2;
+}
+
+.icon-background .v-icon {
+    font-size: clamp(28px, 7vw, 48px) !important;
+}
+
+.pulse-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: clamp(64px, 16vw, 96px);
+    height: clamp(64px, 16vw, 96px);
+    border: 3px solid rgba(255, 152, 0, 0.3);
+    border-radius: 50%;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.pulse-ring-delayed {
+    animation-delay: 1s;
+    border-color: rgba(255, 152, 0, 0.2);
+}
+
+@keyframes pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(2);
+        opacity: 0;
+    }
+}
+
+.status-title {
+    font-size: clamp(1.15rem, 4vw, 1.6rem);
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 clamp(8px, 2vw, 16px) 0;
+    letter-spacing: -0.3px;
+}
+
+.status-description {
+    font-size: clamp(0.85rem, 2.5vw, 1rem);
+    line-height: 1.6;
+    color: #666;
+    margin: 0;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Info Cards */
+.info-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 2vw, 12px);
+    margin-bottom: clamp(16px, 4vw, 32px);
+}
+
+.info-card {
+    background: rgba(54, 116, 181, 0.06);
+    backdrop-filter: blur(10px);
+    border-radius: clamp(10px, 2vw, 16px);
+    border: 1px solid rgba(54, 116, 181, 0.1);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.info-card:hover {
+    background: rgba(54, 116, 181, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.info-card-content {
+    display: flex;
+    align-items: center;
+    padding: clamp(10px, 2.5vw, 16px) clamp(12px, 3vw, 20px);
+    gap: clamp(10px, 2.5vw, 16px);
+}
+
+.info-icon {
+    flex-shrink: 0;
+}
+
+.info-text {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    text-align: left;
+    min-width: 0;
+}
+
+.info-label {
+    font-size: clamp(0.65rem, 1.8vw, 0.8rem);
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.info-value {
+    font-size: clamp(0.8rem, 2.2vw, 0.95rem);
+    font-weight: 500;
+    color: #333;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 2vw, 12px);
+    margin-bottom: clamp(12px, 3vw, 24px);
+}
+
+.primary-action-btn {
+    background: linear-gradient(135deg, #3674B5, #2563A7) !important;
+    box-shadow: 0 6px 24px rgba(54, 116, 181, 0.3) !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    letter-spacing: 0.3px !important;
+    height: clamp(40px, 8vw, 48px) !important;
+    font-size: clamp(0.8rem, 2vw, 0.9rem) !important;
+}
+
+.primary-action-btn:hover {
+    box-shadow: 0 8px 32px rgba(54, 116, 181, 0.4) !important;
+    transform: translateY(-2px);
+}
+
+.secondary-action-btn {
+    border-color: #ddd !important;
+    color: #666 !important;
+    font-weight: 500 !important;
+    text-transform: none !important;
+    height: clamp(36px, 7vw, 44px) !important;
+    font-size: clamp(0.8rem, 2vw, 0.9rem) !important;
+}
+
+.secondary-action-btn:hover {
+    background: rgba(102, 102, 102, 0.04) !important;
+    transform: translateY(-1px);
+}
+
+/* Footer Note */
+.footer-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding-top: clamp(8px, 2vw, 16px);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    flex-wrap: wrap;
+}
+
+.footer-text {
+    font-size: clamp(0.65rem, 1.8vw, 0.8rem);
+    color: #999;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Declined State Styles */
+.declined-overlay {
+    background: linear-gradient(to bottom, #F8F0F0 0%, #FFFFFF 40%, #f8f8f8 50%, #D1F8EF 80%, #A1E3F9 100%) !important;
+}
+
+.declined-overlay::before {
+    background: 
+        radial-gradient(ellipse at 20% 20%, rgba(161,227,249,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(209,248,239,0.12) 0%, transparent 50%) !important;
+}
+
+.declined-icon-bg {
+    background: linear-gradient(135deg, #C62828, #B71C1C) !important;
+    box-shadow: 0 8px 32px rgba(198, 40, 40, 0.3) !important;
+}
+
+.declined-title {
+    color: #C62828 !important;
+}
+
+.declined-reason-card {
+    border-left: 4px solid #C62828 !important;
+    background: rgba(198, 40, 40, 0.05) !important;
+}
+
+/* Responsive Design - Tablet */
+@media (max-width: 768px) {
+    .pending-approval-content {
+        max-width: 440px;
+    }
+
+    .tab-pill-enhanced {
+        padding: 8px 12px;
+    }
+
+    .tab-pill-enhanced .tab-text {
+        font-size: 0.75rem;
+    }
+}
+
+/* Responsive Design - Mobile */
+@media (max-width: 480px) {
+    .pending-approval-overlay {
+        padding: 12px;
+        align-items: flex-start;
+        padding-top: env(safe-area-inset-top, 12px);
+    }
+
+    .pending-approval-content {
+        max-width: 100%;
+        border-radius: 16px;
+    }
+
+    .info-card-content {
+        padding: 10px 12px;
+        gap: 10px;
+    }
+
+    .request-card-content {
+        padding: 12px;
+    }
+
+    .request-name {
+        font-size: 0.85rem;
+    }
+    
+    .request-location {
+        font-size: 0.7rem;
+    }
+}
+
+/* Responsive Design - Very small screens */
+@media (max-width: 360px) {
+    .pending-approval-overlay {
+        padding: 8px;
+    }
+
+    .pending-approval-content {
+        border-radius: 14px;
+    }
+
+    .info-card-content {
+        padding: 8px 10px;
+        gap: 8px;
+    }
+
+    .action-buttons {
+        gap: 8px;
+    }
+}
+
 /* App Container - Prevent all unwanted scrolling/dragging */
 .app-container {
     position: fixed !important;
@@ -1509,12 +2142,8 @@ const showNotification = (message, color = 'info') => {
     background-color: rgba(var(--v-theme-primary), 0.08);
 }
 
-/* Mobile Responsive */
+/* Mobile Responsive - Dashboard Content */
 @media (max-width: 600px) {
-    .brand-title {
-        font-size: 1.25rem;
-    }
-    
     .tab-pill {
         padding: 6px 10px;
         font-size: 0.65rem;
@@ -1523,18 +2152,6 @@ const showNotification = (message, color = 'info') => {
     .tab-pills-container {
         gap: 4px;
         padding: 0 8px 12px;
-    }
-    
-    .request-card-content {
-        padding: 12px;
-    }
-    
-    .request-name {
-        font-size: 0.85rem;
-    }
-    
-    .request-location {
-        font-size: 0.7rem;
     }
     
     .timer-badge {
@@ -1548,6 +2165,14 @@ const showNotification = (message, color = 'info') => {
     
     .section-title {
         padding: 8px 16px;
+    }
+
+    .header-content {
+        padding: 10px 12px;
+    }
+
+    .empty-state {
+        padding: 32px 16px;
     }
 }
 

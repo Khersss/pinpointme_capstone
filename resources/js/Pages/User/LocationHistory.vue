@@ -132,6 +132,11 @@
                                             <span class="location-sub" v-if="location.building_name || location.floor_name">
                                                 {{ [location.building_name, location.floor_name].filter(Boolean).join(', ') }}
                                             </span>
+                                            <!-- Victim name for Samaritan reports -->
+                                            <span v-if="location.is_samaritan_report && location.victim_name" class="victim-name">
+                                                <v-icon size="12" class="mr-1">mdi-account-alert</v-icon>
+                                                {{ location.victim_name }}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -240,7 +245,8 @@ const filteredLocations = computed(() => {
             (loc.rescue_code?.toLowerCase().includes(query)) ||
             (loc.room_name?.toLowerCase().includes(query)) ||
             (loc.building_name?.toLowerCase().includes(query)) ||
-            (loc.floor_name?.toLowerCase().includes(query))
+            (loc.floor_name?.toLowerCase().includes(query)) ||
+            (loc.victim_name?.toLowerCase().includes(query))
         );
     }
     
@@ -310,10 +316,18 @@ const fetchLocationHistory = async () => {
             const roomName = (typeof record.room === 'object' && record.room !== null) ? record.room.room_name : (record.room_name || null);
             const buildingName = (typeof record.building === 'object' && record.building !== null) ? record.building.name : (record.building_name || null);
             const floorName = (typeof record.floor === 'object' && record.floor !== null) ? record.floor.floor_name : (record.floor_name || null);
+            
+            // Check if this is a Samaritan report (reporting for someone else)
+            const victimFirstName = record.firstName || record.first_name || '';
+            const victimLastName = record.lastName || record.last_name || '';
+            const victimName = `${victimFirstName} ${victimLastName}`.trim();
+            const isSamaritanReport = !!victimName;
 
             return {
             id: record.id,
-            name: `${record.firstName || record.first_name || ''} ${record.lastName || record.last_name || ''}`.trim() || 'Rescue Request',
+            name: victimName || 'Rescue Request',
+            victim_name: victimName,
+            is_samaritan_report: isSamaritanReport,
             room_name: roomName,
             building_name: buildingName,
             floor_name: floorName,
@@ -756,6 +770,15 @@ const viewLocation = (location) => {
     color: #888;
     margin-top: 2px;
     line-height: 1.3;
+}
+
+.victim-name {
+    font-size: 0.7rem;
+    color: #3674B5;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    margin-top: 2px;
 }
 
 .rescue-code-tag {

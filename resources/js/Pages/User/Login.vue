@@ -151,7 +151,7 @@
 
                             <div class="text-center mt-2">
                                 <span class="text-grey-darken-1 text-caption" >Don't have an account?</span>
-                                <v-btn variant="text" color="primary" size="x-small" @click="showRegister = true" class="ml-1">
+                                <v-btn variant="text" color="primary" size="x-small" @click="showRolePicker = true" class="ml-1">
                                     Register here
                                 </v-btn>
                             </div>
@@ -600,6 +600,310 @@
                 </v-card>
             </v-dialog>
 
+            <!-- Role Picker Dialog -->
+            <v-dialog v-model="showRolePicker" max-width="420" persistent>
+                <v-card rounded="lg">
+                    <v-card-title class="d-flex align-center pa-4 bg-primary">
+                        <v-icon color="white" class="mr-2">mdi-account-plus</v-icon>
+                        <span class="text-white">Create an Account</span>
+                        <v-spacer />
+                        <v-btn icon variant="text" @click="showRolePicker = false">
+                            <v-icon color="white">mdi-close</v-icon>
+                        </v-btn>
+                    </v-card-title>
+
+                    <v-card-text class="pa-6">
+                        <p class="text-body-2 text-grey-darken-1 mb-5 text-center">
+                            Choose the type of account you'd like to create.
+                        </p>
+
+                        <!-- Student / Staff Option -->
+                        <v-card
+                            variant="outlined"
+                            rounded="lg"
+                            class="mb-4 role-option-card"
+                            @click="handleStudentStaffRegister"
+                            hover
+                        >
+                            <v-card-text class="d-flex align-center pa-4">
+                                <v-avatar color="primary" size="48" class="mr-4">
+                                    <v-icon color="white" size="24">mdi-school</v-icon>
+                                </v-avatar>
+                                <div class="flex-grow-1">
+                                    <div class="text-subtitle-1 font-weight-bold">Student / Staff / Faculty</div>
+                                    <div class="text-caption text-grey">Sign up with your SDCA Google account</div>
+                                </div>
+                                <v-icon color="grey" size="20">mdi-chevron-right</v-icon>
+                            </v-card-text>
+                        </v-card>
+
+                        <!-- Rescuer Option -->
+                        <v-card
+                            variant="outlined"
+                            rounded="lg"
+                            class="role-option-card"
+                            @click="handleRescuerRegister"
+                            hover
+                        >
+                            <v-card-text class="d-flex align-center pa-4">
+                                <v-avatar color="red-darken-1" size="48" class="mr-4">
+                                    <v-icon color="white" size="24">mdi-shield-account</v-icon>
+                                </v-avatar>
+                                <div class="flex-grow-1">
+                                    <div class="text-subtitle-1 font-weight-bold">External Rescuer</div>
+                                    <div class="text-caption text-grey">Register as an emergency responder</div>
+                                </div>
+                                <v-icon color="grey" size="20">mdi-chevron-right</v-icon>
+                            </v-card-text>
+                        </v-card>
+
+                        <p class="text-caption text-grey text-center mt-4">
+                            <v-icon size="14" class="mr-1">mdi-information-outline</v-icon>
+                            SDCA students, staff, and faculty must use their institutional Google account.
+                        </p>
+                    </v-card-text>
+                </v-card>
+            </v-dialog>
+
+            <!-- Rescuer Registration Dialog -->
+            <v-dialog v-model="showRescuerRegister" max-width="450" persistent>
+                <v-card rounded="lg">
+                    <v-card-title class="d-flex align-center pa-4" style="background: #C62828;">
+                        <v-icon color="white" class="mr-2">mdi-shield-account</v-icon>
+                        <span class="text-white">Rescuer Registration</span>
+                        <v-spacer />
+                        <v-btn icon variant="text" @click="closeRescuerRegister" :disabled="rescuerLoading">
+                            <v-icon color="white">mdi-close</v-icon>
+                        </v-btn>
+                    </v-card-title>
+
+                    <v-card-text class="pa-6">
+                        <!-- Step Indicator -->
+                        <div class="d-flex justify-center mb-4">
+                            <div class="d-flex align-center">
+                                <v-avatar :color="rescuerStep >= 1 ? 'red-darken-2' : 'grey-lighten-2'" size="28">
+                                    <span class="text-white text-caption font-weight-bold">1</span>
+                                </v-avatar>
+                                <div class="step-line" :class="{ 'active': rescuerStep >= 2 }" style="--active-color: #C62828;"></div>
+                                <v-avatar :color="rescuerStep >= 2 ? 'red-darken-2' : 'grey-lighten-2'" size="28">
+                                    <span :class="rescuerStep >= 2 ? 'text-white' : 'text-grey'" class="text-caption font-weight-bold">2</span>
+                                </v-avatar>
+                                <div class="step-line" :class="{ 'active': rescuerStep >= 3 }" style="--active-color: #C62828;"></div>
+                                <v-avatar :color="rescuerStep >= 3 ? 'red-darken-2' : 'grey-lighten-2'" size="28">
+                                    <span :class="rescuerStep >= 3 ? 'text-white' : 'text-grey'" class="text-caption font-weight-bold">3</span>
+                                </v-avatar>
+                            </div>
+                        </div>
+
+                        <!-- Step 1: Rescuer Details -->
+                        <div v-if="rescuerStep === 1">
+                            <p class="text-body-2 text-grey mb-4">
+                                Fill in your details to register as an external rescuer. Your registration will require admin approval.
+                            </p>
+
+                            <v-alert
+                                v-if="rescuerError"
+                                type="error"
+                                variant="tonal"
+                                class="mb-4"
+                                closable
+                                @click:close="rescuerError = ''"
+                            >
+                                {{ rescuerError }}
+                            </v-alert>
+
+                            <v-form ref="rescuerFormRef">
+                                <v-text-field
+                                    v-model="rescuerForm.first_name"
+                                    label="First Name"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    prepend-inner-icon="mdi-account"
+                                    :rules="[rules.required, rules.nameOnly]"
+                                    :disabled="rescuerLoading"
+                                    @input="filterNameInput('first_name')"
+                                    class="mb-1"
+                                />
+                                <v-text-field
+                                    v-model="rescuerForm.last_name"
+                                    label="Last Name"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    prepend-inner-icon="mdi-account"
+                                    :rules="[rules.required, rules.nameOnly]"
+                                    :disabled="rescuerLoading"
+                                    @input="filterNameInput('last_name')"
+                                    class="mb-1"
+                                />
+                                <v-text-field
+                                    v-model="rescuerForm.email"
+                                    label="Email Address"
+                                    type="email"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    prepend-inner-icon="mdi-email"
+                                    :rules="[rules.required, rules.email]"
+                                    :disabled="rescuerLoading"
+                                    hint="Any valid email address is accepted"
+                                    persistent-hint
+                                    class="mb-1"
+                                />
+                                <v-text-field
+                                    v-model="rescuerForm.phone"
+                                    label="Mobile Number"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    prepend-inner-icon="mdi-phone"
+                                    placeholder="09XX XXX XXXX"
+                                    :rules="[rules.required, rules.mobileNumber]"
+                                    :disabled="rescuerLoading"
+                                    @input="filterPhoneInput"
+                                    maxlength="11"
+                                    hint="Enter 11-digit number starting with 09"
+                                    persistent-hint
+                                    class="mb-1"
+                                />
+                                <v-text-field
+                                    v-model="rescuerForm.organization"
+                                    label="Organization / Affiliation"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    prepend-inner-icon="mdi-domain"
+                                    :rules="[rules.required]"
+                                    :disabled="rescuerLoading"
+                                    hint="e.g. BFP, Red Cross, MDRRMO, LGU"
+                                    persistent-hint
+                                />
+                            </v-form>
+                        </div>
+
+                        <!-- Step 2: OTP Verification -->
+                        <div v-else-if="rescuerStep === 2">
+                            <div class="text-center mb-4">
+                                <v-icon size="48" color="red-darken-2" class="mb-2">mdi-email-check</v-icon>
+                                <p class="text-body-2 text-grey">
+                                    We've sent a <strong>6-digit verification code</strong> to:
+                                </p>
+                                <p class="text-body-2 font-weight-bold" style="color: #C62828;">{{ rescuerForm.email }}</p>
+                            </div>
+
+                            <v-alert
+                                v-if="rescuerError"
+                                type="error"
+                                variant="tonal"
+                                class="mb-4"
+                                closable
+                                @click:close="rescuerError = ''"
+                            >
+                                {{ rescuerError }}
+                            </v-alert>
+
+                            <v-form @submit.prevent="verifyRescuerOtp" ref="rescuerOtpFormRef">
+                                <label class="text-caption font-weight-medium text-grey-darken-1 d-block mb-2 text-center">Enter Verification Code</label>
+                                <v-otp-input
+                                    v-model="rescuerOtp"
+                                    length="6"
+                                    variant="outlined"
+                                    :disabled="rescuerLoading"
+                                    class="mb-4"
+                                />
+                            </v-form>
+
+                            <p class="text-caption text-grey text-center">
+                                Didn't receive the code? 
+                                <v-btn 
+                                    variant="text" 
+                                    color="red-darken-2" 
+                                    size="small" 
+                                    @click="resendRescuerOtp"
+                                    :disabled="rescuerResendCooldown > 0 || rescuerLoading"
+                                >
+                                    {{ rescuerResendCooldown > 0 ? `Resend in ${rescuerResendCooldown}s` : 'Resend Code' }}
+                                </v-btn>
+                            </p>
+                        </div>
+
+                        <!-- Step 3: Success -->
+                        <div v-else-if="rescuerStep === 3" class="text-center py-4 success-state">
+                            <v-icon size="64" color="success" class="mb-4">mdi-check-circle</v-icon>
+                            <h3 class="text-h6 font-weight-bold mb-2">Registration Submitted!</h3>
+                            <p class="text-body-2 text-grey mb-4">
+                                Your email has been verified. We've sent a <strong>temporary password</strong> to your email.
+                            </p>
+                            <v-alert
+                                type="info"
+                                variant="tonal"
+                                class="mb-4 text-left"
+                                density="compact"
+                            >
+                                <div class="text-caption">
+                                    <v-icon size="16" class="mr-1">mdi-information</v-icon>
+                                    <strong>Next steps:</strong>
+                                    <ol class="mt-1 ml-2" style="line-height: 1.8;">
+                                        <li>Check your email for the temporary password</li>
+                                        <li>Wait for an admin to approve your account</li>
+                                        <li>Once approved, log in with your email and temporary password</li>
+                                        <li>You'll be asked to set a new password on first login</li>
+                                    </ol>
+                                </div>
+                            </v-alert>
+                            <v-alert
+                                type="warning"
+                                variant="tonal"
+                                class="text-left"
+                                density="compact"
+                            >
+                                <div class="text-caption">
+                                    <v-icon size="16" class="mr-1">mdi-clock-outline</v-icon>
+                                    Your account requires <strong>admin approval</strong> before you can log in. You will receive an email notification once approved.
+                                </div>
+                            </v-alert>
+                        </div>
+                    </v-card-text>
+
+                    <v-card-actions class="pa-4 pt-0">
+                        <!-- Success State Actions -->
+                        <template v-if="rescuerStep === 3">
+                            <v-spacer />
+                            <v-btn color="red-darken-2" @click="closeRescuerRegister">
+                                Back to Login
+                            </v-btn>
+                        </template>
+
+                        <!-- Step 1 Actions -->
+                        <template v-else-if="rescuerStep === 1">
+                            <v-btn variant="text" @click="closeRescuerRegister" :disabled="rescuerLoading">
+                                Cancel
+                            </v-btn>
+                            <v-spacer />
+                            <v-btn 
+                                color="red-darken-2" 
+                                @click="sendRescuerOtp"
+                                :loading="rescuerLoading"
+                            >
+                                Send Code
+                            </v-btn>
+                        </template>
+
+                        <!-- Step 2 Actions -->
+                        <template v-else-if="rescuerStep === 2">
+                            <v-btn variant="text" @click="rescuerStep = 1" :disabled="rescuerLoading">
+                                Back
+                            </v-btn>
+                            <v-spacer />
+                            <v-btn 
+                                color="red-darken-2" 
+                                @click="verifyRescuerOtp"
+                                :loading="rescuerLoading"
+                                :disabled="rescuerOtp.length !== 6"
+                            >
+                                Verify Email
+                            </v-btn>
+                        </template>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
+
             <!-- Toast Notification -->
             <v-snackbar v-model="showToast" :color="toastColor" location="top">
                 {{ toastMessage }}
@@ -681,6 +985,27 @@ const registerPassword = ref('');
 const registerConfirmPassword = ref('');
 const registerLoading = ref(false);
 
+// Role Picker state
+const showRolePicker = ref(false);
+
+// Rescuer Registration state
+const showRescuerRegister = ref(false);
+const rescuerStep = ref(1);
+const rescuerForm = ref({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    organization: '',
+});
+const rescuerOtp = ref('');
+const rescuerLoading = ref(false);
+const rescuerError = ref('');
+const rescuerFormRef = ref(null);
+const rescuerOtpFormRef = ref(null);
+const rescuerResendCooldown = ref(0);
+let rescuerCooldownInterval = null;
+
 // Handle Google OAuth login
 const handleGoogleLogin = async () => {
     isGoogleLoading.value = true;
@@ -743,6 +1068,14 @@ const rules = {
     hasNumber: (v) => /[0-9]/.test(v) || 'Must contain at least one number',
     hasSpecial: (v) => /[!@#$%^&*(),.?":{}|<>]/.test(v) || 'Must contain at least one special character',
     passwordMatch: (v) => v === newPassword.value || 'Passwords do not match',
+    nameOnly: (v) => !v || /^[a-zA-Z\s.,'\-ñÑ]+$/.test(v) || 'Name must contain letters only (no numbers or special characters)',
+    mobileNumber: (v) => {
+        if (!v) return 'Mobile number is required';
+        const cleaned = v.replace(/[^0-9]/g, '');
+        if (cleaned.length !== 11) return 'Enter exactly 11 digits (e.g., 09171234567)';
+        if (!cleaned.startsWith('09')) return 'Number must start with 09';
+        return true;
+    },
 };
 
 // Password strength checker
@@ -778,6 +1111,13 @@ rules.sdcaEmail = (v) => {
     if (!v) return true;
     const domain = v.split('@')[1]?.toLowerCase();
     return domain === 'sdca.edu.ph' || 'Only SDCA email addresses (@sdca.edu.ph) are allowed';
+};
+
+// Add phone number validation rule
+rules.phone = (v) => {
+    if (!v) return 'Phone number is required';
+    const cleaned = v.replace(/[^0-9]/g, '');
+    return /^09[0-9]{9}$/.test(cleaned) || 'Enter a valid 11-digit phone number (e.g., 09171234567)';
 };
 
 // Check for existing session on mount
@@ -1261,6 +1601,154 @@ const closeRegister = () => {
         registerCooldownInterval = null;
     }
 };
+
+// Role Picker handlers
+const handleStudentStaffRegister = () => {
+    showRolePicker.value = false;
+    // Trigger Google sign-in for SDCA students/staff/faculty
+    handleGoogleLogin();
+};
+
+const handleRescuerRegister = () => {
+    showRolePicker.value = false;
+    showRescuerRegister.value = true;
+};
+
+// Input filter: strip numbers from name fields in real-time
+const filterNameInput = (field) => {
+    if (rescuerForm.value[field]) {
+        rescuerForm.value[field] = rescuerForm.value[field].replace(/[0-9]/g, '');
+    }
+};
+
+// Input filter: strip non-digits from phone field in real-time
+const filterPhoneInput = () => {
+    if (rescuerForm.value.phone) {
+        rescuerForm.value.phone = rescuerForm.value.phone.replace(/[^0-9]/g, '');
+    }
+};
+
+// Rescuer Registration handlers
+const sendRescuerOtp = async () => {
+    if (rescuerFormRef.value) {
+        const { valid } = await rescuerFormRef.value.validate();
+        if (!valid) return;
+    }
+
+    rescuerError.value = '';
+    rescuerLoading.value = true;
+
+    try {
+        const response = await fetch('/api/auth/rescuer-register-send-otp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+            },
+            body: JSON.stringify({
+                first_name: rescuerForm.value.first_name.trim(),
+                last_name: rescuerForm.value.last_name.trim(),
+                email: rescuerForm.value.email.trim(),
+                phone: rescuerForm.value.phone.replace(/[^0-9]/g, ''),
+                organization: rescuerForm.value.organization.trim(),
+            }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            rescuerStep.value = 2;
+            startRescuerResendCooldown();
+            toastMessage.value = 'Verification code sent to your email!';
+            toastColor.value = 'success';
+            showToast.value = true;
+        } else {
+            if (data.errors) {
+                const firstError = Object.values(data.errors)[0];
+                rescuerError.value = Array.isArray(firstError) ? firstError[0] : firstError;
+            } else {
+                rescuerError.value = data.message || 'Failed to send verification code. Please try again.';
+            }
+        }
+    } catch (err) {
+        console.error('Send rescuer OTP error:', err);
+        rescuerError.value = 'An error occurred. Please try again later.';
+    } finally {
+        rescuerLoading.value = false;
+    }
+};
+
+const verifyRescuerOtp = async () => {
+    if (rescuerOtp.value.length !== 6) {
+        rescuerError.value = 'Please enter the 6-digit code';
+        return;
+    }
+
+    rescuerError.value = '';
+    rescuerLoading.value = true;
+
+    try {
+        const response = await fetch('/api/auth/rescuer-register-verify-otp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+            },
+            body: JSON.stringify({
+                email: rescuerForm.value.email.trim(),
+                otp: rescuerOtp.value,
+            }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            rescuerStep.value = 3;
+            toastMessage.value = 'Email verified! Check your email for the temporary password.';
+            toastColor.value = 'success';
+            showToast.value = true;
+        } else {
+            rescuerError.value = data.message || 'Invalid verification code. Please try again.';
+        }
+    } catch (err) {
+        console.error('Verify rescuer OTP error:', err);
+        rescuerError.value = 'An error occurred. Please try again later.';
+    } finally {
+        rescuerLoading.value = false;
+    }
+};
+
+const resendRescuerOtp = async () => {
+    if (rescuerResendCooldown.value > 0) return;
+    await sendRescuerOtp();
+};
+
+const startRescuerResendCooldown = () => {
+    rescuerResendCooldown.value = 60;
+    if (rescuerCooldownInterval) clearInterval(rescuerCooldownInterval);
+    rescuerCooldownInterval = setInterval(() => {
+        rescuerResendCooldown.value--;
+        if (rescuerResendCooldown.value <= 0) {
+            clearInterval(rescuerCooldownInterval);
+            rescuerCooldownInterval = null;
+        }
+    }, 1000);
+};
+
+const closeRescuerRegister = () => {
+    showRescuerRegister.value = false;
+    rescuerForm.value = { first_name: '', last_name: '', email: '', phone: '', organization: '' };
+    rescuerError.value = '';
+    rescuerStep.value = 1;
+    rescuerOtp.value = '';
+    rescuerResendCooldown.value = 0;
+    if (rescuerCooldownInterval) {
+        clearInterval(rescuerCooldownInterval);
+        rescuerCooldownInterval = null;
+    }
+};
 </script>
 
 <style scoped>
@@ -1542,5 +2030,23 @@ const closeRegister = () => {
     z-index: 10;
     background-color: white;
     min-height: 200px;
+}
+
+/* Role Picker Option Cards */
+.role-option-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-color: #e0e0e0 !important;
+}
+
+.role-option-card:hover {
+    border-color: #3674B5 !important;
+    box-shadow: 0 4px 16px rgba(54, 116, 181, 0.15);
+    transform: translateY(-1px);
+}
+
+/* Rescuer step line active color override */
+.step-line.active[style*="--active-color"] {
+    background-color: var(--active-color, #3674B5) !important;
 }
 </style>

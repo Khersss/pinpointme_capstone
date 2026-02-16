@@ -330,6 +330,11 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/rescuers/{id}', [AdminController::class, 'updateUser'])->name('rescuers.update');
         Route::delete('/rescuers/{id}', [AdminController::class, 'deleteUser'])->name('rescuers.delete');
         
+        // Rescuer approval management
+        Route::get('/rescuers/pending', [AdminController::class, 'pendingRescuers'])->name('rescuers.pending');
+        Route::post('/rescuers/{id}/approve', [AdminController::class, 'approveRescuer'])->name('rescuers.approve');
+        Route::post('/rescuers/{id}/decline', [AdminController::class, 'declineRescuer'])->name('rescuers.decline');
+        
         // Buildings management
         Route::get('/buildings', [AdminController::class, 'buildings'])->name('buildings');
         

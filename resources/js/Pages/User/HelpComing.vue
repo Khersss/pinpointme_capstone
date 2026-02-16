@@ -106,7 +106,7 @@
                                     <!-- View Map Button -->
                                     <v-btn
                                         variant="flat"
-                                        color="primary"
+                                        color="#3674B5"
                                         size="large"
                                         class="mt-4 view-map-btn"
                                         block
@@ -127,19 +127,20 @@
                             </v-card-text>
                         </v-card>
 
-                        <!-- Rescuer Card (if assigned) -->
-                        <v-card v-if="rescue.assigned_rescuer || rescue.rescuer" class="mb-3 rounded-xl rescuer-card" elevation="2">
+                        <!-- Rescuer Card (if assigned) or Self-Safe Card -->
+                        <v-card v-if="rescue.assigned_rescuer || rescue.rescuer || (rescue.status === 'rescued' || rescue.status === 'safe')" class="mb-3 rounded-xl rescuer-card" elevation="2">
                             <div class="card-header-icon">
                                 <v-avatar color="success" size="40">
-                                    <v-icon color="white" size="20">mdi-account-check</v-icon>
+                                    <v-icon color="white" size="20">{{ (rescue.assigned_rescuer || rescue.rescuer) ? 'mdi-account-check' : 'mdi-shield-check' }}</v-icon>
                                 </v-avatar>
                                 <div class="card-header-text">
-                                    <h3>{{ rescue.status === 'rescued' || rescue.status === 'safe' ? 'Your Rescuer' : 'Help is Coming' }}</h3>
-                                    <p>{{ rescue.status === 'rescued' || rescue.status === 'safe' ? 'Rescue completed' : 'Rescuer assigned to help you' }}</p>
+                                    <h3>{{ (rescue.assigned_rescuer || rescue.rescuer) ? (rescue.status === 'rescued' || rescue.status === 'safe' ? 'Your Rescuer' : 'Help is Coming') : (rescue.first_name || rescue.last_name ? 'Samaritan Report - Safe' : 'Marked Safe by Yourself') }}</h3>
+                                    <p>{{ (rescue.assigned_rescuer || rescue.rescuer) ? (rescue.status === 'rescued' || rescue.status === 'safe' ? 'Rescue completed' : 'Rescuer assigned to help you') : (rescue.first_name || rescue.last_name ? 'Person marked as safe by reporter' : 'You have marked yourself as safe') }}</p>
                                 </div>
                             </div>
                             <v-card-text class="pt-0">
-                                <div class="rescuer-info" @click="showRescuerProfile = true">
+                                <!-- Show rescuer info if rescuer is assigned -->
+                                <div v-if="rescue.assigned_rescuer || rescue.rescuer" class="rescuer-info" @click="showRescuerProfile = true">
                                     <v-avatar 
                                         size="60" 
                                         color="success"
@@ -158,11 +159,28 @@
                                     </div>
                                     <v-icon color="grey" size="20">mdi-chevron-right</v-icon>
                                 </div>
+                                
+                                <!-- Show self-safe message if no rescuer assigned -->
+                                <div v-else class="self-safe-info">
+                                    <v-avatar size="60" color="success">
+                                        <v-icon color="white" size="28">mdi-shield-check</v-icon>
+                                    </v-avatar>
+                                    <div class="self-safe-details">
+                                        <h4 v-if="rescue.first_name || rescue.last_name">{{ getPersonInNeedName() }} - Marked Safe</h4>
+                                        <h4 v-else>Emergency Resolved</h4>
+                                        <p v-if="rescue.first_name || rescue.last_name">This person has been marked as safe by the Samaritan reporter.</p>
+                                        <p v-else>You've successfully marked yourself as safe without requiring rescuer assistance.</p>
+                                        <v-chip color="success" variant="tonal" size="x-small">
+                                            <v-icon start size="12">mdi-check-circle</v-icon>
+                                            {{ (rescue.first_name || rescue.last_name) ? 'Samaritan Report - Safe' : 'Self-Resolved' }}
+                                        </v-chip>
+                                    </div>
+                                </div>
                             </v-card-text>
                         </v-card>
 
                         <!-- Emergency Details -->
-                        <v-card v-if="rescue.description || rescue.urgency_level || rescue.mobility_status || rescue.injuries" class="mb-3 rounded-xl emergency-card" elevation="2">
+                        <v-card v-if="rescue.description || rescue.urgency_level || rescue.mobility_status || rescue.injuries || rescue.status === 'rescued' || rescue.status === 'safe'" class="mb-3 rounded-xl emergency-card" elevation="2">
                             <div class="card-header-icon">
                                 <v-avatar color="error" size="40">
                                     <v-icon color="white" size="20">mdi-alert-circle</v-icon>
@@ -213,11 +231,12 @@
                                     </div>
 
                                     <!-- Urgency & Mobility Row -->
-                                    <div class="detail-row" v-if="rescue.urgency_level || rescue.mobility_status || rescue.emergency_type">
-                                        <div v-if="rescue.urgency_level" class="detail-item half">
+                                    <div class="detail-row" v-if="rescue.urgency_level || rescue.mobility_status || rescue.emergency_type || rescue.status === 'rescued' || rescue.status === 'safe'">
+                                        <div v-if="rescue.urgency_level || rescue.status === 'rescued' || rescue.status === 'safe'" class="detail-item half">
                                             <span class="detail-label">Urgency Level</span>
                                             <div class="detail-chip-value">
                                                 <v-chip 
+                                                    v-if="rescue.urgency_level"
                                                     :color="getUrgencyColor(rescue.urgency_level)" 
                                                     variant="flat" 
                                                     size="small"
@@ -225,16 +244,18 @@
                                                     <v-icon start size="12">{{ getUrgencyIcon(rescue.urgency_level) }}</v-icon>
                                                     {{ rescue.urgency_level?.toUpperCase() }}
                                                 </v-chip>
+                                                <span v-else class="text-grey">Not specified</span>
                                             </div>
                                         </div>
 
-                                        <div v-if="rescue.mobility_status" class="detail-item half">
+                                        <div v-if="rescue.mobility_status || rescue.status === 'rescued' || rescue.status === 'safe'" class="detail-item half">
                                             <span class="detail-label">Mobility Status</span>
                                             <div class="detail-chip-value">
-                                                <v-chip color="info" variant="flat" size="small">
+                                                <v-chip v-if="rescue.mobility_status" color="info" variant="flat" size="small">
                                                     <v-icon start size="12">mdi-wheelchair-accessibility</v-icon>
                                                     {{ rescue.mobility_status }}
                                                 </v-chip>
+                                                <span v-else class="text-grey">Not specified</span>
                                             </div>
                                         </div>
 
@@ -250,10 +271,13 @@
                                     </div>
 
                                     <!-- Injuries -->
-                                    <div v-if="rescue.injuries" class="detail-item">
+                                    <div v-if="rescue.injuries || rescue.status === 'rescued' || rescue.status === 'safe'" class="detail-item">
                                         <span class="detail-label">Injuries Reported</span>
-                                        <p class="detail-value">
+                                        <p v-if="rescue.injuries" class="detail-value">
                                             {{ rescue.injuries }}
+                                        </p>
+                                        <p v-else class="detail-value text-grey">
+                                            No injuries reported
                                         </p>
                                         <div v-if="rescue.original_injuries" class="translation-info mt-1">
                                             <v-chip size="x-small" color="info" variant="tonal" class="mb-1">
@@ -443,8 +467,8 @@
                             <div class="secondary-actions">
                                 <div class="action-row">
                                     <v-btn
-                                        variant="tonal"
-                                        color="primary"
+                                        variant="flat"
+                                        color="#3674B5"
                                         size="large"
                                         rounded="xl"
                                         @click="openChat"
@@ -478,19 +502,17 @@
                             <h3 class="text-h6 mb-1">Request Cancelled</h3>
                             <p class="text-grey mb-1" v-if="rescue.cancellation_reason">Reason: {{ rescue.cancellation_reason }}</p>
                             <p class="text-grey mb-3">You can submit a new rescue request if needed.</p>
-                            <v-btn color="primary" variant="tonal" class="rounded-xl" @click="handleGoBack">
-                                Return to Dashboard
-                            </v-btn>
                         </div>
                         
                         <!-- Completed State Actions -->
-                        <div v-else class="text-center py-4" style="padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);">
+                        <div v-else class="text-center py-4" style="padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 100px); margin-bottom: 60px;">
                             <v-icon size="56" color="success" class="mb-2">mdi-check-circle</v-icon>
                             <h3 class="text-h6 mb-1">Rescue Complete</h3>
+                            <p v-if="rescue.first_name || rescue.last_name" class="text-grey mb-1" style="font-weight: 600;">
+                                <v-icon size="16" class="mr-1">mdi-account-alert</v-icon>
+                                {{ getReporterName() }}
+                            </p>
                             <p class="text-grey mb-3">Thank you for using PinPointMe. Stay safe!</p>
-                            <v-btn color="primary" variant="tonal" class="rounded-xl" @click="handleGoBack">
-                                Return to Dashboard
-                            </v-btn>
                         </div>
                     </div>
                 </template>
@@ -500,9 +522,6 @@
                     <v-icon size="80" color="grey-lighten-1">mdi-alert-circle-outline</v-icon>
                     <h3>No Active Rescue Request</h3>
                     <p>You don't have an active rescue request</p>
-                    <v-btn color="primary" class="mt-4 rounded-xl" @click="handleGoBack">
-                        Go to Dashboard
-                    </v-btn>
                 </div>
             </v-container>
 
@@ -2102,6 +2121,36 @@ const handleGoBack = () => {
     font-weight: 500;
 }
 
+/* Self-Safe Info (when no rescuer assigned) */
+.rescuer-card .self-safe-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px;
+    background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+    border-radius: 16px;
+    border: 2px solid rgba(76, 175, 80, 0.2);
+}
+
+.self-safe-details {
+    flex: 1;
+}
+
+.self-safe-details h4 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1b5e20;
+    margin: 0 0 2px;
+    letter-spacing: 0.3px;
+}
+
+.self-safe-details p {
+    font-size: 0.85rem;
+    color: #2e7d32;
+    margin: 0 0 6px;
+    font-weight: 500;
+}
+
 /* Emergency Details */
 .emergency-details {
     display: flex;
@@ -2280,7 +2329,7 @@ const handleGoBack = () => {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
     margin-top: 8px;
-    margin-bottom: 25px;
+    margin-bottom: 100px;
 }
 
 .action-container:hover {

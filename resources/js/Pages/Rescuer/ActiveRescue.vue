@@ -112,14 +112,16 @@
                         </div>
                     </div>
                     <v-btn
-                        variant="tonal"
-                        color="primary"
-                        size="small"
+                        variant="flat"
+                        color="#3674B5"
+                        size="large"
                         class="map-btn"
+                        block
+                        elevation="4"
                         @click="viewMap"
                     >
-                        <v-icon start size="18">mdi-map</v-icon>
-                        View Map
+                        <v-icon start size="20">mdi-map-marker-radius</v-icon>
+                        View Floor Map
                     </v-btn>
                 </div>
 
@@ -376,8 +378,8 @@
                         <div class="secondary-actions">
                             <div class="action-row">
                                 <v-btn
-                                    variant="tonal"
-                                    color="primary"
+                                    variant="flat"
+                                    color="#3674B5"
                                     size="large"
                                     rounded="xl"
                                     @click="openChat"
@@ -1869,7 +1871,7 @@ onUnmounted(() => {
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
-    margin-bottom: 60px;
+    margin-bottom: 100px;
 }
 
 .action-container:hover {

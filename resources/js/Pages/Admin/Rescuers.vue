@@ -108,7 +108,78 @@
                             </v-card-text>
                         </v-card>
                     </v-col>
+                    <v-col cols="6" sm="6" md="2.4">
+                        <v-card class="stat-card-white" rounded="lg" elevation="2" :class="{ 'pending-highlight': counts.pending > 0 }">
+                            <v-card-text class="text-center py-4">
+                                <p class="text-grey text-caption mb-1">Pending Approval</p>
+                                <h2 class="text-h4 font-weight-bold text-orange">{{ counts.pending || 0 }}</h2>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
                 </v-row>
+
+                <!-- Pending Rescuer Applications -->
+                <v-card v-if="pendingApplications.length > 0" rounded="lg" elevation="2" class="mb-6 pending-card">
+                    <v-card-title class="d-flex align-center justify-space-between pa-4">
+                        <div class="d-flex align-center">
+                            <v-icon start color="orange-darken-2">mdi-account-clock</v-icon>
+                            <span class="font-weight-bold">Pending Rescuer Applications</span>
+                            <v-chip size="small" color="orange" variant="flat" class="ml-2">{{ pendingApplications.length }}</v-chip>
+                        </div>
+                        <v-btn variant="text" size="small" color="primary" @click="pendingExpanded = !pendingExpanded">
+                            {{ pendingExpanded ? 'Collapse' : 'Expand' }}
+                            <v-icon end>{{ pendingExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+                        </v-btn>
+                    </v-card-title>
+                    <v-divider></v-divider>
+                    <v-expand-transition>
+                        <div v-show="pendingExpanded">
+                            <v-card-text class="pa-4">
+                                <div v-for="app in pendingApplications" :key="app.id" class="pending-item pa-4 mb-3 rounded-lg">
+                                    <div class="d-flex flex-wrap align-center justify-space-between gap-3">
+                                        <div class="d-flex align-center">
+                                            <v-avatar color="orange-darken-1" size="42" class="mr-3">
+                                                <span class="text-white font-weight-medium text-caption">{{ (app.first_name?.[0] || '') + (app.last_name?.[0] || '') }}</span>
+                                            </v-avatar>
+                                            <div>
+                                                <div class="font-weight-bold text-subtitle-2">{{ app.first_name }} {{ app.last_name }}</div>
+                                                <div class="text-caption text-grey">{{ app.email }}</div>
+                                                <div class="d-flex align-center gap-2 mt-1">
+                                                    <v-chip v-if="app.organization" size="x-small" color="blue-grey" variant="tonal" prepend-icon="mdi-domain">
+                                                        {{ app.organization }}
+                                                    </v-chip>
+                                                    <v-chip v-if="app.phone" size="x-small" color="grey" variant="tonal" prepend-icon="mdi-phone">
+                                                        {{ app.phone }}
+                                                    </v-chip>
+                                                    <v-chip v-if="app.is_external" size="x-small" color="orange" variant="tonal" prepend-icon="mdi-earth">
+                                                        External
+                                                    </v-chip>
+                                                    <v-chip v-if="app.otp_verified" size="x-small" color="success" variant="tonal" prepend-icon="mdi-email-check">
+                                                        Email Verified
+                                                    </v-chip>
+                                                    <v-chip v-else size="x-small" color="warning" variant="tonal" prepend-icon="mdi-email-alert">
+                                                        Unverified
+                                                    </v-chip>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-center gap-2">
+                                            <span class="text-caption text-grey mr-2">{{ formatDateTime(app.created_at) }}</span>
+                                            <v-btn color="success" size="small" variant="flat" :loading="approvalLoading === app.id" @click="approveRescuerApplication(app)">
+                                                <v-icon start size="small">mdi-check</v-icon>
+                                                Approve
+                                            </v-btn>
+                                            <v-btn color="error" size="small" variant="outlined" :loading="approvalLoading === app.id" @click="openDeclineDialog(app)">
+                                                <v-icon start size="small">mdi-close</v-icon>
+                                                Decline
+                                            </v-btn>
+                                        </div>
+                                    </div>
+                                </div>
+                            </v-card-text>
+                        </div>
+                    </v-expand-transition>
+                </v-card>
 
                 <!-- Main Table Card -->
                 <v-card rounded="lg" elevation="2">
@@ -794,6 +865,44 @@
             </v-card>
         </v-dialog>
 
+        <!-- Decline Rescuer Application Dialog -->
+        <v-dialog v-model="declineDialog" max-width="450">
+            <v-card rounded="lg">
+                <v-card-title class="text-error pa-4">
+                    <v-icon start color="error">mdi-account-cancel</v-icon>
+                    Decline Rescuer Application
+                </v-card-title>
+                <v-divider></v-divider>
+                <v-card-text class="pa-4">
+                    <p class="mb-3">
+                        Are you sure you want to decline the application from
+                        <strong>{{ declineTarget?.first_name }} {{ declineTarget?.last_name }}</strong>?
+                    </p>
+                    <p class="text-caption text-grey mb-3">
+                        The applicant will receive an email notification and their account will be removed.
+                    </p>
+                    <v-textarea
+                        v-model="declineReason"
+                        label="Reason for declining (optional)"
+                        variant="outlined"
+                        density="compact"
+                        rows="3"
+                        placeholder="Provide a reason that will be sent to the applicant..."
+                        hide-details
+                    />
+                </v-card-text>
+                <v-divider></v-divider>
+                <v-card-actions class="pa-4">
+                    <v-spacer />
+                    <v-btn variant="text" @click="declineDialog = false">Cancel</v-btn>
+                    <v-btn color="error" :loading="approvalLoading === declineTarget?.id" @click="declineRescuerApplication">
+                        <v-icon start>mdi-close</v-icon>
+                        Decline
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
         <!-- Snackbar -->
         <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000" location="bottom right">
             {{ snackbarText }}
@@ -931,6 +1040,105 @@ const rescuersList = ref(props.rescuers?.data || []);
 const counts = ref(props.counts);
 const auditTrail = ref(props.auditTrail || []);
 
+// Pending Rescuer Applications
+const pendingApplications = ref([]);
+const pendingExpanded = ref(true);
+const approvalLoading = ref(null);
+const declineDialog = ref(false);
+const declineTarget = ref(null);
+const declineReason = ref('');
+
+// Fetch pending rescuer applications
+const fetchPendingApplications = async () => {
+    try {
+        const response = await fetch('/admin/rescuers/pending', {
+            headers: { 
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+            }
+        });
+        const data = await response.json();
+        if (data.success) {
+            pendingApplications.value = data.data || [];
+        }
+    } catch (error) {
+        console.error('Error fetching pending applications:', error);
+    }
+};
+
+// Approve rescuer application
+const approveRescuerApplication = async (app) => {
+    approvalLoading.value = app.id;
+    try {
+        const response = await fetch(`/admin/rescuers/${app.id}/approve`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+            }
+        });
+        const data = await response.json();
+        if (data.success) {
+            showSnackbar(`${app.first_name} ${app.last_name} has been approved as a rescuer!`, 'success');
+            pendingApplications.value = pendingApplications.value.filter(a => a.id !== app.id);
+            fetchRescuers(); // Refresh the rescuer list
+        } else {
+            showSnackbar(data.message || 'Error approving rescuer', 'error');
+        }
+    } catch (error) {
+        console.error('Error approving rescuer:', error);
+        showSnackbar('Error approving rescuer', 'error');
+    } finally {
+        approvalLoading.value = null;
+    }
+};
+
+// Open decline dialog
+const openDeclineDialog = (app) => {
+    declineTarget.value = app;
+    declineReason.value = '';
+    declineDialog.value = true;
+};
+
+// Decline rescuer application
+const declineRescuerApplication = async () => {
+    if (!declineTarget.value) return;
+    const app = declineTarget.value;
+    approvalLoading.value = app.id;
+    try {
+        const response = await fetch(`/admin/rescuers/${app.id}/decline`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+            },
+            body: JSON.stringify({ reason: declineReason.value || undefined })
+        });
+        const data = await response.json();
+        if (data.success) {
+            showSnackbar(`Application from ${app.first_name} ${app.last_name} has been declined`, 'warning');
+            pendingApplications.value = pendingApplications.value.filter(a => a.id !== app.id);
+            declineDialog.value = false;
+            fetchRescuers();
+        } else {
+            showSnackbar(data.message || 'Error declining rescuer', 'error');
+        }
+    } catch (error) {
+        console.error('Error declining rescuer:', error);
+        showSnackbar('Error declining rescuer', 'error');
+    } finally {
+        approvalLoading.value = null;
+    }
+};
+
+// Load pending applications on mount
+import { onMounted } from 'vue';
+onMounted(() => {
+    fetchPendingApplications();
+});
+
 // Activity pagination
 const activityPage = ref(1);
 const activityPerPage = ref(5);
@@ -1040,7 +1248,8 @@ const statusOptions = [
     { label: 'Available', value: 'available' },
     { label: 'On Rescue', value: 'on_rescue' },
     { label: 'Off Duty', value: 'off_duty' },
-    { label: 'Unavailable', value: 'unavailable' }
+    { label: 'Unavailable', value: 'unavailable' },
+    { label: 'Pending Approval', value: 'pending' }
 ];
 
 // Methods
@@ -1592,5 +1801,35 @@ const formatAction = (action) => {
         width: 100%;
         justify-content: flex-end;
     }
+}
+
+/* Pending Applications */
+.pending-card {
+    border-left: 4px solid #E65100;
+}
+
+.pending-item {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.04), rgba(230, 81, 0, 0.03));
+    border: 1px solid rgba(255, 152, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+.pending-item:hover {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.08), rgba(230, 81, 0, 0.05));
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.12);
+}
+
+.pending-highlight {
+    border: 2px solid #E65100 !important;
+    animation: pulse-border 2s infinite;
+}
+
+.text-orange {
+    color: #E65100 !important;
+}
+
+@keyframes pulse-border {
+    0%, 100% { border-color: #E65100; }
+    50% { border-color: #FF9800; }
 }
 </style>

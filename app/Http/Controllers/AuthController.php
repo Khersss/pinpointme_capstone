@@ -96,6 +96,7 @@ class AuthController extends Controller
         $user->email_verified_at = now();
         $user->verification_token = null;
         $user->status = 'active';
+        $user->is_able_to_login = true;
         $user->save();
         return Inertia::render('User/GoogleVerifyResult', [
             'success' => true,
@@ -140,6 +141,13 @@ class AuthController extends Controller
             $user = User::where('email', $credentials['email'])->first();
             
             if ($user && Hash::check($credentials['password'], $user->password)) {
+                // Block unverified external rescuers
+                if ($user->role === 'rescuer' && $user->status === 'otp_pending') {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Please complete email verification first. Check your inbox for the OTP code.'
+                    ], 403);
+                }
                 // Create Sanctum token
                 $token = $user->createToken('api-token')->plainTextToken;
                 
@@ -204,6 +212,13 @@ class AuthController extends Controller
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
                 return redirect('/login')->withErrors(['email' => 'Please verify your SDCA Google account first. Check your inbox for the verification link.']);
+            }
+            // Block external rescuers still in OTP verification (not yet email-verified)
+            if ($user->role === 'rescuer' && $user->status === 'otp_pending') {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                return redirect('/login')->withErrors(['email' => 'Please complete email verification first. Check your inbox for the OTP code.']);
             }
             // Redirect based on user role
             if ($user->isAdmin == 1 || $user->isAdmin === true || $user->role === 'admin') {
@@ -461,8 +476,14 @@ class AuthController extends Controller
         }
 
         // Activate account and set new password
-        // For rescuers, set status to 'available'; for others, set to 'active'
-        $newStatus = $user->role === 'rescuer' ? 'available' : 'active';
+        // For external pending rescuers — keep 'pending' so admin must still approve
+        if ($user->role === 'rescuer' && $user->status === 'pending') {
+            $newStatus = 'pending'; // Must wait for admin approval
+        } elseif ($user->role === 'rescuer') {
+            $newStatus = 'available';
+        } else {
+            $newStatus = 'active';
+        }
         
         $user->update([
             'password' => Hash::make($request->password),
@@ -475,46 +496,81 @@ class AuthController extends Controller
             'password_changed_at' => Carbon::now(),
         ]);
         
-        // Send congratulatory email
+        // Send appropriate email based on status
         try {
-            Mail::send([], [], function ($message) use ($user) {
-                $message->to($user->email)
-                    ->subject('Welcome to PinPointMe - Account Activated!')
-                    ->html("
-                        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
-                            <div style='background: linear-gradient(135deg, #1976D2, #0D47A1); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;'>
-                                <h1 style='color: white; margin: 0;'>🎉 Welcome to PinPointMe!</h1>
+            if ($newStatus === 'pending') {
+                // Pending rescuer — password set but still awaiting admin approval
+                Mail::send([], [], function ($message) use ($user) {
+                    $message->to($user->email)
+                        ->subject('PinPointMe - Password Set Successfully')
+                        ->html("
+                            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                                <div style='background: linear-gradient(135deg, #FF9800, #F57C00); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;'>
+                                    <h1 style='color: white; margin: 0;'>Password Set!</h1>
+                                    <p style='color: rgba(255,255,255,0.9); margin: 10px 0 0 0;'>Awaiting Admin Approval</p>
+                                </div>
+                                <div style='background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;'>
+                                    <h2 style='color: #333;'>Hi {$user->first_name}!</h2>
+                                    <p style='color: #666; line-height: 1.6;'>Your password has been set successfully. However, your rescuer account is still <strong>pending admin approval</strong>.</p>
+                                    <div style='background: #fff3e0; border-left: 4px solid #FF9800; padding: 15px; margin: 20px 0; border-radius: 4px;'>
+                                        <p style='margin: 0; color: #e65100;'>
+                                            <strong>Account Status:</strong> Pending Approval<br>
+                                            You will receive an email notification once an admin has reviewed and approved your application.
+                                        </p>
+                                    </div>
+                                    <p style='color: #666; line-height: 1.6;'>You can log in to check your approval status, but full access will be granted only after approval.</p>
+                                </div>
+                                <div style='background: #333; padding: 20px; text-align: center;'>
+                                    <p style='color: #ccc; margin: 0; font-size: 14px;'>PinPointMe Emergency Rescue System</p>
+                                </div>
                             </div>
-                            <div style='background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;'>
-                                <h2 style='color: #2E7D32;'>Congratulations, {$user->first_name}!</h2>
-                                <p style='color: #333; line-height: 1.6;'>
-                                    Your account has been successfully activated. You're now ready to use the PinPointMe Emergency Response System.
-                                </p>
-                                <div style='background: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px; margin: 20px 0; border-radius: 4px;'>
-                                    <p style='margin: 0; color: #2E7D32;'>
-                                        <strong>✓ Account Status:</strong> " . ucfirst($newStatus) . "<br>
-                                        <strong>✓ Email:</strong> {$user->email}<br>
-                                        <strong>✓ Role:</strong> " . ucfirst($user->role) . "
+                        ");
+                });
+            } else {
+                // Fully activated account
+                Mail::send([], [], function ($message) use ($user, $newStatus) {
+                    $message->to($user->email)
+                        ->subject('Welcome to PinPointMe - Account Activated!')
+                        ->html("
+                            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                                <div style='background: linear-gradient(135deg, #1976D2, #0D47A1); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;'>
+                                    <h1 style='color: white; margin: 0;'>🎉 Welcome to PinPointMe!</h1>
+                                </div>
+                                <div style='background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;'>
+                                    <h2 style='color: #2E7D32;'>Congratulations, {$user->first_name}!</h2>
+                                    <p style='color: #333; line-height: 1.6;'>
+                                        Your account has been successfully activated. You're now ready to use the PinPointMe Emergency Response System.
                                     </p>
+                                    <div style='background: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px; margin: 20px 0; border-radius: 4px;'>
+                                        <p style='margin: 0; color: #2E7D32;'>
+                                            <strong>✓ Account Status:</strong> " . ucfirst($newStatus) . "<br>
+                                            <strong>✓ Email:</strong> {$user->email}<br>
+                                            <strong>✓ Role:</strong> " . ucfirst($user->role) . "
+                                        </p>
+                                    </div>
+                                    <p style='color: #333; line-height: 1.6;'>
+                                        You can now log in to the system and access all the features available to your role.
+                                    </p>
+                                    <div style='text-align: center; margin-top: 30px;'>
+                                        <a href='https://pinpointme.app/login' style='background: linear-gradient(135deg, #1976D2, #0D47A1); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold;'>
+                                            Login to PinPointMe
+                                        </a>
+                                    </div>
                                 </div>
-                                <p style='color: #333; line-height: 1.6;'>
-                                    You can now log in to the system and access all the features available to your role.
-                                </p>
-                                <div style='text-align: center; margin-top: 30px;'>
-                                    <a href='https://pinpointme.app/login' style='background: linear-gradient(135deg, #1976D2, #0D47A1); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold;'>
-                                        Login to PinPointMe
-                                    </a>
-                                </div>
-                                <p style='color: #666; font-size: 12px; margin-top: 30px; text-align: center;'>
-                                    If you have any questions, please contact support at support@sdca.edu.ph
-                                </p>
                             </div>
-                        </div>
-                    ");
-            });
+                        ");
+                });
+            }
         } catch (\Exception $e) {
-            // Log email error but don't fail the activation
             \Log::error('Failed to send activation email: ' . $e->getMessage());
+        }
+
+        // Return appropriate message based on status
+        if ($newStatus === 'pending') {
+            return response()->json([
+                'success' => true,
+                'message' => 'Password set successfully! Your account is awaiting admin approval.',
+            ]);
         }
 
         return response()->json([
@@ -1199,8 +1255,9 @@ class AuthController extends Controller
             'otp_verified' => false,
         ];
         
-        // For rescuers, set status to 'available' after first password change
-        if ($user->role === 'rescuer' && ($user->status === 'pending' || $user->status === 'inactive' || !$user->password_changed_at)) {
+        // For rescuers, only auto-activate if not pending admin approval
+        // External rescuers with 'pending' status must wait for admin approval
+        if ($user->role === 'rescuer' && ($user->status === 'inactive' || (!$user->password_changed_at && $user->status !== 'pending'))) {
             $updateData['status'] = 'available';
         }
         
@@ -1209,9 +1266,15 @@ class AuthController extends Controller
         // Send password change confirmation email
         try {
             $newStatus = $updateData['status'] ?? $user->status;
-            Mail::send([], [], function ($message) use ($user, $newStatus) {
+            $isPending = $newStatus === 'pending';
+            $subject = $isPending ? 'PinPointMe - Password Set, Awaiting Approval' : 'Password Changed Successfully - PinPointMe';
+            $statusNote = $isPending 
+                ? '<div style="background: #fff3e0; border-left: 4px solid #FF9800; padding: 15px; margin: 20px 0; border-radius: 4px;"><p style="margin: 0; color: #e65100;"><strong>Note:</strong> Your account is still awaiting admin approval. You will receive a notification once approved.</p></div>'
+                : '';
+
+            Mail::send([], [], function ($message) use ($user, $newStatus, $subject, $statusNote) {
                 $message->to($user->email)
-                    ->subject('Password Changed Successfully - PinPointMe')
+                    ->subject($subject)
                     ->html("
                         <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
                             <div style='background: linear-gradient(135deg, #1976D2, #0D47A1); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;'>
@@ -1220,7 +1283,7 @@ class AuthController extends Controller
                             <div style='background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;'>
                                 <h2 style='color: #1976D2;'>Hello, {$user->first_name}!</h2>
                                 <p style='color: #333; line-height: 1.6;'>
-                                    Your password has been successfully changed. You can now use your new password to log in to PinPointMe.
+                                    Your password has been successfully changed.
                                 </p>
                                 <div style='background: #e3f2fd; border-left: 4px solid #1976D2; padding: 15px; margin: 20px 0; border-radius: 4px;'>
                                     <p style='margin: 0; color: #1565C0;'>
@@ -1230,24 +1293,27 @@ class AuthController extends Controller
                                         Status: " . ucfirst($newStatus) . "
                                     </p>
                                 </div>
+                                {$statusNote}
                                 <p style='color: #333; line-height: 1.6;'>
                                     If you did not make this change, please contact support immediately.
                                 </p>
-                                <div style='text-align: center; margin-top: 30px;'>
-                                    <a href='https://pinpointme.app/login' style='background: linear-gradient(135deg, #1976D2, #0D47A1); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold;'>
-                                        Login Now
-                                    </a>
-                                </div>
-                                <p style='color: #666; font-size: 12px; margin-top: 30px; text-align: center;'>
-                                    This is an automated message from PinPointMe Emergency Response System
-                                </p>
+                            </div>
+                            <div style='background: #333; padding: 20px; text-align: center;'>
+                                <p style='color: #ccc; margin: 0; font-size: 14px;'>PinPointMe Emergency Rescue System</p>
                             </div>
                         </div>
                     ");
             });
         } catch (\Exception $e) {
-            // Log email error but don't fail the password change
             \Log::error('Failed to send password change email: ' . $e->getMessage());
+        }
+
+        // Return appropriate message for pending rescuers
+        if (($updateData['status'] ?? $user->status) === 'pending') {
+            return response()->json([
+                'success' => true, 
+                'message' => 'Password changed successfully! Your account is still awaiting admin approval.'
+            ]);
         }
 
         return response()->json([
@@ -1732,6 +1798,59 @@ class AuthController extends Controller
             
             if ($user) {
                 // Existing user - update Google OAuth data and login
+                // Check if existing user hasn't verified email yet (new Google signup that didn't complete verification)
+                if (!$user->email_verified_at && $user->google_id) {
+                    // Update Google data but don't log in
+                    $user->update([
+                        'google_id' => $googleUser->getId(),
+                        'google_token' => $googleUser->token,
+                        'profile_picture' => $googleUser->getAvatar() ?? $user->profile_picture,
+                    ]);
+
+                    // Resend verification email
+                    $token = Str::random(64);
+                    $user->verification_token = $token;
+                    $user->save();
+
+                    $verifyUrl = url('/auth/google/verify-link?token=' . $token . '&email=' . urlencode($user->email));
+                    try {
+                        Mail::send([], [], function ($message) use ($user, $verifyUrl) {
+                            $message->to($user->email)
+                                ->subject('PinPointMe - Verify Your SDCA Google Account')
+                                ->html("
+                                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                                        <div style='background: linear-gradient(135deg, #3674B5 0%, #2D5F96 100%); padding: 30px; text-align: center;'>
+                                            <h1 style='color: white; margin: 0; font-size: 28px;'>Verify Your SDCA Google Account</h1>
+                                        </div>
+                                        <div style='padding: 30px; background-color: #f8f9fa;'>
+                                            <h2 style='color: #333; margin-bottom: 20px;'>Hi {$user->first_name}!</h2>
+                                            <p style='color: #666; font-size: 16px; line-height: 1.6;'>Please verify your email by clicking the button below to complete your registration:</p>
+                                            <div style='text-align:center; margin: 30px 0;'>
+                                                <a href='{$verifyUrl}' style='background: #3674B5; color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-size: 18px; font-weight: bold;'>Verify My Account</a>
+                                            </div>
+                                            <p style='color: #999; font-size: 13px; text-align: center;'>If you did not sign up, you can ignore this email.</p>
+                                        </div>
+                                        <div style='background: #333; padding: 20px; text-align: center;'>
+                                            <p style='color: #ccc; margin: 0; font-size: 14px;'>PinPointMe Emergency Rescue System</p>
+                                        </div>
+                                    </div>
+                                ");
+                        });
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to resend Google verification email: ' . $e->getMessage());
+                    }
+
+                    // Store in session for GoogleComplete page
+                    $request->session()->put('google_user', [
+                        'email' => $user->email,
+                        'first_name' => $user->first_name,
+                        'last_name' => $user->last_name,
+                        'profile_picture' => $user->profile_picture,
+                    ]);
+
+                    return redirect('/auth/google/complete');
+                }
+
                 $user->update([
                     'google_id' => $googleUser->getId(),
                     'google_token' => $googleUser->token,
@@ -1757,7 +1876,7 @@ class AuthController extends Controller
                 }
             }
             
-            // New user - create user directly from Google data
+            // New user - create user (pending verification, not logged in)
             $newUser = User::create([
                 'google_id' => $googleUser->getId(),
                 'email' => $email,
@@ -1770,17 +1889,54 @@ class AuthController extends Controller
                 'force_password_change' => true,
                 'profile_picture' => $googleUser->getAvatar(),
                 'google_token' => $googleUser->token,
-                'status' => 'active',
-                'is_able_to_login' => true,
-                'last_login_at' => Carbon::now(),
+                'status' => 'pending',
+                'is_able_to_login' => false,
             ]);
-            
-            // Log in the newly created user
-            Auth::login($newUser);
-            $request->session()->regenerate();
-            
-            // Redirect directly to change password page
-            return redirect('/change-password');
+
+            // Generate verification token and send verification email
+            $token = Str::random(64);
+            $newUser->verification_token = $token;
+            $newUser->save();
+
+            $verifyUrl = url('/auth/google/verify-link?token=' . $token . '&email=' . urlencode($newUser->email));
+            $firstName = $newUser->first_name;
+            try {
+                Mail::send([], [], function ($message) use ($newUser, $verifyUrl, $firstName) {
+                    $message->to($newUser->email)
+                        ->subject('PinPointMe - Verify Your SDCA Google Account')
+                        ->html("
+                            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                                <div style='background: linear-gradient(135deg, #3674B5 0%, #2D5F96 100%); padding: 30px; text-align: center;'>
+                                    <h1 style='color: white; margin: 0; font-size: 28px;'>Verify Your SDCA Google Account</h1>
+                                </div>
+                                <div style='padding: 30px; background-color: #f8f9fa;'>
+                                    <h2 style='color: #333; margin-bottom: 20px;'>Hi {$firstName}!</h2>
+                                    <p style='color: #666; font-size: 16px; line-height: 1.6;'>Thank you for signing up with PinPointMe using your SDCA Google account. Please verify your email by clicking the button below:</p>
+                                    <div style='text-align:center; margin: 30px 0;'>
+                                        <a href='{$verifyUrl}' style='background: #3674B5; color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-size: 18px; font-weight: bold;'>Verify My Account</a>
+                                    </div>
+                                    <p style='color: #999; font-size: 13px; text-align: center;'>If you did not sign up, you can ignore this email.</p>
+                                </div>
+                                <div style='background: #333; padding: 20px; text-align: center;'>
+                                    <p style='color: #ccc; margin: 0; font-size: 14px;'>PinPointMe Emergency Rescue System</p>
+                                </div>
+                            </div>
+                        ");
+                });
+            } catch (\Exception $e) {
+                \Log::error('Failed to send Google verification email: ' . $e->getMessage());
+            }
+
+            // Store user info in session for GoogleComplete page
+            $request->session()->put('google_user', [
+                'email' => $newUser->email,
+                'first_name' => $newUser->first_name,
+                'last_name' => $newUser->last_name,
+                'profile_picture' => $newUser->profile_picture,
+            ]);
+
+            // Redirect to verification page (user is NOT logged in)
+            return redirect('/auth/google/complete');
             
         } catch (\Exception $e) {
             \Log::error('Google OAuth error in handleGoogleCallback', [
@@ -1882,7 +2038,59 @@ class AuthController extends Controller
             $user = User::where('email', $email)->first();
             
             if ($user) {
-                // Existing user - update and login
+                // Check if existing user hasn't verified email yet
+                if (!$user->email_verified_at && $user->google_id) {
+                    // Update Google data but don't log in
+                    $user->update([
+                        'google_id' => $googleUserId,
+                        'profile_picture' => $avatar ?? $user->profile_picture,
+                    ]);
+
+                    // Resend verification email
+                    $token = Str::random(64);
+                    $user->verification_token = $token;
+                    $user->save();
+
+                    $verifyUrl = url('/auth/google/verify-link?token=' . $token . '&email=' . urlencode($user->email));
+                    try {
+                        Mail::send([], [], function ($message) use ($user, $verifyUrl) {
+                            $message->to($user->email)
+                                ->subject('PinPointMe - Verify Your SDCA Google Account')
+                                ->html("
+                                    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                                        <div style='background: linear-gradient(135deg, #3674B5 0%, #2D5F96 100%); padding: 30px; text-align: center;'>
+                                            <h1 style='color: white; margin: 0; font-size: 28px;'>Verify Your SDCA Google Account</h1>
+                                        </div>
+                                        <div style='padding: 30px; background-color: #f8f9fa;'>
+                                            <h2 style='color: #333; margin-bottom: 20px;'>Hi {$user->first_name}!</h2>
+                                            <p style='color: #666; font-size: 16px; line-height: 1.6;'>Please verify your email by clicking the button below to complete your registration:</p>
+                                            <div style='text-align:center; margin: 30px 0;'>
+                                                <a href='{$verifyUrl}' style='background: #3674B5; color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-size: 18px; font-weight: bold;'>Verify My Account</a>
+                                            </div>
+                                            <p style='color: #999; font-size: 13px; text-align: center;'>If you did not sign up, you can ignore this email.</p>
+                                        </div>
+                                        <div style='background: #333; padding: 20px; text-align: center;'>
+                                            <p style='color: #ccc; margin: 0; font-size: 14px;'>PinPointMe Emergency Rescue System</p>
+                                        </div>
+                                    </div>
+                                ");
+                        });
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to resend Google verification email (native): ' . $e->getMessage());
+                    }
+
+                    // Store in session for GoogleComplete page
+                    $request->session()->put('google_user', [
+                        'email' => $user->email,
+                        'first_name' => $user->first_name,
+                        'last_name' => $user->last_name,
+                        'profile_picture' => $user->profile_picture,
+                    ]);
+
+                    return redirect('/auth/google/complete');
+                }
+
+                // Existing verified user - update and login
                 $user->update([
                     'google_id' => $googleUserId,
                     'profile_picture' => $avatar ?? $user->profile_picture,
@@ -1906,7 +2114,7 @@ class AuthController extends Controller
                     return redirect('/user/scanner');
                 }
             } else {
-                // New user - create account directly
+                // New user - create account (pending verification, not logged in)
                 $newUser = User::create([
                     'google_id' => $googleUserId,
                     'email' => $email,
@@ -1918,15 +2126,53 @@ class AuthController extends Controller
                     'must_change_password' => true,
                     'force_password_change' => true,
                     'profile_picture' => $avatar,
-                    'status' => 'active',
-                    'is_able_to_login' => true,
-                    'last_login_at' => Carbon::now(),
+                    'status' => 'pending',
+                    'is_able_to_login' => false,
                 ]);
-                
-                Auth::login($newUser);
-                $request->session()->regenerate();
-                
-                return redirect('/change-password');
+
+                // Generate verification token and send verification email
+                $token = Str::random(64);
+                $newUser->verification_token = $token;
+                $newUser->save();
+
+                $verifyUrl = url('/auth/google/verify-link?token=' . $token . '&email=' . urlencode($newUser->email));
+                try {
+                    Mail::send([], [], function ($message) use ($newUser, $verifyUrl, $firstName) {
+                        $message->to($newUser->email)
+                            ->subject('PinPointMe - Verify Your SDCA Google Account')
+                            ->html("
+                                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                                    <div style='background: linear-gradient(135deg, #3674B5 0%, #2D5F96 100%); padding: 30px; text-align: center;'>
+                                        <h1 style='color: white; margin: 0; font-size: 28px;'>Verify Your SDCA Google Account</h1>
+                                    </div>
+                                    <div style='padding: 30px; background-color: #f8f9fa;'>
+                                        <h2 style='color: #333; margin-bottom: 20px;'>Hi {$firstName}!</h2>
+                                        <p style='color: #666; font-size: 16px; line-height: 1.6;'>Thank you for signing up with PinPointMe using your SDCA Google account. Please verify your email by clicking the button below:</p>
+                                        <div style='text-align:center; margin: 30px 0;'>
+                                            <a href='{$verifyUrl}' style='background: #3674B5; color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-size: 18px; font-weight: bold;'>Verify My Account</a>
+                                        </div>
+                                        <p style='color: #999; font-size: 13px; text-align: center;'>If you did not sign up, you can ignore this email.</p>
+                                    </div>
+                                    <div style='background: #333; padding: 20px; text-align: center;'>
+                                        <p style='color: #ccc; margin: 0; font-size: 14px;'>PinPointMe Emergency Rescue System</p>
+                                    </div>
+                                </div>
+                            ");
+                    });
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send Google verification email (native): ' . $e->getMessage());
+                }
+
+                // Store user info in session for GoogleComplete page
+                $request->session()->put('google_user', [
+                    'email' => $newUser->email,
+                    'first_name' => $newUser->first_name,
+                    'last_name' => $newUser->last_name,
+                    'profile_picture' => $newUser->profile_picture,
+                ]);
+
+                // Redirect to verification page (user is NOT logged in)
+                return redirect('/auth/google/complete');
             }
             
         } catch (\Exception $e) {
@@ -2456,6 +2702,259 @@ class AuthController extends Controller
                 'message' => 'Failed to create account. Please try again.'
             ], 500);
         }
+    }
+
+    /**
+     * Send OTP for external rescuer self-registration
+     */
+    public function rescuerRegisterSendOtp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'first_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s.,\'\-ñÑ]+$/'],
+            'last_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s.,\'\-ñÑ]+$/'],
+            'email' => 'required|email|max:255',
+            'phone' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    $normalized = preg_replace('/[^0-9]/', '', $value);
+                    if (str_starts_with($normalized, '63')) {
+                        $normalized = '0' . substr($normalized, 2);
+                    }
+                    if (str_starts_with($normalized, '9') && strlen($normalized) === 10) {
+                        $normalized = '0' . $normalized;
+                    }
+                    if (!preg_match('/^09[0-9]{9}$/', $normalized)) {
+                        $fail('Please enter a valid 11-digit phone number (e.g., 09171234567).');
+                    }
+                },
+            ],
+            'organization' => 'required|string|max:255',
+        ], [
+            'first_name.required' => 'First name is required.',
+            'first_name.regex' => 'First name must contain letters only (no numbers or special characters).',
+            'last_name.required' => 'Last name is required.',
+            'last_name.regex' => 'Last name must contain letters only (no numbers or special characters).',
+            'email.required' => 'Email address is required.',
+            'email.email' => 'Please enter a valid email address.',
+            'phone.required' => 'Phone number is required.',
+            'organization.required' => 'Organization / affiliation is required.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed.',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $email = strtolower(trim($request->email));
+
+        // Check if user already exists
+        $existingUser = User::where('email', $email)->first();
+        if ($existingUser) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An account with this email already exists. Please log in instead.',
+            ], 422);
+        }
+
+        // Generate OTP and temp password
+        $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $tempPassword = 'Rescue' . str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT) . '!';
+
+        // Normalize phone
+        $phone = preg_replace('/[^0-9]/', '', $request->phone);
+        if (str_starts_with($phone, '63')) {
+            $phone = '0' . substr($phone, 2);
+        }
+        if (str_starts_with($phone, '9') && strlen($phone) === 10) {
+            $phone = '0' . $phone;
+        }
+
+        // Create unverified rescuer account (not yet visible to admin)
+        $rescuer = User::create([
+            'first_name' => trim($request->first_name),
+            'last_name' => trim($request->last_name),
+            'email' => $email,
+            'username' => strtok($email, '@'),
+            'role' => 'rescuer',
+            'phone' => $phone,
+            'password' => Hash::make($tempPassword),
+            'status' => 'otp_pending',
+            'is_able_to_login' => false,
+            'force_password_change' => true,
+            'otp_code' => $otp,
+            'otp_expires_at' => Carbon::now()->addMinutes(15),
+            'otp_verified' => false,
+            'tags' => json_encode([
+                'organization' => trim($request->organization),
+                'temp_password' => $tempPassword
+            ]),
+        ]);
+
+        // Send OTP email
+        try {
+            $firstName = $rescuer->first_name;
+            $organization = trim($request->organization);
+            Mail::send([], [], function ($message) use ($email, $firstName, $otp, $organization) {
+                $message->to($email)
+                    ->subject('PinPointMe - Rescuer Registration Verification')
+                    ->html("
+                        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                            <div style='background: linear-gradient(135deg, #C62828 0%, #B71C1C 100%); padding: 30px; text-align: center;'>
+                                <h1 style='color: white; margin: 0; font-size: 28px;'>Rescuer Registration</h1>
+                                <p style='color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;'>Verify Your Email Address</p>
+                            </div>
+                            <div style='padding: 30px; background-color: #f8f9fa;'>
+                                <h2 style='color: #333; margin-bottom: 20px;'>Hi {$firstName}!</h2>
+                                <p style='color: #666; font-size: 16px; line-height: 1.6;'>Thank you for registering as an external rescuer with PinPointMe. Enter the verification code below to confirm your email:</p>
+                                
+                                <div style='background: white; padding: 25px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #C62828; text-align: center;'>
+                                    <h3 style='color: #C62828; margin-top: 0;'>Verification Code</h3>
+                                    <p style='font-size: 32px; font-weight: bold; color: #333; margin: 10px 0; letter-spacing: 8px;'>{$otp}</p>
+                                </div>
+                                
+                                <p style='color: #999; font-size: 13px; text-align: center;'>This code will expire in <strong>15 minutes</strong></p>
+                                
+                                <div style='background: #fff3e0; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #ffe0b2;'>
+                                    <p style='color: #e65100; margin: 0; font-size: 14px;'>
+                                        <strong>Organization:</strong> {$organization}<br>
+                                        <strong>Note:</strong> After email verification, your account will need admin approval before you can log in.
+                                    </p>
+                                </div>
+                            </div>
+                            <div style='background: #333; padding: 20px; text-align: center;'>
+                                <p style='color: #ccc; margin: 0; font-size: 14px;'>PinPointMe Emergency Rescue System</p>
+                            </div>
+                        </div>
+                    ");
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Verification code sent to your email!',
+                'expires_in' => 900
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send rescuer registration OTP: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send verification email. Please try again.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Verify OTP for external rescuer self-registration
+     */
+    public function rescuerRegisterVerifyOtp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'otp' => 'required|string|size:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => 'Invalid input.', 'errors' => $validator->errors()], 422);
+        }
+
+        $user = User::where('email', strtolower(trim($request->email)))
+            ->where('role', 'rescuer')
+            ->where('status', 'otp_pending')
+            ->first();
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'No pending registration found for this email. Please complete the initial registration first.'], 404);
+        }
+
+        // Check OTP
+        if ($user->otp_code !== $request->otp) {
+            return response()->json(['success' => false, 'message' => 'Invalid verification code.'], 422);
+        }
+
+        if (Carbon::now()->isAfter($user->otp_expires_at)) {
+            return response()->json(['success' => false, 'message' => 'Verification code has expired. Please request a new one.'], 422);
+        }
+
+        // Mark email as verified and set status to pending for admin approval
+        $user->update([
+            'otp_verified' => true,
+            'otp_code' => null,
+            'otp_expires_at' => null,
+            'email_verified_at' => Carbon::now(),
+            'status' => 'pending', // Now visible to admin for approval
+            'is_able_to_login' => true, // Allow login so rescuer can see pending overlay & change password
+        ]);
+
+        // Get temp password and organization from user tags
+        $tagsData = json_decode($user->tags, true) ?? [];
+        $tempPassword = $tagsData['temp_password'] ?? null;
+        $organization = $tagsData['organization'] ?? 'N/A';
+
+        // Clear temp password from tags after retrieving
+        $updatedTags = $tagsData;
+        unset($updatedTags['temp_password']);
+        $user->update(['tags' => json_encode($updatedTags)]);
+
+        // Send temp password and confirmation email
+        if ($tempPassword) {
+            try {
+                $firstName = $user->first_name;
+                $email = $user->email;
+                Mail::send([], [], function ($message) use ($email, $firstName, $tempPassword, $organization) {
+                    $message->to($email)
+                        ->subject('PinPointMe - Rescuer Registration Confirmed')
+                        ->html("
+                            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                                <div style='background: linear-gradient(135deg, #C62828 0%, #B71C1C 100%); padding: 30px; text-align: center;'>
+                                    <h1 style='color: white; margin: 0; font-size: 28px;'>Registration Confirmed!</h1>
+                                    <p style='color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;'>Your email has been verified</p>
+                                </div>
+                                <div style='padding: 30px; background-color: #f8f9fa;'>
+                                    <h2 style='color: #333; margin-bottom: 20px;'>Welcome, {$firstName}!</h2>
+                                    <p style='color: #666; font-size: 16px; line-height: 1.6;'>Your rescuer account registration has been submitted. An administrator will review and approve your account.</p>
+                                    
+                                    <div style='background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #C62828;'>
+                                        <p style='color: #888; margin: 0 0 10px;'><strong>Your temporary password:</strong></p>
+                                        <p style='font-size: 20px; font-weight: bold; color: #C62828; margin: 0; letter-spacing: 2px;'>{$tempPassword}</p>
+                                        <p style='color: #999; font-size: 12px; margin: 8px 0 0;'>You will be required to change this after your first login.</p>
+                                    </div>
+                                    
+                                    <div style='background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #bbdefb;'>
+                                        <p style='color: #1565c0; margin: 0; font-size: 14px;'>
+                                            <strong>What happens next?</strong>
+                                        </p>
+                                        <ol style='color: #666; margin: 10px 0 0; padding-left: 20px; line-height: 1.8;'>
+                                            <li>An admin will review your registration</li>
+                                            <li>You'll receive a notification once approved</li>
+                                            <li>Log in with your email and the temporary password above</li>
+                                            <li>Set a new secure password on first login</li>
+                                        </ol>
+                                    </div>
+                                    
+                                    <div style='background: #fff3e0; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #ffe0b2;'>
+                                        <p style='color: #e65100; margin: 0; font-size: 14px;'>
+                                            <strong>Organization:</strong> {$organization}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div style='background: #333; padding: 20px; text-align: center;'>
+                                    <p style='color: #ccc; margin: 0; font-size: 14px;'>PinPointMe Emergency Rescue System</p>
+                                </div>
+                            </div>
+                        ");
+                });
+            } catch (\Exception $e) {
+                \Log::error('Failed to send rescuer temp password email: ' . $e->getMessage());
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Email verified! Your temporary password has been sent to your email.',
+        ]);
     }
 
     /**

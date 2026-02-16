@@ -617,7 +617,7 @@ onUnmounted(() => {
 
 <style scoped>
 .change-password-bg {
-  background: linear-gradient(160deg, #13294B 0%, #1e3a5f 35%, #3674B5 100%);
+  background: linear-gradient(to bottom, #F8F0F0 0%, #FFFFFF 40%, #f8f8f8 50%, #D1F8EF 80%, #A1E3F9 100%);
   min-height: 100vh;
   position: relative;
 }
@@ -629,8 +629,8 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at 20% 80%, rgba(223, 169, 44, 0.08) 0%, transparent 50%),
-              radial-gradient(circle at 80% 20%, rgba(54, 116, 181, 0.12) 0%, transparent 50%);
+  background: radial-gradient(ellipse at 20% 20%, rgba(161,227,249,0.15) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 80%, rgba(209,248,239,0.12) 0%, transparent 50%);
   pointer-events: none;
 }
 

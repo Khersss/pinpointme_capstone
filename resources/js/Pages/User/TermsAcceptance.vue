@@ -7,7 +7,7 @@
                 <div class="terms-header">
                     <div class="header-content">
                         <div class="logo-section">
-                            <img src="/images/icons/ppm_logo.png" alt="PinPointMe" class="logo" />
+                            <img src="/images/Icons/ppm_logo.png" alt="PinPointMe" class="logo" />
                             <div class="logo-text">
                                 <h1>PinPointMe</h1>
                                 <p>SDCA Emergency Rescue System</p>
@@ -327,7 +327,8 @@ const acceptTerms = async () => {
             
             // Redirect to the appropriate dashboard
             setTimeout(() => {
-                router.visit(response.data.redirect || '/user/scanner');
+                // Use window.location.href for reliable redirect on all platforms (mobile/tablet/desktop)
+                window.location.href = response.data.redirect || '/user/scanner';
             }, 1000);
         }
     } catch (error) {

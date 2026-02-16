@@ -93,11 +93,16 @@
         </div>
 
         <!-- ── Tabs ── -->
-        <div class="nc-tabs nc-tabs-three">
+        <div class="nc-tabs nc-tabs-four">
             <button class="nc-tab" :class="{ 'nc-tab-active': notifTab === 'urgent' }" @click="notifTab = 'urgent'">
                 <v-icon size="15">mdi-alarm-light</v-icon>
                 <span>{{ isMobile ? 'Urgent' : 'Force Alerts' }}</span>
                 <span v-if="forceAlertNotifications.length > 0" class="nc-badge nc-badge-error">{{ forceAlertNotifications.length }}</span>
+            </button>
+            <button class="nc-tab" :class="{ 'nc-tab-active': notifTab === 'approvals' }" @click="notifTab = 'approvals'">
+                <v-icon size="15">mdi-account-clock</v-icon>
+                <span>Approvals</span>
+                <span v-if="pendingRescuerApplications.length > 0" class="nc-badge nc-badge-orange">{{ pendingRescuerApplications.length }}</span>
             </button>
             <button class="nc-tab" :class="{ 'nc-tab-active': notifTab === 'activity' }" @click="notifTab = 'activity'">
                 <v-icon size="15">mdi-pulse</v-icon>
@@ -109,11 +114,89 @@
                 <span>Messages</span>
                 <span v-if="unreadMessageBadge > 0" class="nc-badge nc-badge-blue">{{ unreadMessageBadge }}</span>
             </button>
-            <div class="nc-tab-slider" :class="{ 
+            <div class="nc-tab-slider nc-tab-slider-four" :class="{ 
                 'nc-tab-slider-0': notifTab === 'urgent',
-                'nc-tab-slider-1': notifTab === 'activity',
-                'nc-tab-slider-2': notifTab === 'messages'
+                'nc-tab-slider-1': notifTab === 'approvals',
+                'nc-tab-slider-2': notifTab === 'activity',
+                'nc-tab-slider-3': notifTab === 'messages'
             }"></div>
+        </div>
+
+        <!-- ─── Approvals Tab ─── -->
+        <div v-if="notifTab === 'approvals'" class="nc-body">
+            <div v-if="pendingRescuerApplications.length === 0" class="nc-empty">
+                <div class="nc-empty-icon">
+                    <v-icon size="32" color="#B0BEC5">mdi-account-check-outline</v-icon>
+                </div>
+                <p class="nc-empty-title">No pending applications</p>
+                <p class="nc-empty-sub">External rescuer applications will appear here for review</p>
+            </div>
+            <div v-else>
+                <div
+                    v-for="app in pendingRescuerApplications"
+                    :key="app.id"
+                    class="nc-item nc-item-approval"
+                    :class="{ 'nc-item-unread': !approvalReadIds.has(app.id) }"
+                    @click="approvalReadIds.add(app.id)"
+                >
+                    <div class="nc-item-bar nc-bar-orange"></div>
+                    <div class="nc-item-icon nc-icon-orange">
+                        <v-icon size="16" color="white">mdi-account-plus</v-icon>
+                    </div>
+                    <div class="nc-item-content">
+                        <div class="nc-item-top">
+                            <span class="nc-item-title">{{ app.first_name }} {{ app.last_name }}</span>
+                            <span v-if="!approvalReadIds.has(app.id)" class="nc-unread-dot"></span>
+                        </div>
+                        <div class="nc-item-msg">{{ app.email }}</div>
+                        <div class="nc-item-detail">
+                            <span v-if="app.organization" class="nc-detail-code">
+                                <v-icon size="10">mdi-domain</v-icon>
+                                {{ app.organization }}
+                            </span>
+                            <span v-if="app.phone" class="nc-detail-name">
+                                <v-icon size="10">mdi-phone</v-icon>
+                                {{ app.phone }}
+                            </span>
+                            <span v-if="app.is_external" class="nc-external-chip">
+                                <v-icon size="10">mdi-earth</v-icon> External
+                            </span>
+                        </div>
+                        <div class="nc-item-footer">
+                            <span class="nc-item-time">
+                                <v-icon size="10">mdi-clock-outline</v-icon>
+                                {{ formatTimeAgo(app.created_at) }}
+                            </span>
+                            <span v-if="app.otp_verified" class="nc-verified-chip">
+                                <v-icon size="10">mdi-email-check</v-icon> Verified
+                            </span>
+                            <span v-else class="nc-unverified-chip">
+                                <v-icon size="10">mdi-email-alert</v-icon> Unverified
+                            </span>
+                        </div>
+                        <div class="nc-approval-actions">
+                            <button 
+                                class="nc-approve-btn"
+                                :class="{ 'nc-btn-loading': approvalLoading === app.id }"
+                                :disabled="approvalLoading === app.id"
+                                @click.stop="handleApproveRescuer(app)"
+                            >
+                                <v-icon size="14">mdi-check</v-icon>
+                                <span>Approve</span>
+                            </button>
+                            <button 
+                                class="nc-decline-btn"
+                                :class="{ 'nc-btn-loading': approvalLoading === app.id }"
+                                :disabled="approvalLoading === app.id"
+                                @click.stop="showDeclineDialog(app)"
+                            >
+                                <v-icon size="14">mdi-close</v-icon>
+                                <span>Decline</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- ─── Force Alerts / Urgent Tab ─── -->
@@ -433,6 +516,42 @@
             </div>
         </div>
     </v-navigation-drawer>
+
+    <!-- Decline Rescuer Dialog -->
+    <v-dialog v-model="declineDialogVisible" max-width="450" persistent>
+        <v-card rounded="lg">
+            <v-card-title class="d-flex align-center pa-4 text-error">
+                <v-icon start color="error">mdi-account-cancel</v-icon>
+                Decline Rescuer Application
+            </v-card-title>
+            <v-divider></v-divider>
+            <v-card-text class="pa-4">
+                <p class="mb-3">
+                    Are you sure you want to decline the application from
+                    <strong>{{ declineTarget?.first_name }} {{ declineTarget?.last_name }}</strong>
+                    ({{ declineTarget?.email }})?
+                </p>
+                <v-textarea
+                    v-model="declineReason"
+                    label="Reason for declining (optional)"
+                    variant="outlined"
+                    density="compact"
+                    rows="3"
+                    placeholder="Provide a reason that will be sent to the applicant..."
+                    hide-details
+                />
+            </v-card-text>
+            <v-divider></v-divider>
+            <v-card-actions class="pa-4">
+                <v-spacer />
+                <v-btn variant="text" @click="declineDialogVisible = false" :disabled="approvalLoading">Cancel</v-btn>
+                <v-btn color="error" :loading="approvalLoading === declineTarget?.id" @click="handleDeclineRescuer">
+                    <v-icon start>mdi-close</v-icon>
+                    Decline
+                </v-btn>
+            </v-card-actions>
+        </v-card>
+    </v-dialog>
 
     <!-- Notification Popup -->
     <NotificationPopup
@@ -808,8 +927,138 @@ const unreadMessageBadge = computed(() =>
 );
 
 const totalUnreadCount = computed(() =>
-    unreadActivityCount.value + unreadMessageBadge.value + forceAlertNotifications.value.length
+    unreadActivityCount.value + unreadMessageBadge.value + forceAlertNotifications.value.length + pendingRescuerApplications.value.length
 );
+
+// ── Pending Rescuer Applications ──
+const pendingRescuerApplications = ref([]);
+const previousPendingRescuerCount = ref(0);
+const approvalLoading = ref(null);
+const approvalReadIds = ref(new Set());
+const declineDialogVisible = ref(false);
+const declineTarget = ref(null);
+const declineReason = ref('');
+
+const fetchPendingRescuers = async () => {
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const resp = await fetch('/admin/rescuers/pending', {
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken || '' },
+            credentials: 'include',
+        });
+        if (!resp.ok) return;
+        const result = await resp.json();
+        if (result.success) {
+            const newApps = result.data || [];
+            
+            // Notify admin of new applications
+            if (newApps.length > previousPendingRescuerCount.value && previousPendingRescuerCount.value >= 0) {
+                const newOnes = newApps.filter(a => !pendingRescuerApplications.value.find(p => p.id === a.id));
+                newOnes.forEach(app => {
+                    const org = app.organization ? ` from ${app.organization}` : '';
+                    addActivityNotification(
+                        `rescuer-app-${app.id}`,
+                        `New rescuer application`,
+                        `${app.first_name} ${app.last_name}${org} wants to join as a rescuer`,
+                        'mdi-account-plus',
+                        'orange',
+                        'rescuer_application',
+                        null
+                    );
+                });
+                
+                if (newOnes.length > 0 && previousPendingRescuerCount.value > 0) {
+                    playNotificationSound('message');
+                    vibrate([100, 50, 100]);
+                    showToast('🆕 New Rescuer Application', `${newOnes[0].first_name} ${newOnes[0].last_name} applied to be a rescuer`, {
+                        color: 'warning', icon: 'mdi-account-clock', timeout: 8000,
+                        action: {
+                            label: 'Review',
+                            handler: () => { showNotificationPanel.value = true; notifTab.value = 'approvals'; snackbar.value.show = false; }
+                        }
+                    });
+                }
+            }
+            
+            previousPendingRescuerCount.value = newApps.length;
+            pendingRescuerApplications.value = newApps;
+        }
+    } catch (err) {
+        console.error('Error fetching pending rescuers:', err);
+    }
+};
+
+const handleApproveRescuer = async (app) => {
+    approvalLoading.value = app.id;
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const resp = await fetch(`/admin/rescuers/${app.id}/approve`, {
+            method: 'POST',
+            headers: { 
+                'Accept': 'application/json', 
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken || ''
+            },
+            credentials: 'include',
+        });
+        const result = await resp.json();
+        if (result.success) {
+            pendingRescuerApplications.value = pendingRescuerApplications.value.filter(a => a.id !== app.id);
+            previousPendingRescuerCount.value = pendingRescuerApplications.value.length;
+            showToast('✅ Rescuer Approved', `${app.first_name} ${app.last_name} can now access the full system`, {
+                color: 'success', icon: 'mdi-account-check', timeout: 5000
+            });
+        } else {
+            showToast('Error', result.message || 'Failed to approve rescuer', { color: 'error', icon: 'mdi-alert' });
+        }
+    } catch (err) {
+        console.error('Error approving rescuer:', err);
+        showToast('Error', 'Failed to approve rescuer', { color: 'error', icon: 'mdi-alert' });
+    } finally {
+        approvalLoading.value = null;
+    }
+};
+
+const showDeclineDialog = (app) => {
+    declineTarget.value = app;
+    declineReason.value = '';
+    declineDialogVisible.value = true;
+};
+
+const handleDeclineRescuer = async () => {
+    if (!declineTarget.value) return;
+    const app = declineTarget.value;
+    approvalLoading.value = app.id;
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const resp = await fetch(`/admin/rescuers/${app.id}/decline`, {
+            method: 'POST',
+            headers: { 
+                'Accept': 'application/json', 
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken || ''
+            },
+            credentials: 'include',
+            body: JSON.stringify({ reason: declineReason.value || undefined }),
+        });
+        const result = await resp.json();
+        if (result.success) {
+            pendingRescuerApplications.value = pendingRescuerApplications.value.filter(a => a.id !== app.id);
+            previousPendingRescuerCount.value = pendingRescuerApplications.value.length;
+            declineDialogVisible.value = false;
+            showToast('Application Declined', `${app.first_name} ${app.last_name}'s application was declined`, {
+                color: 'warning', icon: 'mdi-account-cancel', timeout: 5000
+            });
+        } else {
+            showToast('Error', result.message || 'Failed to decline rescuer', { color: 'error', icon: 'mdi-alert' });
+        }
+    } catch (err) {
+        console.error('Error declining rescuer:', err);
+        showToast('Error', 'Failed to decline rescuer', { color: 'error', icon: 'mdi-alert' });
+    } finally {
+        approvalLoading.value = null;
+    }
+};
 
 // ── Urgency Helpers ──
 const URGENCY_THRESHOLDS = { critical: 10, high: 30, medium: 120, low: 300 };
@@ -1242,6 +1491,7 @@ const startPolling = () => {
     pollingInterval = setInterval(() => {
         fetchPendingRequests();
         fetchAdminConversations();
+        fetchPendingRescuers();
     }, POLLING_INTERVAL);
 };
 
@@ -1258,6 +1508,7 @@ onMounted(() => {
     // Start notification polling
     fetchPendingRequests();
     fetchAdminConversations();
+    fetchPendingRescuers();
     startPolling();
 });
 
@@ -1415,6 +1666,14 @@ defineExpose({ showToast, showNotificationPanel, notifTab });
 .nc-tabs-three .nc-tab-slider-1 { transform: translateX(100%); }
 .nc-tabs-three .nc-tab-slider-2 { transform: translateX(200%); }
 
+/* 4-tab layout */
+.nc-tabs-four .nc-tab-slider { width: calc(25% - 8px); }
+.nc-tabs-four .nc-tab { font-size: 11.5px; gap: 4px; padding: 10px 6px 12px; }
+.nc-tab-slider-four.nc-tab-slider-0 { transform: translateX(0); }
+.nc-tab-slider-four.nc-tab-slider-1 { transform: translateX(100%); }
+.nc-tab-slider-four.nc-tab-slider-2 { transform: translateX(200%); }
+.nc-tab-slider-four.nc-tab-slider-3 { transform: translateX(300%); }
+
 .nc-badge {
     display: inline-flex;
     align-items: center;
@@ -1432,6 +1691,7 @@ defineExpose({ showToast, showNotificationPanel, notifTab });
 .nc-badge-error { background: #b71c1c; }
 .nc-badge-red { background: #b71c1c; }
 .nc-badge-blue { background: #3674B5; }
+.nc-badge-orange { background: #E65100; }
 
 /* ── Body / List ── */
 .nc-body {
@@ -1488,6 +1748,7 @@ defineExpose({ showToast, showNotificationPanel, notifTab });
 .nc-bar-success { background: linear-gradient(180deg, #66BB6A, #185D33); }
 .nc-bar-error   { background: linear-gradient(180deg, #EF5350, #b71c1c); }
 .nc-bar-primary { background: linear-gradient(180deg, #42A5F5, #3674B5); }
+.nc-bar-orange  { background: linear-gradient(180deg, #FF9800, #E65100); }
 
 .nc-item-icon { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .nc-icon-warning { background: linear-gradient(135deg, #FFA726, #DFA92C); }
@@ -1495,6 +1756,7 @@ defineExpose({ showToast, showNotificationPanel, notifTab });
 .nc-icon-success { background: linear-gradient(135deg, #66BB6A, #2E7D32); }
 .nc-icon-error   { background: linear-gradient(135deg, #EF5350, #b71c1c); }
 .nc-icon-primary { background: linear-gradient(135deg, #42A5F5, #3674B5); }
+.nc-icon-orange  { background: linear-gradient(135deg, #FF9800, #E65100); }
 
 .nc-item-content { flex: 1; min-width: 0; }
 .nc-item-top { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
@@ -1555,6 +1817,31 @@ defineExpose({ showToast, showNotificationPanel, notifTab });
 .nc-safe-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 6px; background: rgba(76, 175, 80, 0.1); color: #2E7D32; font-size: 10.5px; font-weight: 600; }
 .nc-cancelled-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 6px; background: rgba(183, 28, 28, 0.08); color: #B71C1C; font-size: 10.5px; font-weight: 600; }
 .nc-countdown-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 6px; background: rgba(255, 152, 0, 0.1); color: #E65100; font-size: 10.5px; font-weight: 600; }
+
+/* ── Approval Item Styles ── */
+.nc-item-approval { background: linear-gradient(135deg, rgba(255, 152, 0, 0.03), rgba(230, 81, 0, 0.03)); border-color: rgba(255, 152, 0, 0.15); }
+.nc-item-approval:hover { background: linear-gradient(135deg, rgba(255, 152, 0, 0.06), rgba(230, 81, 0, 0.06)); box-shadow: 0 3px 12px rgba(255, 152, 0, 0.12); }
+.nc-item-approval .nc-item-bar { width: 3.5px; background: linear-gradient(180deg, #FF9800, #E65100); }
+
+.nc-external-chip { display: inline-flex; align-items: center; gap: 3px; padding: 1px 7px; border-radius: 5px; background: rgba(230, 81, 0, 0.08); color: #E65100; font-size: 10.5px; font-weight: 600; }
+.nc-verified-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 6px; background: rgba(76, 175, 80, 0.1); color: #2E7D32; font-size: 10.5px; font-weight: 600; }
+.nc-unverified-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 6px; background: rgba(255, 152, 0, 0.1); color: #E65100; font-size: 10.5px; font-weight: 600; }
+
+.nc-approval-actions { display: flex; gap: 8px; margin-top: 10px; }
+.nc-approve-btn {
+    display: inline-flex; align-items: center; gap: 5px; padding: 6px 16px; border: none; border-radius: 8px;
+    background: linear-gradient(135deg, #66BB6A, #2E7D32); color: #ffffff; font-size: 12px; font-weight: 700;
+    cursor: pointer; transition: transform 0.12s ease, box-shadow 0.12s ease;
+    box-shadow: 0 2px 6px rgba(46, 125, 50, 0.25);
+}
+.nc-approve-btn:hover { transform: scale(1.04); box-shadow: 0 3px 10px rgba(46, 125, 50, 0.35); }
+.nc-decline-btn {
+    display: inline-flex; align-items: center; gap: 5px; padding: 6px 16px; border: 1.5px solid #EF5350; border-radius: 8px;
+    background: transparent; color: #C62828; font-size: 12px; font-weight: 700;
+    cursor: pointer; transition: all 0.12s ease;
+}
+.nc-decline-btn:hover { background: rgba(239, 83, 80, 0.06); transform: scale(1.04); }
+.nc-btn-loading { opacity: 0.6; pointer-events: none; }
 
 .nc-urgency-chip { display: inline-flex; align-items: center; padding: 1px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; }
 .nc-urgency-critical { background: rgba(183, 28, 28, 0.1); color: #b71c1c; }

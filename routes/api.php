@@ -36,6 +36,10 @@ Route::post('/auth/register-send-otp', [AuthController::class, 'registerSendOtp'
 Route::post('/auth/register-verify-otp', [AuthController::class, 'registerVerifyOtp']);
 Route::post('/auth/register-complete', [AuthController::class, 'registerComplete']);
 
+// Rescuer Self-Registration Routes
+Route::post('/auth/rescuer-register-send-otp', [AuthController::class, 'rescuerRegisterSendOtp']);
+Route::post('/auth/rescuer-register-verify-otp', [AuthController::class, 'rescuerRegisterVerifyOtp']);
+
 // Password Change Routes  
 Route::post('/auth/send-password-change-otp', [AuthController::class, 'sendPasswordChangeOtp']);
 Route::post('/auth/verify-password-change-otp', [AuthController::class, 'verifyPasswordChangeOtp']);

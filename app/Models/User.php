@@ -59,6 +59,7 @@ class User extends Authenticatable
         'terms_accepted_at',
         'terms_accepted_version',
         'terms_accepted_ip',
+        'verification_token',
     ];
 
     /**

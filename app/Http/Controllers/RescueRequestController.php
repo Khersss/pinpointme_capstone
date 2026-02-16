@@ -10,6 +10,7 @@ use App\Services\PushNotificationService;
 use App\Services\TranslationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -428,7 +429,30 @@ class RescueRequestController extends Controller
         }
 
         try {
-            $rescueRequest = RescueRequest::findOrFail($id);
+            // Use database transaction with row-level locking for race condition protection
+            return DB::transaction(function () use ($request, $id, $data) {
+            $rescueRequest = RescueRequest::lockForUpdate()->findOrFail($id);
+            
+            // ── Race condition guard: if a rescuer is trying to accept a request
+            //    that has already been accepted by another rescuer, reject it. ──
+            if (isset($data['assigned_rescuer']) && isset($data['status']) && $data['status'] === 'assigned') {
+                if ($rescueRequest->status !== 'pending') {
+                    $existingRescuer = $rescueRequest->rescuer;
+                    $rescuerName = $existingRescuer 
+                        ? trim(($existingRescuer->first_name ?? '') . ' ' . ($existingRescuer->last_name ?? ''))
+                        : 'another rescuer';
+                    
+                    if ($request->expectsJson() || $request->is('api/*')) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => "This rescue request has already been accepted by {$rescuerName}.",
+                            'already_accepted' => true,
+                            'current_status' => $rescueRequest->status,
+                        ], 409); // 409 Conflict
+                    }
+                    return redirect()->back()->with('error', 'This request has already been accepted.');
+                }
+            }
             
             // Check if rescuer is available (not off_duty or unavailable)
             if (isset($data['assigned_rescuer']) && $data['assigned_rescuer'] !== $rescueRequest->assigned_rescuer) {
@@ -466,6 +490,12 @@ class RescueRequestController extends Controller
             // Update timestamp for status changes
             if (isset($data['status']) && $data['status'] !== $rescueRequest->status) {
                 $data['updated_at'] = now();
+                
+                // ── Clear force_alert when request is no longer pending ──
+                // This ensures ALL rescuers stop receiving the alarm on next poll
+                if ($data['status'] !== 'pending' && $rescueRequest->force_alert) {
+                    $data['force_alert'] = false;
+                }
             }
             
             $rescueRequest->update($data);
@@ -504,6 +534,7 @@ class RescueRequestController extends Controller
             }
 
             return redirect()->back()->with('success', 'Rescue request updated successfully');
+            }); // end DB::transaction
         } catch (\Exception $e) {
             // Handle API requests
             if ($request->expectsJson() || $request->is('api/*')) {
