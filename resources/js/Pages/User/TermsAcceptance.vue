@@ -223,7 +223,7 @@
                 </v-card>
 
                 <!-- Consent Card -->
-                <v-card class="consent-card mx-4 mt-4 mb-6" elevation="2" rounded="xl">
+                <v-card class="consent-card mx-4 mt-2 mb-15" elevation="2" rounded="xl">
                     <v-card-text class="pa-3">
                         <v-checkbox
                             v-model="agreedToTerms"
@@ -696,6 +696,14 @@ onMounted(() => {
 
 /* Responsive Adjustments */
 @media (max-width: 599px) {
+    .terms-container {
+        padding-bottom: 60px;
+    }
+
+    .consent-card {
+        margin-bottom: 90px !important;
+    }
+
     .terms-header {
         padding: 24px 16px 16px;
     }

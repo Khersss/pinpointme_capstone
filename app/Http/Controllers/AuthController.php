@@ -97,10 +97,14 @@ class AuthController extends Controller
         $user->verification_token = null;
         $user->status = 'active';
         $user->is_able_to_login = true;
+        // Google users don't need to set a password
+        $user->must_change_password = false;
+        $user->force_password_change = false;
+        $user->password_changed_at = now();
         $user->save();
         return Inertia::render('User/GoogleVerifyResult', [
             'success' => true,
-            'message' => 'Your account has been verified! You can now sign in using SDCA Google.'
+            'message' => 'Your account has been verified! You can now sign in using your SDCA Google account.'
         ]);
     }
 
@@ -862,7 +866,7 @@ class AuthController extends Controller
             'emergency_contact_name' => 'sometimes|string|max:255',
             'emergency_contact_phone' => 'sometimes|string|max:13', // Allow +639XXXXXXXXX format
             'emergency_contact_relation' => 'sometimes|string|max:255',
-            'blood_type' => 'sometimes|string|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+            'blood_type' => 'sometimes|string|in:A+,A-,B+,B-,AB+,AB-,O+,O-,Unknown',
             'allergies' => 'sometimes|string',
             'medical_conditions' => 'sometimes|string',
             'current_password' => 'sometimes|string|min:8',
@@ -993,13 +997,17 @@ class AuthController extends Controller
         // Check if profile is now complete and clear the must_update_profile flag
         if (\Schema::hasColumn('users', 'must_update_profile') && $user->must_update_profile) {
             $user->refresh();
-            $requiredFields = ['first_name', 'last_name', 'phone', 'emergency_contact_name', 'emergency_contact_phone', 'blood_type'];
+            $requiredFields = ['first_name', 'last_name', 'phone', 'emergency_contact_name', 'emergency_contact_phone', 'allergies'];
             $profileComplete = true;
             foreach ($requiredFields as $field) {
                 if (empty($user->$field)) {
                     $profileComplete = false;
                     break;
                 }
+            }
+            // Also check id_number via accessor (student_id or faculty_id)
+            if ($profileComplete && empty($user->id_number)) {
+                $profileComplete = false;
             }
             if ($profileComplete) {
                 $user->update(['must_update_profile' => false]);
@@ -1885,8 +1893,8 @@ class AuthController extends Controller
                 'username' => strtok($email, '@'), // Use email prefix as username
                 'role' => 'student', // Default role for Google users
                 'password' => Hash::make(Str::random(16)), // Temporary random password
-                'must_change_password' => true,
-                'force_password_change' => true,
+                'must_change_password' => false, // Google users don't need to set a password
+                'force_password_change' => false,
                 'profile_picture' => $googleUser->getAvatar(),
                 'google_token' => $googleUser->token,
                 'status' => 'pending',
@@ -2123,8 +2131,8 @@ class AuthController extends Controller
                     'username' => strtok($email, '@'),
                     'role' => 'student',
                     'password' => Hash::make(Str::random(16)),
-                    'must_change_password' => true,
-                    'force_password_change' => true,
+                    'must_change_password' => false, // Google users don't need to set a password
+                    'force_password_change' => false,
                     'profile_picture' => $avatar,
                     'status' => 'pending',
                     'is_able_to_login' => false,

@@ -732,13 +732,18 @@ class RescueRequestController extends Controller
             'phone',
             'emergency_contact_name',
             'emergency_contact_phone',
-            'blood_type'
+            'allergies'
         ];
 
         foreach ($requiredFields as $field) {
             if (empty($user->$field)) {
                 return true;
             }
+        }
+
+        // Also check id_number via accessor (student_id or faculty_id)
+        if (empty($user->id_number)) {
+            return true;
         }
 
         // All fields are filled — if the flag is still set, clear it now

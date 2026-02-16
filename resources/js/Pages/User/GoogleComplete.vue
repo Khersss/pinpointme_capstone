@@ -1,47 +1,97 @@
 <template>
     <v-app class="bg-user-gradient-light">
-        <v-main class="registration-viewport">
-            <div class="mobile-container">
-                <div class="mobile-header">
-                    <v-img
-                        src="/images/logos/pinpointme.png"
-                        max-height="64"
-                        max-width="64"
-                        contain
-                        class="mx-auto"
-                    />
-                    <h1 class="text-h6 font-weight-bold text-primary mt-2 mb-0">PinPointMe</h1>
+        <v-main class="verify-viewport">
+            <div class="verify-container">
+                <!-- Brand Header -->
+                <div class="brand-header">
+                    <img src="/images/Icons/logo_w_word.png" alt="PinPointMe" class="brand-logo" />
                 </div>
-                <v-card class="registration-card" rounded="xl" elevation="2">
-                    <div class="google-profile-card mb-4 mt-2">
-                        <v-avatar size="40" class="mr-3">
+
+                <!-- Main Card -->
+                <v-card class="verify-card" rounded="xl" elevation="3">
+                    <!-- Google Profile Strip -->
+                    <div class="profile-strip">
+                        <v-avatar :size="profileAvatarSize" class="profile-avatar">
                             <v-img v-if="googleUser.profile_picture" :src="googleUser.profile_picture" />
-                            <v-icon v-else color="primary">mdi-account-circle</v-icon>
+                            <v-icon v-else color="white" :size="profileAvatarSize * 0.6">mdi-account-circle</v-icon>
                         </v-avatar>
-                        <div class="profile-info">
+                        <div class="profile-details">
                             <div class="profile-name">{{ googleUser.first_name }} {{ googleUser.last_name }}</div>
                             <div class="profile-email">{{ googleUser.email }}</div>
                         </div>
-                        <v-icon color="success" size="20">mdi-check-circle</v-icon>
+                        <v-icon color="#4CAF50" :size="checkSize">mdi-check-decagram</v-icon>
                     </div>
-                    <div class="form-content text-center">
-                        <v-icon size="56" color="primary" class="mb-3">mdi-email-check-outline</v-icon>
-                        <h2 class="form-title" style="color:#3674B5;">Verify Your SDCA Email</h2>
-                        <p class="form-subtitle mb-4">
-                            We have sent a verification link to your SDCA Gmail account.<br>
-                            <span style="color:#3674B5;font-weight:600">Please check your inbox and click the link to verify your account.</span>
+
+                    <!-- Content -->
+                    <div class="verify-content">
+                        <!-- Email Icon -->
+                        <div class="icon-wrapper">
+                            <div class="icon-bg">
+                                <v-icon color="white" :size="emailIconSize">mdi-email-check-outline</v-icon>
+                            </div>
+                        </div>
+
+                        <h2 class="verify-title">Verify Your SDCA Email</h2>
+
+                        <p class="verify-description">
+                            We've sent a verification link to your <strong>SDCA Gmail account</strong>.
+                            Please check your inbox and click the link to activate your account.
                         </p>
-                        <v-alert v-if="error" type="error" variant="tonal" class="mb-4 mx-4" closable density="compact" @click:close="error = ''">
+
+                        <!-- Steps Info -->
+                        <div class="steps-info">
+                            <div class="step-item">
+                                <div class="step-num">1</div>
+                                <span>Open your <strong>SDCA Gmail</strong> inbox</span>
+                            </div>
+                            <div class="step-item">
+                                <div class="step-num">2</div>
+                                <span>Find the email from <strong>PinPointMe</strong></span>
+                            </div>
+                            <div class="step-item">
+                                <div class="step-num">3</div>
+                                <span>Click <strong>"Verify My Account"</strong></span>
+                            </div>
+                        </div>
+
+                        <!-- Error Alert -->
+                        <v-alert v-if="error" type="error" variant="tonal" class="mb-3" closable density="compact" rounded="lg" @click:close="error = ''">
                             {{ error }}
                         </v-alert>
-                        <v-btn color="primary" class="submit-btn mb-2" :loading="isLoading" @click="resendVerification" variant="tonal">
+
+                        <!-- Actions -->
+                        <v-btn
+                            color="#3674B5"
+                            class="resend-btn"
+                            :loading="isLoading"
+                            @click="resendVerification"
+                            variant="tonal"
+                            block
+                            rounded="lg"
+                        >
+                            <v-icon start size="18">mdi-email-sync-outline</v-icon>
                             Resend Verification Email
                         </v-btn>
-                        <v-btn color="grey" class="submit-btn" @click="handleCancel" variant="text">
+
+                        <v-btn
+                            color="grey-darken-1"
+                            class="back-btn"
+                            @click="handleCancel"
+                            variant="text"
+                            block
+                            rounded="lg"
+                        >
+                            <v-icon start size="18">mdi-arrow-left</v-icon>
                             Back to Login
                         </v-btn>
                     </div>
                 </v-card>
+
+                <!-- Footer Note -->
+                <p class="footer-note">
+                    <v-icon size="14" color="#999">mdi-information-outline</v-icon>
+                    Didn't receive the email? Check your spam folder.
+                </p>
             </div>
         </v-main>
         <v-snackbar v-model="showToast" :color="toastColor" location="top" timeout="3000">
@@ -63,6 +113,11 @@ const error = ref('');
 const showToast = ref(false);
 const toastMessage = ref('');
 const toastColor = ref('success');
+
+// Responsive sizes
+const profileAvatarSize = computed(() => window.innerWidth < 360 ? 32 : 40);
+const checkSize = computed(() => window.innerWidth < 360 ? 18 : 22);
+const emailIconSize = computed(() => window.innerWidth < 360 ? 28 : 36);
 
 // Resend verification email
 const resendVerification = async () => {
@@ -113,299 +168,221 @@ onMounted(() => {
 
 <style scoped>
 /* =================================================================
-   Mobile-First Container Layout
+   Viewport & Container
    ================================================================= */
-.registration-viewport {
+.verify-viewport {
     min-height: 100vh;
     min-height: 100dvh;
-    padding: 0;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(12px, 3vw, 24px);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
 
-.mobile-container {
+.verify-container {
     width: 100%;
-    max-width: 440px;
+    max-width: clamp(340px, 85vw, 460px);
     margin: 0 auto;
-    padding: 12px;
-    padding-top: max(12px, env(safe-area-inset-top, 12px));
-    padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    min-height: 100dvh;
-    box-sizing: border-box;
+    align-items: center;
+    gap: clamp(12px, 3vw, 20px);
 }
 
 /* =================================================================
-   Mobile Header
+   Brand Header
    ================================================================= */
-.mobile-header {
+.brand-header {
     text-align: center;
-    padding: 4px 0 10px;
     flex-shrink: 0;
 }
 
-.mobile-header .v-img {
-    max-height: 48px !important;
-    max-width: 48px !important;
-}
-
-.mobile-header h1 {
-    font-size: 1rem !important;
+.brand-logo {
+    max-width: clamp(180px, 50vw, 260px);
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 8px rgba(54, 116, 181, 0.15));
 }
 
 /* =================================================================
-   Registration Card - Main Container
+   Main Card - Fits Content
    ================================================================= */
-.registration-card {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
+.verify-card {
+    width: 100%;
     background: white !important;
-    border-radius: 16px !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid rgba(161, 227, 249, 0.25);
+    box-shadow: 0 8px 32px rgba(54, 116, 181, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
     overflow: hidden;
-    min-height: 0;
 }
 
 /* =================================================================
-   Step Indicator
+   Profile Strip
    ================================================================= */
-.step-indicator {
+.profile-strip {
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 12px 16px;
-    background: #f8f9fa;
-    gap: 6px;
-    flex-shrink: 0;
-}
-
-.step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-}
-
-.step-circle {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 600;
-    background: #e0e0e0;
-    color: #9e9e9e;
-    transition: all 0.3s ease;
-    flex-shrink: 0;
-}
-
-.step.active .step-circle {
-    background: #3674B5;
-    color: white;
-}
-
-.step.completed .step-circle {
-    background: #4caf50;
-    color: white;
-}
-
-.step-label {
-    font-size: 10px;
-    color: #9e9e9e;
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.step.active .step-label,
-.step.completed .step-label {
-    color: #333;
-}
-
-.step-line {
-    width: clamp(24px, 8vw, 48px);
-    height: 2px;
-    background: #e0e0e0;
-    margin-bottom: 16px;
-    transition: background 0.3s ease;
-    flex-shrink: 0;
-}
-
-.step-line.active {
-    background: #3674B5;
-}
-
-/* =================================================================
-   Google Profile Card
-   ================================================================= */
-.google-profile-card {
-    display: flex;
-    align-items: center;
-    padding: 10px 12px;
-    margin: 0 12px 6px;
+    padding: clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 20px);
     background: linear-gradient(135deg, #f0f7ff 0%, #e8f4f8 100%);
-    border-radius: 10px;
-    border: 1px solid rgba(54, 116, 181, 0.15);
-    flex-shrink: 0;
+    border-bottom: 1px solid rgba(54, 116, 181, 0.1);
+    gap: clamp(10px, 2.5vw, 14px);
     min-width: 0;
 }
 
-.google-profile-card .v-avatar {
+.profile-avatar {
     flex-shrink: 0;
+    border: 2px solid rgba(54, 116, 181, 0.2);
 }
 
-.profile-info {
+.profile-details {
     flex: 1;
     min-width: 0;
-    margin-right: 8px;
 }
 
 .profile-name {
-    font-size: 13px;
+    font-size: clamp(12px, 3.2vw, 14px);
     font-weight: 600;
     color: #333;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.3;
 }
 
 .profile-email {
-    font-size: 11px;
+    font-size: clamp(10px, 2.8vw, 12px);
     color: #666;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.3;
 }
 
 /* =================================================================
-   Form Content Area
+   Content Area
    ================================================================= */
-.form-content {
-    padding: 14px;
-    flex: 1 1 auto;
+.verify-content {
+    padding: clamp(16px, 4vw, 28px) clamp(16px, 4vw, 24px) clamp(20px, 4vw, 28px);
+    text-align: center;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    min-height: 0;
+    align-items: center;
 }
 
-.form-title {
-    font-size: clamp(16px, 4.5vw, 20px);
+/* Email Icon */
+.icon-wrapper {
+    margin-bottom: clamp(12px, 3vw, 20px);
+}
+
+.icon-bg {
+    width: clamp(56px, 14vw, 72px);
+    height: clamp(56px, 14vw, 72px);
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3674B5, #2563A7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 24px rgba(54, 116, 181, 0.3);
+}
+
+/* Title */
+.verify-title {
+    font-size: clamp(1.1rem, 4.5vw, 1.4rem);
     font-weight: 700;
-    color: #333;
-    margin-bottom: 4px;
+    color: #3674B5;
+    margin: 0 0 clamp(8px, 2vw, 12px) 0;
+    letter-spacing: -0.3px;
 }
 
-.form-subtitle {
-    font-size: clamp(12px, 3.2vw, 14px);
-    color: #666;
-    margin-bottom: 16px;
+/* Description */
+.verify-description {
+    font-size: clamp(0.8rem, 2.8vw, 0.9rem);
+    line-height: 1.6;
+    color: #555;
+    margin: 0 0 clamp(14px, 3.5vw, 20px) 0;
+    max-width: 380px;
+}
+
+.verify-description strong {
+    color: #3674B5;
+}
+
+/* =================================================================
+   Steps Info
+   ================================================================= */
+.steps-info {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 1.5vw, 10px);
+    margin-bottom: clamp(16px, 4vw, 24px);
+    padding: clamp(10px, 2.5vw, 16px);
+    background: rgba(54, 116, 181, 0.04);
+    border-radius: clamp(10px, 2vw, 14px);
+    border: 1px solid rgba(54, 116, 181, 0.08);
+}
+
+.step-item {
+    display: flex;
+    align-items: center;
+    gap: clamp(8px, 2vw, 12px);
+    text-align: left;
+    font-size: clamp(0.75rem, 2.5vw, 0.85rem);
+    color: #444;
     line-height: 1.4;
 }
 
-/* =================================================================
-   Input Groups
-   ================================================================= */
-.input-group {
-    margin-bottom: 12px;
+.step-item strong {
+    color: #3674B5;
 }
 
-.input-label {
+.step-num {
+    width: clamp(22px, 5.5vw, 28px);
+    height: clamp(22px, 5.5vw, 28px);
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3674B5, #2563A7);
+    color: white;
     display: flex;
     align-items: center;
-    font-size: 13px;
-    font-weight: 600;
-    color: #444;
-    margin-bottom: 4px;
-}
-
-/* Text field styling */
-:deep(.v-text-field .v-field) {
-    border-radius: 10px;
-    background: #fafafa;
-    font-size: 15px;
-    min-height: 44px;
-}
-
-:deep(.v-text-field .v-field--focused) {
-    background: #fff;
-}
-
-:deep(.v-text-field .v-field__outline) {
-    --v-field-border-opacity: 0.25;
-}
-
-:deep(.v-text-field .v-field--focused .v-field__outline) {
-    --v-field-border-opacity: 1;
-}
-
-:deep(.v-text-field input) {
-    font-size: 15px !important;
-}
-
-:deep(.v-text-field input::placeholder) {
-    font-size: 14px !important;
-    color: #aaa !important;
-}
-
-/* OTP Input */
-.otp-input {
     justify-content: center;
-}
-
-:deep(.v-otp-input) {
-    max-width: 100%;
-    gap: 4px;
-}
-
-:deep(.v-otp-input .v-otp-input__content) {
-    gap: clamp(4px, 1.5vw, 8px);
-    justify-content: center;
-}
-
-:deep(.v-otp-input .v-field) {
-    border-radius: 8px;
-    min-width: 0;
-    width: clamp(36px, 11vw, 48px);
-    height: clamp(40px, 11vw, 48px);
-}
-
-:deep(.v-otp-input input) {
-    font-size: clamp(16px, 4.5vw, 20px) !important;
-    font-weight: 600;
-    padding: 0 !important;
-    text-align: center;
-}
-
-/* =================================================================
-   Submit Button
-   ================================================================= */
-.submit-btn {
-    text-transform: none !important;
-    font-weight: 600;
-    font-size: 14px;
-    letter-spacing: 0.3px;
-    border-radius: 12px !important;
-    height: 46px !important;
-    box-shadow: 0 4px 12px rgba(54, 116, 181, 0.25) !important;
+    font-size: clamp(10px, 2.5vw, 12px);
+    font-weight: 700;
     flex-shrink: 0;
 }
 
 /* =================================================================
-   Cancel Section
+   Buttons
    ================================================================= */
-.cancel-section {
-    padding: 10px 14px 14px;
+.resend-btn {
+    text-transform: none !important;
+    font-weight: 600 !important;
+    font-size: clamp(13px, 3.2vw, 14px) !important;
+    letter-spacing: 0.2px !important;
+    height: clamp(40px, 9vw, 46px) !important;
+    margin-bottom: clamp(6px, 1.5vw, 10px);
+    box-shadow: none !important;
+}
+
+.back-btn {
+    text-transform: none !important;
+    font-weight: 500 !important;
+    font-size: clamp(12px, 3vw, 13px) !important;
+    height: clamp(36px, 8vw, 42px) !important;
+    color: #888 !important;
+}
+
+/* =================================================================
+   Footer Note
+   ================================================================= */
+.footer-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: clamp(0.65rem, 2vw, 0.75rem);
+    color: #999;
     text-align: center;
-    border-top: 1px solid #f0f0f0;
-    margin-top: auto;
     flex-shrink: 0;
 }
 
@@ -413,355 +390,150 @@ onMounted(() => {
    Alerts
    ================================================================= */
 :deep(.v-alert) {
+    width: 100%;
     border-radius: 10px;
 }
 
 :deep(.v-alert .v-alert__content) {
-    font-size: 12px;
+    font-size: clamp(11px, 2.8vw, 12px);
 }
 
 /* =================================================================
-   Chips
-   ================================================================= */
-:deep(.v-chip) {
-    font-weight: 500;
-    border-radius: 6px;
-}
-
-/* =================================================================
-   Responsive – Extra-small phones (iPhone SE, Galaxy S3, 320px)
+   Responsive – Extra Small (< 360px)
    ================================================================= */
 @media (max-width: 359px) {
-    .mobile-container {
+    .verify-viewport {
         padding: 8px;
+        align-items: flex-start;
+        padding-top: 16px;
     }
 
-    .mobile-header {
-        padding: 2px 0 6px;
+    .verify-container {
+        gap: 8px;
     }
 
-    .mobile-header .v-img {
-        max-height: 36px !important;
-        max-width: 36px !important;
+    .brand-logo {
+        max-width: 150px;
     }
 
-    .mobile-header h1 {
-        font-size: 0.85rem !important;
-        margin-top: 4px !important;
-    }
-
-    .step-indicator {
+    .profile-strip {
         padding: 8px 10px;
-        gap: 4px;
+        gap: 8px;
     }
 
-    .step-circle {
-        width: 22px;
-        height: 22px;
-        font-size: 10px;
+    .verify-content {
+        padding: 12px 12px 16px;
     }
 
-    .step-label {
-        font-size: 9px;
-    }
-
-    .step-line {
-        width: 20px;
-        margin-bottom: 14px;
-    }
-
-    .google-profile-card {
-        margin: 0 8px 4px;
-        padding: 8px 10px;
-    }
-
-    .google-profile-card .v-avatar {
-        width: 32px !important;
-        height: 32px !important;
-    }
-
-    .profile-name {
-        font-size: 12px;
-    }
-
-    .profile-email {
-        font-size: 10px;
-    }
-
-    .form-content {
-        padding: 10px;
-    }
-
-    .input-group {
-        margin-bottom: 10px;
-    }
-
-    .input-label {
-        font-size: 12px;
-    }
-
-    .submit-btn {
-        height: 42px !important;
-        font-size: 13px;
-    }
-
-    .cancel-section {
-        padding: 8px 10px 10px;
-    }
-
-    :deep(.v-text-field input) {
-        font-size: 14px !important;
-    }
-
-    :deep(.v-text-field input::placeholder) {
-        font-size: 13px !important;
+    .steps-info {
+        padding: 8px;
+        gap: 5px;
     }
 }
 
 /* =================================================================
-   Responsive – Small phones (375px)
-   ================================================================= */
-@media (min-width: 360px) and (max-width: 399px) {
-    .mobile-container {
-        padding: 10px;
-    }
-
-    .form-content {
-        padding: 12px;
-    }
-
-    .google-profile-card {
-        margin: 0 10px 6px;
-    }
-}
-
-/* =================================================================
-   Responsive – Short screens / landscape
+   Responsive – Short Screens / Landscape
    ================================================================= */
 @media (max-height: 640px) {
-    .mobile-container {
-        min-height: auto;
-        padding-top: 6px;
-        padding-bottom: 6px;
+    .verify-viewport {
+        align-items: flex-start;
+        padding-top: 8px;
     }
 
-    .mobile-header {
-        padding: 2px 0 6px;
+    .brand-logo {
+        max-width: 140px;
     }
 
-    .mobile-header .v-img {
-        max-height: 36px !important;
-        max-width: 36px !important;
+    .verify-container {
+        gap: 8px;
     }
 
-    .mobile-header h1 {
-        font-size: 0.85rem !important;
-        margin-top: 2px !important;
+    .icon-bg {
+        width: 48px;
+        height: 48px;
     }
 
-    .registration-card {
-        flex: none;
-    }
-
-    .step-indicator {
-        padding: 8px 14px;
-    }
-
-    .google-profile-card {
-        padding: 8px 10px;
-        margin-bottom: 4px;
-    }
-
-    .form-content {
-        padding: 10px 14px;
-    }
-
-    .form-title {
-        margin-bottom: 2px;
-    }
-
-    .form-subtitle {
-        margin-bottom: 10px;
-    }
-
-    .input-group {
+    .icon-wrapper {
         margin-bottom: 8px;
     }
 
-    .submit-btn {
-        height: 42px !important;
-    }
-
-    .cancel-section {
-        padding: 6px 14px 10px;
+    .steps-info {
+        padding: 8px;
+        gap: 4px;
     }
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
-    .mobile-header {
+    .brand-header {
         display: none;
     }
 
-    .step-indicator {
-        padding: 6px 12px;
+    .verify-viewport {
+        align-items: flex-start;
+        padding: 6px;
     }
 
-    .step-circle {
-        width: 22px;
-        height: 22px;
-        font-size: 10px;
+    .verify-content {
+        padding: 10px 14px 14px;
     }
 
-    .step-label {
-        display: none;
-    }
-
-    .step-line {
-        margin-bottom: 0;
-    }
-
-    .google-profile-card {
-        margin: 0 10px 2px;
-        padding: 6px 10px;
-    }
-
-    .form-content {
-        padding: 8px 12px;
-        overflow-y: auto;
-    }
-
-    .form-title {
-        font-size: 15px;
-    }
-
-    .form-subtitle {
-        font-size: 11px;
-        margin-bottom: 8px;
-    }
-
-    .input-group {
+    .icon-wrapper {
         margin-bottom: 6px;
     }
 
-    .input-label {
-        font-size: 11px;
-        margin-bottom: 2px;
+    .icon-bg {
+        width: 40px;
+        height: 40px;
     }
 
-    :deep(.v-text-field .v-field) {
-        min-height: 38px;
+    .verify-title {
+        font-size: 1rem;
     }
 
-    .submit-btn {
+    .verify-description {
+        font-size: 0.75rem;
+        margin-bottom: 10px;
+    }
+
+    .steps-info {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px;
+    }
+
+    .step-item {
+        font-size: 0.7rem;
+    }
+
+    .resend-btn {
         height: 38px !important;
-        font-size: 13px;
     }
 
-    .cancel-section {
-        padding: 4px 12px 6px;
+    .back-btn {
+        height: 34px !important;
     }
 }
 
 /* =================================================================
-   Responsive – Tablet and larger
+   Responsive – Tablet+
    ================================================================= */
 @media (min-width: 600px) {
-    .mobile-container {
-        padding: 24px;
-        justify-content: center;
-        min-height: 100vh;
-        min-height: 100dvh;
+    .brand-logo {
+        max-width: 280px;
     }
 
-    .mobile-header {
-        padding: 12px 0 20px;
+    .verify-card {
+        box-shadow: 0 12px 48px rgba(54, 116, 181, 0.12), 0 4px 16px rgba(0, 0, 0, 0.05) !important;
     }
 
-    .mobile-header .v-img {
-        max-height: 72px !important;
-        max-width: 72px !important;
+    .verify-content {
+        padding: 28px 32px 32px;
     }
 
-    .mobile-header h1 {
-        font-size: 1.35rem !important;
-    }
-
-    .registration-card {
-        flex: none;
-        max-width: 100%;
-    }
-
-    .step-indicator {
-        padding: 16px 20px;
-    }
-
-    .form-content {
-        padding: 20px 24px;
-    }
-
-    .google-profile-card {
-        margin: 0 20px 12px;
-        padding: 12px 16px;
-    }
-
-    .profile-name {
-        font-size: 14px;
-    }
-
-    .profile-email {
-        font-size: 12px;
-    }
-
-    .form-title {
-        font-size: 20px;
-    }
-
-    .form-subtitle {
-        font-size: 14px;
-        margin-bottom: 20px;
-    }
-
-    .input-group {
-        margin-bottom: 16px;
-    }
-
-    .submit-btn {
-        height: 48px !important;
-        font-size: 15px;
-    }
-}
-
-/* =================================================================
-   Responsive – Desktop
-   ================================================================= */
-@media (min-width: 960px) {
-    .mobile-container {
-        padding: 32px;
-    }
-
-    .mobile-header {
-        padding: 16px 0 24px;
-    }
-
-    .mobile-header .v-img {
-        max-height: 80px !important;
-        max-width: 80px !important;
-    }
-
-    .mobile-header h1 {
-        font-size: 1.5rem !important;
-    }
-
-    .form-content {
-        padding: 24px 28px;
-    }
-
-    .google-profile-card {
-        margin: 0 24px 16px;
-    }
-
-    .form-title {
-        font-size: 22px;
+    .profile-strip {
+        padding: 14px 24px;
     }
 }
 
@@ -769,33 +541,11 @@ onMounted(() => {
    Safe Area Support (notched phones)
    ================================================================= */
 @supports (padding-top: env(safe-area-inset-top)) {
-    .mobile-container {
+    .verify-viewport {
+        padding-top: max(12px, env(safe-area-inset-top));
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
         padding-left: max(12px, env(safe-area-inset-left));
         padding-right: max(12px, env(safe-area-inset-right));
     }
-}
-
-/* =================================================================
-   Focus states for accessibility
-   ================================================================= */
-:deep(.v-field--focused .v-label) {
-    color: #3674B5 !important;
-}
-
-/* =================================================================
-   Scrollbar (for overflow content)
-   ================================================================= */
-.form-content::-webkit-scrollbar {
-    width: 3px;
-}
-
-.form-content::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 2px;
-}
-
-.form-content {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
 }
 </style>

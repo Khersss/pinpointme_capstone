@@ -10,10 +10,35 @@
         <h2 class="form-title text-center mb-2" :class="success ? 'text-success' : 'text-error'">
           {{ success ? 'Account Verified!' : 'Verification Failed' }}
         </h2>
-        <p class="form-subtitle text-center mb-6">{{ message }}</p>
-        <v-btn color="primary" block class="submit-btn" @click="goToLogin">
-          Go to Login
-        </v-btn>
+        <p class="form-subtitle text-center mb-4">{{ message }}</p>
+        
+        <v-alert
+          v-if="success"
+          type="info"
+          variant="tonal"
+          density="compact"
+          class="mb-4 text-left"
+          rounded="lg"
+        >
+          <div style="font-size: 0.85rem; line-height: 1.5;">
+            <v-icon size="16" class="mr-1">mdi-information-outline</v-icon>
+            You may now close this tab and go back to the <strong>PinPointMe app</strong> or your <strong>browser</strong> to sign in with your SDCA Google account.
+          </div>
+        </v-alert>
+
+        <v-alert
+          v-if="!success"
+          type="warning"
+          variant="tonal"
+          density="compact"
+          class="mb-4 text-left"
+          rounded="lg"
+        >
+          <div style="font-size: 0.85rem; line-height: 1.5;">
+            <v-icon size="16" class="mr-1">mdi-arrow-left</v-icon>
+            Please go back to the <strong>PinPointMe app</strong> or your <strong>browser</strong> and try signing in with Google again.
+          </div>
+        </v-alert>
       </v-card>
     </v-main>
   </v-app>

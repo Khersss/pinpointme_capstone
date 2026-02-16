@@ -81,6 +81,8 @@
                                 <v-icon color="white" size="18">mdi-account</v-icon>
                             </v-avatar>
                             <span class="text-body-1 text-sm-subtitle-1 font-weight-bold">Personal Information</span>
+                            <v-spacer />
+                            <span class="text-caption text-grey-darken-1">* Required fields</span>
                         </div>
                         
                         <v-form ref="formRef" v-model="formValid">
@@ -88,25 +90,27 @@
                                 <v-col cols="12" sm="6">
                                     <v-text-field
                                         v-model="editData.first_name"
-                                        label="First Name"
-                                        :rules="[rules.required, rules.nameOnly]"
+                                        label="First Name *"
+                                        :rules="[rules.requiredField('First Name'), rules.nameOnly]"
                                         variant="outlined"
                                         density="comfortable"
                                         hide-details="auto"
                                         class="mb-3 mobile-input"
                                         @keypress="preventNumbers"
+                                        required
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="12" sm="6">
                                     <v-text-field
                                         v-model="editData.last_name"
-                                        label="Last Name"
-                                        :rules="[rules.required, rules.nameOnly]"
+                                        label="Last Name *"
+                                        :rules="[rules.requiredField('Last Name'), rules.nameOnly]"
                                         variant="outlined"
                                         density="comfortable"
                                         hide-details="auto"
                                         class="mb-3 mobile-input"
                                         @keypress="preventNumbers"
+                                        required
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="12">
@@ -126,8 +130,8 @@
                                 <v-col cols="12">
                                     <v-text-field
                                         v-model="editData.phone_number"
-                                        label="Phone Number"
-                                        :rules="[rules.phoneNumber]"
+                                        label="Phone Number *"
+                                        :rules="[rules.requiredField('Phone Number'), rules.phoneNumber]"
                                         variant="outlined"
                                         density="comfortable"
                                         hide-details="auto"
@@ -137,21 +141,25 @@
                                         hint="Mobile number (e.g., 09171234567)"
                                         persistent-hint
                                         @input="formatPhoneNumber('phone_number')"
+                                        required
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="12">
                                     <v-text-field
                                         v-model="editData.id_number"
-                                        label="ID Number"
-                                        :rules="[rules.idNumber]"
+                                        label="ID Number *"
+                                        :rules="[rules.requiredField('ID Number'), rules.idNumber]"
                                         variant="outlined"
                                         density="comfortable"
                                         hide-details="auto"
                                         class="mb-3 mobile-input"
                                         prepend-inner-icon="mdi-card-account-details-outline"
                                         placeholder="Enter 9-digit ID number"
+                                        hint="Student/Faculty ID (9 digits)"
+                                        persistent-hint
                                         maxlength="9"
                                         @input="formatIdNumber"
+                                        required
                                     ></v-text-field>
                                    
                                 </v-col>
@@ -188,11 +196,13 @@
                     <v-expansion-panels flat v-model="emergencyPanel">
                         <v-expansion-panel>
                             <v-expansion-panel-title class="panel-title-mobile">
-                                <div class="d-flex align-center">
+                                <div class="d-flex align-center w-100">
                                     <v-avatar color="error" size="32" class="mr-3">
                                         <v-icon color="white" size="18">mdi-phone-in-talk</v-icon>
                                     </v-avatar>
                                     <span class="text-body-1 text-sm-subtitle-1 font-weight-bold">Emergency Contact</span>
+                                    <v-spacer />
+                                    <span class="text-caption text-grey-darken-1">* Required fields</span>
                                 </div>
                             </v-expansion-panel-title>
                             <v-expansion-panel-text class="panel-content-mobile">
@@ -200,8 +210,8 @@
                                     <v-col cols="12">
                                         <v-text-field
                                             v-model="editData.emergency_contact_name"
-                                            label="Contact Name"
-                                            :rules="[rules.nameOnly]"
+                                            label="Contact Name *"
+                                            :rules="[rules.requiredField('Contact Name'), rules.nameOnly]"
                                             variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
@@ -209,13 +219,14 @@
                                             prepend-inner-icon="mdi-account-heart-outline"
                                             placeholder="Enter emergency contact name"
                                             @keypress="preventNumbers"
+                                            required
                                         ></v-text-field>
                                     </v-col>
                                     <v-col cols="12" sm="6">
                                         <v-text-field
                                             v-model="editData.emergency_contact_phone"
-                                            label="Contact Phone"
-                                            :rules="[rules.phoneNumber]"
+                                            label="Contact Phone *"
+                                            :rules="[rules.requiredField('Contact Phone'), rules.phoneNumber]"
                                             variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
@@ -225,6 +236,7 @@
                                             hint="Mobile number (e.g., 09171234567)"
                                             persistent-hint
                                             @input="formatPhoneNumber('emergency_contact_phone')"
+                                            required
                                         ></v-text-field>
                                     </v-col>
                                     <v-col cols="12" sm="6">
@@ -274,11 +286,13 @@
                     <v-expansion-panels flat v-model="medicalPanel">
                         <v-expansion-panel>
                             <v-expansion-panel-title class="panel-title-mobile">
-                                <div class="d-flex align-center">
+                                <div class="d-flex align-center w-100">
                                     <v-avatar color="red" size="32" class="mr-3">
                                         <v-icon color="white" size="18">mdi-medical-bag</v-icon>
                                     </v-avatar>
                                     <span class="text-body-1 text-sm-subtitle-1 font-weight-bold">Medical Information</span>
+                                    <v-spacer />
+                                    <span class="text-caption text-grey-darken-1">* Required fields</span>
                                 </div>
                             </v-expansion-panel-title>
                             <v-expansion-panel-text class="panel-content-mobile">
@@ -287,7 +301,7 @@
                                         <v-select
                                             v-model="editData.blood_type"
                                             label="Blood Type"
-                                            :items="['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']"
+                                            :items="['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown']"
                                             variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
@@ -299,7 +313,8 @@
                                     <v-col cols="12">
                                         <v-textarea
                                             v-model="editData.allergies"
-                                            label="Allergies"
+                                            label="Allergies *"
+                                            :rules="[rules.requiredField('Allergies')]"
                                             variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
@@ -307,6 +322,7 @@
                                             rows="2"
                                             placeholder="List any known allergies..."
                                             prepend-inner-icon="mdi-allergy"
+                                            required
                                         ></v-textarea>
                                     </v-col>
                                     <v-col cols="12">
@@ -1006,6 +1022,7 @@ const snackbar = ref({
 // Validation rules
 const rules = {
     required: (v) => !!v || 'Required',
+    requiredField: (fieldName) => (v) => !!v || `${fieldName} is required`,
     minLength: (v) => (v && v.length >= 8) || 'Min 8 characters',
     hasUppercase: (v) => /[A-Z]/.test(v) || 'Must contain uppercase letter',
     hasLowercase: (v) => /[a-z]/.test(v) || 'Must contain lowercase letter',
@@ -1033,14 +1050,36 @@ const rules = {
         
         return true;
     },
-    // ID Number validation - exactly 9 digits, no letters
+    // ID Number validation - exactly 9 digits, no letters, and enhanced security
     idNumber: (v) => {
-        if (!v) return true; // Optional field
+        if (!v) return 'ID Number is required';
+        
         // Must be exactly 9 digits, no letters or special characters
         const idRegex = /^\d{9}$/;
         if (!idRegex.test(v)) {
             return 'ID Number must be exactly 9 digits (numbers only)';
         }
+        
+        // Check for all zeros
+        if (v === '000000000') {
+            return 'ID Number cannot be all zeros';
+        }
+        
+        // Check for repeating digits (111111111, 222222222, etc.)
+        const firstDigit = v[0];
+        if (v.split('').every(digit => digit === firstDigit)) {
+            return 'ID Number cannot be all the same digit';
+        }
+        
+        // Check for simple sequential patterns
+        const sequences = [
+            '123456789', '987654321', // ascending/descending
+            '012345678', '876543210'  // starting from 0
+        ];
+        if (sequences.includes(v)) {
+            return 'Please enter a valid ID number';
+        }
+        
         return true;
     },
 };
@@ -1417,6 +1456,9 @@ const saveProfile = async () => {
         localStorage.setItem('userData', JSON.stringify(user.value));
 
         showSnackbar('Personal information updated successfully', 'success');
+
+        // Reload Inertia page props to refresh auth user data immediately
+        router.reload({ only: ['auth'] });
     } catch (err) {
         console.error('Error updating profile:', err);
         const errorMsg = err?.data?.message || err?.message || 'Failed to update profile';
@@ -1428,7 +1470,17 @@ const saveProfile = async () => {
 
 // Save Emergency Contact
 const saveEmergencyContact = async () => {
-    // Validate emergency contact phone number before saving
+    // Validate required fields first
+    if (!editData.emergency_contact_name || !editData.emergency_contact_name.trim()) {
+        showSnackbar('Contact Name is required', 'error');
+        return;
+    }
+    if (!editData.emergency_contact_phone || !editData.emergency_contact_phone.trim()) {
+        showSnackbar('Contact Phone is required', 'error');
+        return;
+    }
+
+    // Validate emergency contact phone number format
     if (editData.emergency_contact_phone) {
         const phoneValidation = rules.phoneNumber(editData.emergency_contact_phone);
         if (phoneValidation !== true) {
@@ -1439,25 +1491,12 @@ const saveEmergencyContact = async () => {
 
     savingEmergency.value = true;
     try {
-        // Build update data - only include non-empty string values
-        const updateData = {};
-        
-        if (editData.emergency_contact_name && editData.emergency_contact_name.trim()) {
-            updateData.emergency_contact_name = editData.emergency_contact_name.trim();
-        }
-        if (editData.emergency_contact_phone && editData.emergency_contact_phone.trim()) {
-            updateData.emergency_contact_phone = editData.emergency_contact_phone.trim();
-        }
-        if (editData.emergency_contact_relation && editData.emergency_contact_relation.trim()) {
-            updateData.emergency_contact_relation = editData.emergency_contact_relation.trim();
-        }
-
-        // Check if there's anything to save
-        if (Object.keys(updateData).length === 0) {
-            showSnackbar('Please fill in at least one field', 'warning');
-            savingEmergency.value = false;
-            return;
-        }
+        // Always include all emergency contact fields (allow clearing optional ones)
+        const updateData = {
+            emergency_contact_name: (editData.emergency_contact_name && editData.emergency_contact_name.trim()) ? editData.emergency_contact_name.trim() : '',
+            emergency_contact_phone: (editData.emergency_contact_phone && editData.emergency_contact_phone.trim()) ? editData.emergency_contact_phone.trim() : '',
+            emergency_contact_relation: (editData.emergency_contact_relation && editData.emergency_contact_relation.trim()) ? editData.emergency_contact_relation.trim() : ''
+        };
 
         console.log('Updating emergency contact with data:', updateData);
         
@@ -1472,6 +1511,9 @@ const saveEmergencyContact = async () => {
         localStorage.setItem('userData', JSON.stringify(user.value));
 
         showSnackbar('Emergency contact updated successfully', 'success');
+
+        // Reload Inertia page props to refresh auth user data immediately
+        router.reload({ only: ['auth'] });
     } catch (err) {
         console.error('Error updating emergency contact:', err);
         const errorMsg = err?.data?.message || err?.message || 'Failed to update emergency contact';
@@ -1490,27 +1532,20 @@ const cancelEditEmergency = () => {
 
 // Save Medical Information
 const saveMedicalInfo = async () => {
+    // Validate required fields first
+    if (!editData.allergies || !editData.allergies.trim()) {
+        showSnackbar('Allergies is required', 'error');
+        return;
+    }
+
     savingMedical.value = true;
     try {
-        // Build update data - only include non-empty values
-        const updateData = {};
-        
-        if (editData.blood_type) {
-            updateData.blood_type = editData.blood_type;
-        }
-        if (editData.allergies && editData.allergies.trim()) {
-            updateData.allergies = editData.allergies.trim();
-        }
-        if (editData.medical_conditions && editData.medical_conditions.trim()) {
-            updateData.medical_conditions = editData.medical_conditions.trim();
-        }
-
-        // Check if there's anything to save
-        if (Object.keys(updateData).length === 0) {
-            showSnackbar('Please fill in at least one field', 'warning');
-            savingMedical.value = false;
-            return;
-        }
+        // Always include all medical fields (allow clearing optional ones)
+        const updateData = {
+            blood_type: editData.blood_type || null,
+            allergies: (editData.allergies && editData.allergies.trim()) ? editData.allergies.trim() : '',
+            medical_conditions: (editData.medical_conditions && editData.medical_conditions.trim()) ? editData.medical_conditions.trim() : ''
+        };
 
         console.log('Updating medical info with data:', updateData);
         
@@ -1525,6 +1560,9 @@ const saveMedicalInfo = async () => {
         localStorage.setItem('userData', JSON.stringify(user.value));
 
         showSnackbar('Medical information updated successfully', 'success');
+
+        // Reload Inertia page props to refresh auth user data immediately
+        router.reload({ only: ['auth'] });
     } catch (err) {
         console.error('Error updating medical info:', err);
         const errorMsg = err?.data?.message || err?.message || 'Failed to update medical information';

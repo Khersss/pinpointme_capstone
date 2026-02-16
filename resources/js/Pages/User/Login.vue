@@ -1605,8 +1605,7 @@ const closeRegister = () => {
 // Role Picker handlers
 const handleStudentStaffRegister = () => {
     showRolePicker.value = false;
-    // Trigger Google sign-in for SDCA students/staff/faculty
-    handleGoogleLogin();
+    showRegister.value = true;
 };
 
 const handleRescuerRegister = () => {

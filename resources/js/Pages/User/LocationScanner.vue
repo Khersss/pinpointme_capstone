@@ -1001,15 +1001,15 @@ const isProfileComplete = computed(() => {
     // Check basic personal information
     const hasBasicInfo = userData.value.first_name && 
                         userData.value.last_name && 
-                        (userData.value.contact_number || userData.value.phone_number);
+                        (userData.value.contact_number || userData.value.phone_number) &&
+                        userData.value.id_number;
     
     // Check emergency contact information
     const hasEmergencyContact = userData.value.emergency_contact_name &&
-                               userData.value.emergency_contact_phone &&
-                               userData.value.emergency_contact_relation;
+                               userData.value.emergency_contact_phone;
     
-    // Check medical information - at least blood type should be provided
-    const hasMedicalInfo = userData.value.blood_type;
+    // Check medical information - allergies is required
+    const hasMedicalInfo = userData.value.allergies;
     
     // All sections must be complete for profile to be considered complete
     return hasBasicInfo && hasEmergencyContact && hasMedicalInfo;
@@ -1382,6 +1382,7 @@ onMounted(async () => {
         profile_picture: mergedUser.profile_picture || null,
         contact_number: mergedUser.contact_number || mergedUser.phone_number || '',
         phone_number: mergedUser.phone_number || mergedUser.contact_number || '',
+        id_number: mergedUser.id_number || '',
         emergency_contact_name: mergedUser.emergency_contact_name || '',
         emergency_contact_phone: mergedUser.emergency_contact_phone || '',
         emergency_contact_relation: mergedUser.emergency_contact_relation || '',
