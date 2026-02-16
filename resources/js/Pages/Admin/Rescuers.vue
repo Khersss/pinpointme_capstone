@@ -443,7 +443,8 @@
                                     label="First Name"
                                     variant="outlined"
                                     density="compact"
-                                    :rules="[v => !!v || 'First name is required']"
+                                    :rules="[rules.nameOnly]"
+                                    @keypress="preventNumbers"
                                 />
                             </v-col>
                             <v-col cols="6">
@@ -452,7 +453,8 @@
                                     label="Last Name"
                                     variant="outlined"
                                     density="compact"
-                                    :rules="[v => !!v || 'Last name is required']"
+                                    :rules="[rules.nameOnly]"
+                                    @keypress="preventNumbers"
                                 />
                             </v-col>
                         </v-row>
@@ -946,6 +948,14 @@ const formData = ref({
 // Validation rules
 const rules = {
     required: (v) => !!v || 'Required',
+    // Name validation - no numbers allowed
+    nameOnly: (v) => {
+        if (!v) return 'Required';
+        if (/[0-9]/.test(v)) {
+            return 'Names cannot contain numbers';
+        }
+        return true;
+    },
     // Phone number validation - only accepts 11 numeric digits
     phoneNumber: (v) => {
         if (!v) return true; // Optional field

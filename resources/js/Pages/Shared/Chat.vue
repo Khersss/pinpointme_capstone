@@ -1319,29 +1319,8 @@ const showSnackbar = (message, color = 'success') => {
     snackbar.value = { show: true, message, color };
 };
 
-// Prevent zoom on mobile/tablet
-const setNoZoomViewport = () => {
-    const viewport = document.querySelector('meta[name="viewport"]');
-    if (viewport) {
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
-    } else {
-        const meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
-        document.head.appendChild(meta);
-    }
-};
-
-const restoreViewport = () => {
-    const viewport = document.querySelector('meta[name="viewport"]');
-    if (viewport) {
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1');
-    }
-};
-
 // Lifecycle
 onMounted(async () => {
-    setNoZoomViewport();
     await initializeChat();
     
     // Poll for new messages every 5 seconds
@@ -1362,7 +1341,7 @@ const handleVisibilityChange = () => {
 };
 
 onBeforeUnmount(() => {
-    restoreViewport();
+    // cleanup before unmount
 });
 
 onUnmounted(() => {

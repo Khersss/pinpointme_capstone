@@ -125,7 +125,7 @@
                                         v-model="profile.first_name"
                                         label="First Name"
                                         :readonly="!isEditing"
-                                        :rules="[rules.required]"
+                                        :rules="[rules.required, rules.nameOnly]"
                                         variant="outlined"
                                         density="compact"
                                         hide-details="auto"
@@ -137,7 +137,7 @@
                                         v-model="profile.last_name"
                                         label="Last Name"
                                         :readonly="!isEditing"
-                                        :rules="[rules.required]"
+                                        :rules="[rules.required, rules.nameOnly]"
                                         variant="outlined"
                                         density="compact"
                                         hide-details="auto"
@@ -307,24 +307,6 @@
                                                 hide-details
                                                 inset
                                                 @change="updateSetting('Sound')"
-                                            />
-                                        </template>
-                                    </v-list-item>
-                                    <v-list-item class="px-2 py-3 rounded-lg mb-2 setting-item">
-                                        <template v-slot:prepend>
-                                            <v-avatar color="success" variant="tonal" size="36" class="mr-3">
-                                                <v-icon size="20">mdi-map-marker-outline</v-icon>
-                                            </v-avatar>
-                                        </template>
-                                        <v-list-item-title class="text-body-2 font-weight-medium">Location Services</v-list-item-title>
-                                        <v-list-item-subtitle class="text-caption">Enable for navigation to victims</v-list-item-subtitle>
-                                        <template v-slot:append>
-                                            <v-switch
-                                                v-model="settings.location"
-                                                color="primary"
-                                                hide-details
-                                                inset
-                                                @change="updateSetting('Location')"
                                             />
                                         </template>
                                     </v-list-item>
@@ -786,11 +768,15 @@ import RescuerMenu from '@/Components/Pages/Rescuer/Menu/RescuerMenu.vue';
 import RescuerBottomNav from '@/Components/Pages/Rescuer/Menu/RescuerBottomNav.vue';
 import { apiFetch, getProfilePictureUrl, updateUser, uploadProfilePicture, deleteProfilePicture, getUnreadMessageCount } from '@/Composables/useApi';
 import { useNotificationAlert } from '@/Composables/useNotificationAlert';
+import { useDarkMode } from '@/Composables/useDarkMode';
 import { setUserActiveStatus } from '@/Utilities/firebase';
 
 // Auth check
 const page = usePage();
 const authUser = computed(() => page.props?.auth?.user);
+
+// Dark mode composable
+const { isDark, set: setDarkMode } = useDarkMode();
 
 // Notification Alert System
 const { playNotificationSound } = useNotificationAlert();
@@ -863,7 +849,6 @@ const passwordForm = ref({
 const settings = ref({
     notifications: true,
     sound: true,
-    location: true,
     darkMode: false,
 });
 
@@ -889,6 +874,19 @@ const rules = {
     hasNumber: v => /[0-9]/.test(v) || 'Must contain a number',
     hasSpecial: v => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(v) || 'Must contain special character',
     passwordMatch: v => v === passwordForm.value.new_password || 'Passwords do not match',
+    // Name validation - only accepts letters, spaces, hyphens, and apostrophes
+    nameOnly: (v) => {
+        if (!v) return true; // Allow empty (use 'required' rule separately if needed)
+        // Allow letters (with diacritics), spaces, hyphens, apostrophes, and periods
+        if (!/^[a-zA-ZÀ-ÿ\s'.-]+$/.test(v)) {
+            return 'Name can only contain letters, spaces, hyphens, and apostrophes';
+        }
+        // Prevent numbers
+        if (/\d/.test(v)) {
+            return 'Name cannot contain numbers';
+        }
+        return true;
+    },
     // Phone number validation - only accepts 11 numeric digits
     phoneNumber: (v) => {
         if (!v) return true; // Optional field
@@ -1072,6 +1070,8 @@ const fetchProfile = async () => {
         if (savedSettings) {
             settings.value = JSON.parse(savedSettings);
         }
+        // Sync dark mode composable with loaded setting
+        setDarkMode(settings.value.darkMode);
     } catch (error) {
         console.error('Error fetching profile:', error);
         showSnackbar('Failed to load profile', 'error');
@@ -1394,42 +1394,11 @@ const updateSetting = async (setting) => {
         }
     }
     
-    // Handle Location
-    else if (setting === 'Location') {
-        if (settings.value.location) {
-            // Request location permission
-            if ('geolocation' in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    () => {
-                        showSnackbar('Location services enabled', 'success');
-                    },
-                    (error) => {
-                        if (error.code === error.PERMISSION_DENIED) {
-                            settings.value.location = false;
-                            localStorage.setItem('rescuerSettings', JSON.stringify(settings.value));
-                            showSnackbar('Location permission denied. Please enable in browser settings.', 'warning');
-                        }
-                    }
-                );
-            } else {
-                showSnackbar('Geolocation not supported', 'warning');
-            }
-        } else {
-            showSnackbar('Location services disabled', 'info');
-        }
-    }
-    
     // Handle Dark Mode
     else if (setting === 'DarkMode') {
-        if (settings.value.darkMode) {
-            // Enable dark mode
-            document.documentElement.classList.add('dark-mode');
-            showSnackbar('Dark mode enabled', 'success');
-        } else {
-            // Disable dark mode
-            document.documentElement.classList.remove('dark-mode');
-            showSnackbar('Dark mode disabled', 'info');
-        }
+        setDarkMode(settings.value.darkMode);
+        showSnackbar(settings.value.darkMode ? 'Dark mode enabled' : 'Dark mode disabled',
+            settings.value.darkMode ? 'success' : 'info');
     }
     
     else {
@@ -1996,5 +1965,106 @@ onUnmounted(() => {
 
 .setting-item:active {
     background: rgba(0, 0, 0, 0.05);
+}
+
+/* Dark Mode Overrides */
+.dark-mode .profile-header-bg {
+    background: var(--dm-bg-surface) !important; /* Remove gradient */
+}
+
+.dark-mode .profile-avatar {
+    background: var(--dm-bg-surface) !important; /* Remove gradient */
+    border: 2px solid var(--dm-border) !important;
+}
+
+/* Make all icons gray for balance in dark mode */
+.dark-mode .v-icon {
+    color: var(--dm-text-muted) !important;
+}
+
+/* Exception: Keep some icons with their intended colors when they're interactive or status indicators */
+.dark-mode .v-snackbar .v-icon,
+.dark-mode .v-alert .v-icon,
+.dark-mode .status-chip .v-icon,
+.dark-mode .v-btn--variant-flat .v-icon,
+.dark-mode .v-btn[style*="background"] .v-icon {
+    color: inherit !important;
+}
+
+/* Profile header specific dark mode */
+.dark-mode .profile-page-header {
+    background: var(--dm-bg-surface) !important;
+    border-bottom: 1px solid var(--dm-border) !important;
+}
+
+.dark-mode .header-title h1 {
+    color: var(--dm-text-primary) !important;
+}
+
+.dark-mode .header-title p {
+    color: var(--dm-text-secondary) !important;
+}
+
+/* Profile card dark mode */
+.dark-mode .profile-info {
+    background: var(--dm-bg-surface) !important;
+    border: 1px solid var(--dm-border) !important;
+}
+
+.dark-mode .profile-name {
+    color: var(--dm-text-primary) !important;
+}
+
+.dark-mode .profile-contact,
+.dark-mode .profile-status {
+    color: var(--dm-text-secondary) !important;
+}
+
+/* Settings list dark mode */
+.dark-mode .setting-item {
+    background: var(--dm-hover) !important;
+    border-bottom: 1px solid var(--dm-border) !important;
+}
+
+.dark-mode .setting-item:active {
+    background: var(--dm-active) !important;
+}
+
+/* Remove gradients from buttons in dark mode */
+.dark-mode .v-btn[style*="linear-gradient"] {
+    background: var(--dm-bg-elevated) !important;
+}
+
+/* Stats cards dark mode */
+.dark-mode .stats-card {
+    background: var(--dm-bg-surface) !important;
+    border: 1px solid var(--dm-border) !important;
+}
+
+/* Photo dialog dark mode */
+.dark-mode .photo-preview {
+    background: var(--dm-bg-surface) !important;
+    border: 1px solid var(--dm-border) !important;
+}
+
+/* Form fields in dark mode */
+.dark-mode .profile-form .v-text-field .v-field,
+.dark-mode .profile-form .v-select .v-field,
+.dark-mode .profile-form .v-textarea .v-field {
+    background: var(--dm-bg-input) !important;
+}
+
+/* Password requirements dark mode */
+.dark-mode .password-requirements {
+    background: var(--dm-bg-input) !important;
+    border: 1px solid var(--dm-border) !important;
+}
+
+.dark-mode .requirement-item {
+    color: var(--dm-text-muted) !important;
+}
+
+.dark-mode .requirement-item.met {
+    color: var(--dm-success) !important;
 }
 </style>

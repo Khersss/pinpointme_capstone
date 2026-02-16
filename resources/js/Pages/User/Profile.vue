@@ -89,22 +89,24 @@
                                     <v-text-field
                                         v-model="editData.first_name"
                                         label="First Name"
-                                        :rules="[rules.required]"
+                                        :rules="[rules.required, rules.nameOnly]"
                                         variant="outlined"
                                         density="comfortable"
                                         hide-details="auto"
                                         class="mb-3 mobile-input"
+                                        @keypress="preventNumbers"
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="12" sm="6">
                                     <v-text-field
                                         v-model="editData.last_name"
                                         label="Last Name"
-                                        :rules="[rules.required]"
+                                        :rules="[rules.required, rules.nameOnly]"
                                         variant="outlined"
                                         density="comfortable"
                                         hide-details="auto"
                                         class="mb-3 mobile-input"
+                                        @keypress="preventNumbers"
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="12">
@@ -199,12 +201,14 @@
                                         <v-text-field
                                             v-model="editData.emergency_contact_name"
                                             label="Contact Name"
+                                            :rules="[rules.nameOnly]"
                                             variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
                                             class="mb-3 mobile-input"
                                             prepend-inner-icon="mdi-account-heart-outline"
                                             placeholder="Enter emergency contact name"
+                                            @keypress="preventNumbers"
                                         ></v-text-field>
                                     </v-col>
                                     <v-col cols="12" sm="6">
@@ -227,12 +231,14 @@
                                         <v-text-field
                                             v-model="editData.emergency_contact_relation"
                                             label="Relationship"
+                                            :rules="[rules.nameOnly]"
                                             variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
                                             class="mb-3 mobile-input"
                                             prepend-inner-icon="mdi-account-tie-outline"
                                             placeholder="e.g., Parent, Spouse, Sibling"
+                                            @keypress="preventNumbers"
                                         ></v-text-field>
                                     </v-col>
                                 </v-row>
@@ -402,24 +408,6 @@
                                                 hide-details
                                                 inset
                                                 @change="updateSetting('Notifications')"
-                                            />
-                                        </template>
-                                    </v-list-item>
-                                    <v-list-item class="px-2 py-3 rounded-lg mb-2 setting-item">
-                                        <template v-slot:prepend>
-                                            <v-avatar color="success" variant="tonal" size="36" class="mr-3">
-                                                <v-icon size="20">mdi-map-marker-outline</v-icon>
-                                            </v-avatar>
-                                        </template>
-                                        <v-list-item-title class="text-body-2 font-weight-medium">Location Services</v-list-item-title>
-                                        <v-list-item-subtitle class="text-caption">Enable for faster rescue</v-list-item-subtitle>
-                                        <template v-slot:append>
-                                            <v-switch
-                                                v-model="settings.locationServices"
-                                                color="primary"
-                                                hide-details
-                                                inset
-                                                @change="updateSetting('Location')"
                                             />
                                         </template>
                                     </v-list-item>
@@ -887,9 +875,12 @@ import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { getCurrentUser, updateUser, uploadProfilePicture, deleteProfilePicture, getProfilePictureUrl, getUserRescueHistory } from '@/Composables/useApi';
 import { useUnreadMessages } from '@/Composables/useUnreadMessages';
+import { useDarkMode } from '@/Composables/useDarkMode';
 import { setUserActiveStatus } from '@/Utilities/firebase';
 import UserAppBar from '@/Components/Pages/User/Menu/UserAppBar.vue';
 import UserBottomNav from '@/Components/Pages/User/Menu/UserBottomNav.vue';
+
+const { isDark, set: setDarkMode } = useDarkMode();
 
 // Get Inertia page for auth
 const page = usePage();
@@ -992,7 +983,6 @@ const passwordData = reactive({
 // Settings
 const settings = reactive({
     pushNotifications: true,
-    locationServices: true,
     darkMode: false,
 });
 
@@ -1022,6 +1012,14 @@ const rules = {
     hasNumber: (v) => /[0-9]/.test(v) || 'Must contain a number',
     hasSpecial: (v) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(v) || 'Must contain special character',
     passwordMatch: (v) => v === passwordData.new_password || 'Passwords do not match',
+    // Name validation - no numbers allowed
+    nameOnly: (v) => {
+        if (!v) return true; // Optional field
+        if (/[0-9]/.test(v)) {
+            return 'Names cannot contain numbers';
+        }
+        return true;
+    },
     // Phone number validation (used for all phone fields)
     phoneNumber: (v) => {
         if (!v) return true; // Optional field
@@ -1045,6 +1043,14 @@ const rules = {
         }
         return true;
     },
+};
+
+// Method to prevent numbers from being entered in name fields
+const preventNumbers = (event) => {
+    const char = String.fromCharCode(event.keyCode || event.which);
+    if (/[0-9]/.test(char)) {
+        event.preventDefault();
+    }
 };
 
 // Password validation checks for visual feedback
@@ -1141,11 +1147,10 @@ const loadSettings = () => {
     if (savedSettings) {
         const parsed = JSON.parse(savedSettings);
         settings.pushNotifications = parsed.pushNotifications ?? true;
-        settings.locationServices = parsed.locationServices ?? true;
         settings.darkMode = parsed.darkMode ?? false;
     }
-    // Apply dark mode on load
-    applyDarkMode(settings.darkMode);
+    // Sync dark mode composable with loaded setting
+    setDarkMode(settings.darkMode);
 };
 
 // Save settings to localStorage when they change
@@ -1682,7 +1687,6 @@ const updateSetting = async (setting) => {
     // Save settings to localStorage immediately
     localStorage.setItem('userSettings', JSON.stringify({
         pushNotifications: settings.pushNotifications,
-        locationServices: settings.locationServices,
         darkMode: settings.darkMode,
     }));
     
@@ -1700,36 +1704,13 @@ const updateSetting = async (setting) => {
         } else {
             showSnackbar('Push notifications disabled', 'info');
         }
-    } else if (setting === 'Location') {
-        if (settings.locationServices) {
-            if ('geolocation' in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    () => showSnackbar('Location services enabled', 'success'),
-                    () => {
-                        settings.locationServices = false;
-                        showSnackbar('Location permission denied', 'warning');
-                    }
-                );
-            }
-        } else {
-            showSnackbar('Location services disabled', 'info');
-        }
     } else if (setting === 'DarkMode') {
-        applyDarkMode(settings.darkMode);
+        setDarkMode(settings.darkMode);
         showSnackbar(settings.darkMode ? 'Dark mode enabled' : 'Dark mode disabled', 'info');
     }
 };
 
-// Apply dark mode to document
-const applyDarkMode = (enabled) => {
-    if (enabled) {
-        document.documentElement.classList.add('dark-mode');
-        document.body.classList.add('dark-mode');
-    } else {
-        document.documentElement.classList.remove('dark-mode');
-        document.body.classList.remove('dark-mode');
-    }
-};
+
 
 // Navigate to location history
 const goToLocationHistory = () => {
@@ -2139,113 +2120,8 @@ onMounted(async () => {
 }
 </style>
 
-<!-- Global Dark Mode Styles (unscoped) -->
+<!-- Global utility styles (unscoped) -->
 <style>
-/* Dark Mode Theme */
-html.dark-mode,
-body.dark-mode {
-    background-color: #121212 !important;
-    color: #e0e0e0 !important;
-}
-
-.dark-mode .profile-page-header {
-    background: #1e1e1e !important;
-}
-
-.dark-mode .profile-header-bg {
-    background: linear-gradient(135deg, #1a237e 0%, #0d1b2a 50%, #0a1929 100%) !important;
-}
-
-.dark-mode .v-main {
-    background-color: #121212 !important;
-}
-
-.dark-mode .v-card {
-    background-color: #1e1e1e !important;
-    color: #e0e0e0 !important;
-}
-
-.dark-mode .v-expansion-panel {
-    background-color: #1e1e1e !important;
-}
-
-.dark-mode .v-expansion-panel-title {
-    color: #e0e0e0 !important;
-}
-
-.dark-mode .v-expansion-panel-text {
-    color: #b0b0b0 !important;
-}
-
-.dark-mode .v-list-item {
-    color: #e0e0e0 !important;
-}
-
-.dark-mode .v-list-item-title {
-    color: #e0e0e0 !important;
-}
-
-.dark-mode .v-list-item-subtitle {
-    color: #9e9e9e !important;
-}
-
-.dark-mode .v-text-field .v-field {
-    background-color: #2d2d2d !important;
-}
-
-.dark-mode .v-text-field input {
-    color: #e0e0e0 !important;
-}
-
-.dark-mode .v-text-field label {
-    color: #9e9e9e !important;
-}
-
-.dark-mode .v-select .v-field {
-    background-color: #2d2d2d !important;
-}
-
-.dark-mode .v-textarea .v-field {
-    background-color: #2d2d2d !important;
-}
-
-.dark-mode .text-grey,
-.dark-mode .text-grey-darken-1 {
-    color: #9e9e9e !important;
-}
-
-.dark-mode .stats-row {
-    background: rgba(255, 255, 255, 0.05) !important;
-}
-
-.dark-mode .history-item {
-    background: rgba(255, 255, 255, 0.05) !important;
-}
-
-.dark-mode .history-item:hover {
-    background: rgba(255, 255, 255, 0.1) !important;
-}
-
-.dark-mode .non-editable-field :deep(.v-field) {
-    background-color: #252525 !important;
-}
-
-.dark-mode .non-editable-field :deep(.v-field__input) {
-    color: #9e9e9e !important;
-}
-
-.dark-mode .v-navigation-drawer {
-    background-color: #1e1e1e !important;
-}
-
-.dark-mode .v-bottom-navigation {
-    background-color: #1e1e1e !important;
-}
-
-.dark-mode .v-dialog .v-card {
-    background-color: #1e1e1e !important;
-}
-
 /* Step Indicator */
 .step-line {
     width: 40px;
@@ -2286,22 +2162,5 @@ body.dark-mode {
 
 .requirement-item span {
     line-height: 1.2;
-}
-
-/* Dark mode for password dialog */
-.dark-mode .password-requirements {
-    background: #2d2d2d;
-}
-
-.dark-mode .step-line {
-    background-color: #444;
-}
-
-.dark-mode .requirement-item {
-    color: #757575;
-}
-
-.dark-mode .requirement-item.met {
-    color: #81c784;
 }
 </style>

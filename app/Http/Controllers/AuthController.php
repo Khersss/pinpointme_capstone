@@ -1,3 +1,39 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\DTOs\ChangePasswordDTO;
+use App\Helpers\ErrorHelper;
+use App\Helpers\Helper;
+use App\Http\Requests\LoginFormRequest;
+use App\Http\Requests\System\ChangePasswordFormRequest;
+use App\Interfaces\ActivityLogInterface;
+use App\Interfaces\AuthInterface;
+use App\Interfaces\CurrentUserInterface;
+use App\Interfaces\ManageAccountInterface;
+use App\Models\User;
+use App\Traits\ActivityLoggerTrait;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Carbon\Carbon;
+
+class AuthController extends Controller
+{
+
+    public function __construct(
+        private AuthInterface $auth,
+        private CurrentUserInterface $currentUser,
+        // private ManageAccountInterface $manageAccount,
+        // private ActivityLogInterface $activityLog,
+    ) {}
+
     /**
      * Send SDCA Google verification email with link
      */
@@ -66,41 +102,6 @@
             'message' => 'Your account has been verified! You can now sign in using SDCA Google.'
         ]);
     }
-<?php
-
-namespace App\Http\Controllers;
-
-use App\DTOs\ChangePasswordDTO;
-use App\Helpers\ErrorHelper;
-use App\Helpers\Helper;
-use App\Http\Requests\LoginFormRequest;
-use App\Http\Requests\System\ChangePasswordFormRequest;
-use App\Interfaces\ActivityLogInterface;
-use App\Interfaces\AuthInterface;
-use App\Interfaces\CurrentUserInterface;
-use App\Interfaces\ManageAccountInterface;
-use App\Models\User;
-use App\Traits\ActivityLoggerTrait;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
-use Inertia\Inertia;
-use Carbon\Carbon;
-
-class AuthController extends Controller
-{
-
-    public function __construct(
-        private AuthInterface $auth,
-        private CurrentUserInterface $currentUser,
-        // private ManageAccountInterface $manageAccount,
-        // private ActivityLogInterface $activityLog,
-    ) {}
 
     /**
      * show login page
@@ -210,8 +211,6 @@ class AuthController extends Controller
             } elseif ($user->role === 'rescuer') {
                 return redirect()->intended('/rescuer/dashboard');
             } else {
-                return redirect()->intended('/user/scanner');
-            }
                 return redirect()->intended('/user/scanner');
             }
         }

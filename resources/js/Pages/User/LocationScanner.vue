@@ -343,41 +343,6 @@
                             </v-card-text>
                         </v-card>
 
-                        <!-- Evacuation Path (Collapsible) -->
-                        <v-expansion-panels v-if="selectedRoom && hasFloorPlan" class="mb-4" variant="accordion">
-                            <v-expansion-panel elevation="0" class="rounded-xl">
-                                <v-expansion-panel-title class="py-3">
-                                    <div class="d-flex align-center">
-                                        <v-avatar color="error-lighten-4" size="40" class="mr-3">
-                                            <v-icon color="error" size="20">mdi-exit-run</v-icon>
-                                        </v-avatar>
-                                        <div>
-                                            <h3 class="text-subtitle-1 font-weight-bold mb-0">Evacuation Path</h3>
-                                            <p class="text-caption text-grey mb-0">{{ selectedRoom.room_name }} - {{ selectedFloor?.floor_name }}</p>
-                                        </div>
-                                    </div>
-                                </v-expansion-panel-title>
-                                <v-expansion-panel-text>
-                                    <div class="evacuation-canvas-container">
-                                        <div class="evacuation-canvas-wrapper" :style="evacuationWrapperStyle">
-                                            <img ref="evacuationImage" :src="selectedFloor.floor_plan_url" class="evacuation-image" @load="onEvacuationImageLoad" />
-                                            <canvas ref="evacuationCanvas" class="evacuation-overlay"></canvas>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex justify-center align-center mt-3 gap-2">
-                                        <v-btn size="small" icon variant="tonal" @click="evacuationZoomOut"><v-icon>mdi-minus</v-icon></v-btn>
-                                        <v-chip size="small">{{ Math.round(evacuationZoom * 100) }}%</v-chip>
-                                        <v-btn size="small" icon variant="tonal" @click="evacuationZoomIn"><v-icon>mdi-plus</v-icon></v-btn>
-                                        <v-btn size="small" icon variant="tonal" @click="resetEvacuationZoom"><v-icon>mdi-restore</v-icon></v-btn>
-                                    </div>
-                                    <div class="evacuation-legend mt-3">
-                                        <div class="legend-item"><div class="legend-line"></div><span>Evacuation Path</span></div>
-                                        <div class="legend-item"><div class="legend-room"></div><span>Your Room</span></div>
-                                    </div>
-                                </v-expansion-panel-text>
-                            </v-expansion-panel>
-                        </v-expansion-panels>
-
                         <!-- Emergency Form -->
                         <v-card id="emergency-form-section" class="mb-4 rounded-xl emergency-form-card" elevation="8">
                             <div class="emergency-form-header">
@@ -1682,13 +1647,13 @@ const checkActiveRescueRequest = async () => {
     }
     
     try {
-        console.log('🔍 Checking for active rescue request for user:', userData.value.id);
+        // Checking for active rescue request
         const response = await getUserActiveRescueRequest(userData.value.id);
-        console.log('🔍 Active rescue check response:', response);
+        // Active rescue check response received
         if (response.has_active && response.data) {
             hasActiveRequest.value = true;
             activeRequest.value = response.data;
-            console.log('📋 Active request status:', response.data.status);
+            // Active request status checked
         } else {
             hasActiveRequest.value = false;
             activeRequest.value = null;
@@ -1751,23 +1716,11 @@ onUnmounted(() => {
 });
 
 const loadBuildings = async () => {
-    console.log('🏗️ Starting to load buildings...');
+    // Loading buildings
     isLoadingBuildings.value = true;
     try {
         const result = await getBuildingsFullStructure();
-        console.log('✅ Buildings loaded successfully:', result);
-        console.log('📊 Total buildings:', result.length);
-        
-        // Log building structure for debugging QR matching
-        result.forEach(b => {
-            console.log(`  🏢 Building: "${b.name}" (ID: ${b.id})`);
-            (b.floors || []).forEach(f => {
-                console.log(`    📋 Floor: "${f.floor_name}" (ID: ${f.id})`);
-                (f.rooms || []).forEach(r => {
-                    console.log(`      🚪 Room: "${r.room_name}" (ID: ${r.id})`);
-                });
-            });
-        });
+        // Buildings loaded successfully
         
         buildings.value = result;
     } catch (error) {
@@ -1906,7 +1859,7 @@ const setupZoomCapabilities = async () => {
         videoTrack = tracks[0];
         const capabilities = videoTrack.getCapabilities();
         
-        console.log('Camera capabilities:', capabilities);
+        // Camera capabilities retrieved
         
         // Check zoom support
         if (capabilities.zoom) {
@@ -1914,7 +1867,7 @@ const setupZoomCapabilities = async () => {
             minZoom.value = capabilities.zoom.min || 1;
             maxZoom.value = capabilities.zoom.max || 4;
             currentZoom.value = capabilities.zoom.min || 1;
-            console.log(`Zoom supported: ${minZoom.value}x - ${maxZoom.value}x`);
+            // Zoom level support checked
         } else {
             console.log('Zoom not supported by this camera');
             zoomSupported.value = false;
@@ -1923,7 +1876,7 @@ const setupZoomCapabilities = async () => {
         // Check flash/torch support
         if (capabilities.torch) {
             flashSupported.value = true;
-            console.log('Flash/torch supported');
+            // Flash/torch support checked
         } else {
             flashSupported.value = false;
             console.log('Flash/torch not supported by this camera');
@@ -2107,10 +2060,6 @@ const stopQrScanner = async () => {
 };
 
 const onQrCodeScanned = async (decodedText, decodedResult) => {
-    console.log('========== QR CODE SCANNED ==========');
-    console.log('Raw QR Text:', decodedText);
-    console.log('QR Result Object:', decodedResult);
-    console.log('Buildings loaded:', buildings.value.length);
     
     // Stop scanning first
     await stopQrScanner();
@@ -2118,7 +2067,7 @@ const onQrCodeScanned = async (decodedText, decodedResult) => {
     
     // Make sure buildings are loaded
     if (buildings.value.length === 0) {
-        console.log('⏳ Buildings not loaded yet, loading now...');
+        // Buildings not loaded yet, loading now
         await loadBuildings();
     }
     
@@ -2131,24 +2080,13 @@ const onQrCodeScanned = async (decodedText, decodedResult) => {
         try {
             locationData = JSON.parse(decodedText);
             parseMethod = 'JSON';
-            console.log('✅ Parsed as JSON:', locationData);
-            
             // Validate QR code structure
             if (locationData.building_id && locationData.floor_id && locationData.room_id) {
-                console.log('✅ Valid QR code structure detected');
-                console.log(`📍 Location: ${locationData.building_name} > ${locationData.floor_name} > ${locationData.room_name}`);
-                
-                if (locationData.version) {
-                    console.log(`📊 QR Version: ${locationData.version}`);
-                }
-                
-                if (locationData.unique_hash) {
-                    console.log(`🔑 Unique Hash: ${locationData.unique_hash}`);
-                }
+                // Valid QR code structure detected
             }
             
         } catch (jsonError) {
-            console.log('❌ Not valid JSON:', jsonError.message);
+            // Not valid JSON
             
             // Try parsing as URL params or custom format
             // Format could be: building_id:1,floor_id:2,room_id:3
@@ -2164,7 +2102,7 @@ const onQrCodeScanned = async (decodedText, decodedResult) => {
                     }
                 });
                 parseMethod = 'Colon-separated';
-                console.log('✅ Parsed as colon-separated');
+                // Parsed as colon-separated
             } else if (decodedText.includes('-')) {
                 const parts = decodedText.split('-');
                 locationData = {
@@ -2173,17 +2111,16 @@ const onQrCodeScanned = async (decodedText, decodedResult) => {
                     room_id: parts[2]
                 };
                 parseMethod = 'Dash-separated';
-                console.log('✅ Parsed as dash-separated');
+                // Parsed as dash-separated
             } else {
                 // Assume it's just a room ID or name
                 locationData = { room_id: decodedText, room_name: decodedText };
                 parseMethod = 'Plain text (room ID/name)';
-                console.log('✅ Parsed as plain text');
+                // Parsed as plain text
             }
         }
         
-        console.log('Parse Method:', parseMethod);
-        console.log('Parsed Location Data:', JSON.stringify(locationData, null, 2));
+        // QR parse method and data logged for debugging
         
         // Validate that we have some data
         if (!locationData || Object.keys(locationData).length === 0) {
@@ -2192,7 +2129,7 @@ const onQrCodeScanned = async (decodedText, decodedResult) => {
         
         // Validate QR code with backend to check if it's still valid (not expired)
         if (locationData.room_id && locationData.version && locationData.unique_hash) {
-            console.log('🔍 Validating QR code with backend...');
+            // Validating QR code with backend
             
             const isValid = await validateQrCodeWithBackend(locationData);
             
@@ -2203,11 +2140,11 @@ const onQrCodeScanned = async (decodedText, decodedResult) => {
                 return;
             }
             
-            console.log('✅ QR code validated successfully');
+            // QR code validated successfully
         } else if (locationData.room_id) {
             // QR code without version - could be an old format
             // Check if room has a newer version in database
-            console.log('⚠️ QR code has no version info - checking if room has been updated...');
+            // QR code has no version info - checking if room has been updated
             
             const checkResult = await validateQrCodeWithBackend({
                 room_id: locationData.room_id,
@@ -2240,17 +2177,16 @@ const onQrCodeScanned = async (decodedText, decodedResult) => {
         } else {
             locationScanned.value = false;
             console.warn('⚠️ QR data parsed but no matching location found');
-            console.log('QR Data:', locationData);
-            console.log('Available buildings:', buildings.value.map(b => ({ id: b.id, name: b.name })));
+            // Debug QR data logging removed
             showNotification(`QR scanned but location not found. Please select manually.`, 'warning');
         }
     } catch (error) {
         locationScanned.value = false;
         console.error('❌ Failed to process QR code:', error);
-        console.log('Raw QR text was:', decodedText);
+        // Raw QR debug logging removed
         showNotification(`Invalid QR code: ${error.message}`, 'error');
     }
-    console.log('=====================================');
+    // Debug separator line removed
 };
 
 // Validate QR code with backend to check if it's still valid
@@ -2285,7 +2221,7 @@ const validateQrCodeWithBackend = async (qrData) => {
     } catch (error) {
         console.error('❌ Error validating QR code:', error);
         // On network error, allow scanning to proceed (offline support)
-        console.log('⚠️ Could not validate QR with backend, allowing scan to proceed');
+        // Could not validate QR with backend, allowing scan to proceed
         return { valid: true, offline: true };
     }
 };
@@ -2309,8 +2245,7 @@ const selectLocationFromQr = async (data) => {
     const floorName = data.floor_name || data.floorName;
     const roomName = data.room_name || data.roomName;
     
-    console.log('🔍 Searching for location with:', { buildingId, floorId, roomId, buildingName, floorName, roomName });
-    console.log('📦 Available buildings count:', buildings.value.length);
+    // Searching for location (debug logging removed)
     
     if (buildings.value.length === 0) {
         console.error('❌ No buildings loaded! Cannot match QR code.');
@@ -2331,7 +2266,7 @@ const selectLocationFromQr = async (data) => {
     
     // First try to find by names (most common QR format)
     if (buildingName && buildings.value.length > 0) {
-        console.log(`🏢 Searching for building by name: "${buildingName}"`);
+        // Searching for building by name
         const building = buildings.value.find(b => 
             b.name.toLowerCase() === buildingName.toLowerCase() ||
             b.name.toLowerCase().includes(buildingName.toLowerCase()) ||
@@ -2344,7 +2279,7 @@ const selectLocationFromQr = async (data) => {
             await nextTick();
             
             if (floorName) {
-                console.log(`🏢 Searching for floor by name: "${floorName}"`);
+                // Searching for floor by name
                 const floor = (building.floors || []).find(f => 
                     f.floor_name.toLowerCase() === floorName.toLowerCase() ||
                     f.floor_name.toLowerCase().includes(floorName.toLowerCase()) ||
@@ -2357,7 +2292,7 @@ const selectLocationFromQr = async (data) => {
                     await nextTick();
                     
                     if (roomName) {
-                        console.log(`🚪 Searching for room by name: "${roomName}"`);
+                        // Searching for room by name
                         const room = (floor.rooms || []).find(r => 
                             r.room_name.toLowerCase() === roomName.toLowerCase() ||
                             r.room_name.toLowerCase().includes(roomName.toLowerCase()) ||
@@ -2366,7 +2301,7 @@ const selectLocationFromQr = async (data) => {
                         
                         if (room) {
                             selectedRoom.value = room;
-                            console.log(`✅ SUCCESS! Location selected: ${building.name} > ${floor.floor_name} > ${room.room_name}`);
+                            // SUCCESS! Location selected
                             // Save location data after successful QR scan
                             saveLocationData();
                             return true;
@@ -2385,7 +2320,7 @@ const selectLocationFromQr = async (data) => {
     
     // Try to find by room name alone (search all buildings/floors)
     if (roomName && buildings.value.length > 0) {
-        console.log(`🔎 Global search for room: "${roomName}"`);
+        // Global search for room
         for (const building of buildings.value) {
             for (const floor of building.floors || []) {
                 const room = (floor.rooms || []).find(r => 
@@ -2398,7 +2333,7 @@ const selectLocationFromQr = async (data) => {
                     selectedFloor.value = floor;
                     await nextTick();
                     selectedRoom.value = room;
-                    console.log(`✅ SUCCESS! Found room globally: ${building.name} > ${floor.floor_name} > ${room.room_name}`);
+                    // SUCCESS! Found room globally
                     // Save location data after successful global room search
                     saveLocationData();
                     return true;
@@ -2855,30 +2790,26 @@ const extractEmergencyFromVoice = (transcript) => {
         }
     }
     
-    console.log('🔍 Emergency extraction - Original:', transcript);
-    console.log('🔍 Emergency extraction - Clean description:', cleanDescription);
-    console.log('🔍 Emergency extraction - Result:', result);
+    // Emergency extraction processing
     
     return result;
 };
 
 const processAudioTranscription = async (audioBlob) => {
     try {
-        console.log('🎤 Starting audio transcription...');
-        console.log('Audio blob size:', audioBlob.size, 'bytes');
-        console.log('Audio blob type:', audioBlob.type);
+        // Starting audio transcription
         
         const transcript = await transcribeAudio(audioBlob);
-        console.log('✅ Transcription result:', transcript);
+        // Transcription completed
         
         if (transcript) {
             // Step 1: Try to extract location from voice directly
             const locationResult = extractLocationFromVoice(transcript);
-            console.log('📍 Location extraction result:', locationResult);
+            // Location extraction completed
             
             // Step 2: Extract emergency details from voice
             const emergencyResult = extractEmergencyFromVoice(transcript);
-            console.log('🚨 Emergency extraction result:', emergencyResult);
+            // Emergency extraction completed
             
             // Step 3: Apply extracted location
             let locationApplied = false;

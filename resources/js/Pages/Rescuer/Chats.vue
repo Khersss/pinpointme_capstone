@@ -101,10 +101,13 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { getConversations, getProfilePictureUrl } from '@/Composables/useApi';
 import { useNotificationAlert } from '@/Composables/useNotificationAlert';
+import { useDarkMode } from '@/Composables/useDarkMode';
 import RescuerMenu from '@/Components/Pages/Rescuer/Menu/RescuerMenu.vue';
 import RescuerBottomNav from '@/Components/Pages/Rescuer/Menu/RescuerBottomNav.vue';
 import NotificationPopup from '@/Components/NotificationPopup.vue';
 import InboxList from '@/Pages/Shared/InboxList.vue';
+
+const { isDark } = useDarkMode();
 
 // State
 const drawer = ref(false);
@@ -492,4 +495,6 @@ onUnmounted(() => {
         display: none;
     }
 }
+
+
 </style>

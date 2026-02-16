@@ -428,9 +428,12 @@ import { router, usePage } from '@inertiajs/vue3';
 import { apiFetch, getProfilePictureUrl } from '@/Composables/useApi';
 import { useNotificationAlert } from '@/Composables/useNotificationAlert';
 import { useUnreadMessages } from '@/Composables/useUnreadMessages';
+import { useDarkMode } from '@/Composables/useDarkMode';
 import RescuerMenu from '@/Components/Pages/Rescuer/Menu/RescuerMenu.vue';
 import RescuerBottomNav from '@/Components/Pages/Rescuer/Menu/RescuerBottomNav.vue';
 import NotificationPopup from '@/Components/NotificationPopup.vue';
+
+const { isDark } = useDarkMode();
 
 // Get Inertia page for auth
 const page = usePage();
@@ -568,17 +571,6 @@ const toastMessage = ref('');
 const toastColor = ref('success');
 
 onMounted(async () => {
-    // Prevent zoom and ensure proper viewport
-    const viewport = document.querySelector('meta[name="viewport"]');
-    if (viewport) {
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
-    } else {
-        const meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
-        document.head.appendChild(meta);
-    }
-    
     // Prevent pull-to-refresh and overscroll
     document.body.style.overscrollBehavior = 'none';
     document.documentElement.style.overscrollBehavior = 'none';
@@ -1009,17 +1001,18 @@ const getInjuryType = (description) => {
 };
 
 const formatElapsedTime = (timestamp) => {
-    if (!timestamp) return '0:00';
+    if (!timestamp) return '0:00:00';
     const date = new Date(timestamp);
     const now = new Date();
     const diffMs = now - date;
-    const totalMinutes = Math.floor(diffMs / 60000);
+    const totalSeconds = Math.floor(diffMs / 1000);
     
-    // Format as hours:minutes instead of minutes:seconds
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
+    // Format as hours:minutes:seconds
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
     
-    return `${hours}:${minutes.toString().padStart(2, '0')}`;
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 };
 
 const formatTime = (timestamp) => {

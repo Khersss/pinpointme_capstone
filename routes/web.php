@@ -97,6 +97,11 @@ Route::prefix('api')->withoutMiddleware([Csrf::class])->group(function () {
     Route::post('/auth/verify-password-change-otp', [AuthController::class, 'verifyPasswordChangeOtp']);
     Route::post('/auth/complete-password-change', [AuthController::class, 'completePasswordChange']);
     
+    // Registration OTP endpoints (for new user registration)
+    Route::post('/auth/register-send-otp', [AuthController::class, 'registerSendOtp']);
+    Route::post('/auth/register-verify-otp', [AuthController::class, 'registerVerifyOtp']);
+    Route::post('/auth/register-complete', [AuthController::class, 'registerComplete']);
+    
 // Terms & Conditions acceptance endpoint (requires auth)
     Route::post('/accept-terms', [AuthController::class, 'acceptTerms'])->middleware('auth');
 

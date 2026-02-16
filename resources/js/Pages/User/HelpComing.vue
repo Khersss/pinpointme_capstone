@@ -34,23 +34,7 @@
 
                 <!-- Rescue Status Display -->
                 <template v-else-if="rescue">
-                    <!-- Status Hero Card -->
                     <div class="status-hero" :class="'status-' + rescue.status">
-                        <div class="status-hero-content">
-                            <div class="status-icon-wrapper">
-                                <v-avatar :color="getStatusColor(rescue.status)" size="100" class="status-avatar">
-                                    <v-icon size="50" color="white">
-                                        {{ getStatusIcon(rescue.status) }}
-                                    </v-icon>
-                                </v-avatar>
-                                <div v-if="rescue.status !== 'rescued' && rescue.status !== 'safe' && rescue.status !== 'cancelled'" class="pulse-ring"></div>
-                            </div>
-                            <h2 class="status-title">{{ getStatusText(rescue.status) }}</h2>
-                            <v-chip :color="getStatusColor(rescue.status)" variant="flat" size="large" class="status-chip">
-                                {{ rescue.status?.replace('_', ' ').toUpperCase() }}
-                            </v-chip>
-                        </div>
-                        
                         <!-- Progress Steps -->
                         <div class="progress-steps-container">
                             <div class="progress-track">
@@ -84,7 +68,7 @@
                     <!-- Content Area -->
                     <div class="content-area pa-4">
                         <!-- Location Card -->
-                        <v-card class="mb-3 rounded-xl" elevation="0">
+                        <v-card class="mb-3 rounded-xl location-card" elevation="2">
                             <div class="card-header-icon">
                                 <v-avatar color="primary" size="40">
                                     <v-icon color="white" size="20">mdi-map-marker</v-icon>
@@ -121,14 +105,15 @@
                                     </div>
                                     <!-- View Map Button -->
                                     <v-btn
-                                        variant="tonal"
+                                        variant="flat"
                                         color="primary"
-                                        size="small"
-                                        class="mt-3 view-map-btn"
+                                        size="large"
+                                        class="mt-4 view-map-btn"
                                         block
+                                        elevation="4"
                                         @click="viewMap"
                                     >
-                                        <v-icon start size="18">mdi-map</v-icon>
+                                        <v-icon start size="20">mdi-map-marker-radius</v-icon>
                                         View Floor Map
                                     </v-btn>
                                 </template>
@@ -143,7 +128,7 @@
                         </v-card>
 
                         <!-- Rescuer Card (if assigned) -->
-                        <v-card v-if="rescue.assigned_rescuer || rescue.rescuer" class="mb-3 rounded-xl rescuer-card" elevation="0">
+                        <v-card v-if="rescue.assigned_rescuer || rescue.rescuer" class="mb-3 rounded-xl rescuer-card" elevation="2">
                             <div class="card-header-icon">
                                 <v-avatar color="success" size="40">
                                     <v-icon color="white" size="20">mdi-account-check</v-icon>
@@ -177,7 +162,7 @@
                         </v-card>
 
                         <!-- Emergency Details -->
-                        <v-card v-if="rescue.description || rescue.urgency_level || rescue.mobility_status || rescue.injuries" class="mb-3 rounded-xl" elevation="0">
+                        <v-card v-if="rescue.description || rescue.urgency_level || rescue.mobility_status || rescue.injuries" class="mb-3 rounded-xl emergency-card" elevation="2">
                             <div class="card-header-icon">
                                 <v-avatar color="error" size="40">
                                     <v-icon color="white" size="20">mdi-alert-circle</v-icon>
@@ -191,11 +176,16 @@
                             <v-card-text class="pt-0">
                                 <div class="emergency-details">
                                     <!-- Description -->
-                                    <div v-if="rescue.description" class="detail-item">
-                                        <span class="detail-label">Description</span>
-                                        <p class="detail-value">
-                                            {{ rescue.description }}
-                                        </p>
+                                    <div v-if="rescue.description" class="detail-item description-item">
+                                        <span class="detail-label">
+                                            <v-icon size="14" class="mr-1">mdi-text-box</v-icon>
+                                            Description
+                                        </span>
+                                        <div class="detail-value description-text">
+                                            <p v-for="(paragraph, index) in rescue.description.split('\n').filter(p => p.trim())" :key="index" class="description-paragraph">
+                                                {{ paragraph }}
+                                            </p>
+                                        </div>
                                         <!-- Show translate button if language is not English -->
                                         <div v-if="rescue.is_translated && !rescue.original_description" class="mt-2">
                                             <v-btn
@@ -1935,6 +1925,40 @@ const handleGoBack = () => {
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 120px); /* Space for bottom nav on mobile */
 }
 
+/* Enhanced Card Styling */
+.location-card {
+    border: 2px solid rgba(54, 116, 181, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    transition: all 0.3s ease;
+}
+
+.location-card:hover {
+    box-shadow: 0 6px 20px rgba(54, 116, 181, 0.15) !important;
+    transform: translateY(-2px);
+}
+
+.rescuer-card {
+    border: 2px solid rgba(76, 175, 80, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    transition: all 0.3s ease;
+}
+
+.rescuer-card:hover {
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.15) !important;
+    transform: translateY(-2px);
+}
+
+.emergency-card {
+    border: 2px solid rgba(244, 67, 54, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    transition: all 0.3s ease;
+}
+
+.emergency-card:hover {
+    box-shadow: 0 6px 20px rgba(244, 67, 54, 0.15) !important;
+    transform: translateY(-2px);
+}
+
 /* Safe area bottom padding for buttons */
 .pb-safe {
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 100px) !important;
@@ -1945,20 +1969,24 @@ const handleGoBack = () => {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 16px 16px 8px;
+    padding: 16px 16px 12px;
+    border-bottom: 2px solid #F0F0F0;
+    margin-bottom: 4px;
 }
 
 .card-header-text h3 {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #333;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #2c3e50;
     margin: 0;
+    letter-spacing: 0.3px;
 }
 
 .card-header-text p {
-    font-size: 0.75rem;
-    color: #888;
-    margin: 0;
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin: 2px 0 0 0;
+    font-weight: 500;
 }
 
 /* Location Details */
@@ -1972,9 +2000,17 @@ const handleGoBack = () => {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 8px 12px;
-    background: #f8f9fa;
+    padding: 12px 14px;
+    background: linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%);
     border-radius: 12px;
+    border: 1px solid rgba(54, 116, 181, 0.1);
+    transition: all 0.2s ease;
+}
+
+.location-item:hover {
+    background: linear-gradient(135deg, #E9ECEF 0%, #DEE2E6 100%);
+    border-color: rgba(54, 116, 181, 0.2);
+    transform: translateX(2px);
 }
 
 .location-item > div {
@@ -1984,22 +2020,43 @@ const handleGoBack = () => {
 
 .location-item .label {
     font-size: 0.7rem;
-    color: #888;
+    color: #6c757d;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
+    font-weight: 700;
 }
 
 .location-item .value {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #333;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-top: 2px;
 }
 
 /* View Map Button */
 .view-map-btn {
-    border-radius: 12px !important;
+    border-radius: 16px !important;
     text-transform: none;
-    font-weight: 500;
+    font-weight: 600 !important;
+    height: 56px !important;
+    font-size: 1rem !important;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(54, 116, 181, 0.3) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.view-map-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(54, 116, 181, 0.4) !important;
+}
+
+.view-map-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(54, 116, 181, 0.3) !important;
+}
+
+.view-map-btn .v-icon {
+    margin-right: 8px;
 }
 
 /* Rescuer Card */
@@ -2007,11 +2064,19 @@ const handleGoBack = () => {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 12px;
+    padding: 14px;
     background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
     border-radius: 16px;
     cursor: pointer;
-    transition: transform 0.2s ease;
+    transition: all 0.3s ease;
+    border: 2px solid rgba(76, 175, 80, 0.2);
+}
+
+.rescuer-card .rescuer-info:hover {
+    background: linear-gradient(135deg, #C8E6C9 0%, #A5D6A7 100%);
+    border-color: rgba(76, 175, 80, 0.4);
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
 }
 
 .rescuer-card .rescuer-info:active {
@@ -2023,23 +2088,26 @@ const handleGoBack = () => {
 }
 
 .rescuer-details h4 {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #333;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1b5e20;
     margin: 0 0 2px;
+    letter-spacing: 0.3px;
 }
 
 .rescuer-details p {
-    font-size: 0.8rem;
-    color: #666;
-    margin: 0 0 4px;
+    font-size: 0.85rem;
+    color: #2e7d32;
+    margin: 0 0 6px;
+    font-weight: 500;
 }
 
 /* Emergency Details */
 .emergency-details {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 18px;
+    padding: 4px 0;
 }
 
 .detail-item {
@@ -2064,6 +2132,8 @@ const handleGoBack = () => {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 600;
+    display: flex;
+    align-items: center;
 }
 
 .detail-value {
@@ -2073,12 +2143,47 @@ const handleGoBack = () => {
     line-height: 1.5;
 }
 
+/* Description specific styling */
+.description-item {
+    background: linear-gradient(135deg, #F5F7FA 0%, #E8EEF5 100%);
+    padding: 16px;
+    border-radius: 12px;
+    border-left: 4px solid #3674B5;
+}
+
+.description-text {
+    margin-top: 8px;
+}
+
+.description-paragraph {
+    margin: 0 0 12px 0;
+    line-height: 1.7;
+    color: #2c3e50;
+    font-size: 0.95rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.description-paragraph:last-child {
+    margin-bottom: 0;
+}
+
 .detail-chip-value {
     margin-top: 4px;
 }
 
 .detail-chip-value .v-chip {
     font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0 12px;
+    height: 32px;
+}
+
+/* Injuries Detail */
+.detail-item:has(.detail-chip-value) {
+    background: #F8F9FA;
+    padding: 12px;
+    border-radius: 10px;
 }
 
 @media (max-width: 600px) {
@@ -2167,7 +2272,7 @@ const handleGoBack = () => {
     flex-direction: column;
     gap: 16px;
     padding: 20px;
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 50px);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
     border-radius: 24px;
@@ -2175,6 +2280,7 @@ const handleGoBack = () => {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
     margin-top: 8px;
+    margin-bottom: 25px;
 }
 
 .action-container:hover {

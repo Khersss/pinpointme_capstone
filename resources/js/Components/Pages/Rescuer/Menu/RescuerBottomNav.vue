@@ -95,7 +95,8 @@ const isActive = (path) => {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 70px;
+    min-height: 70px;
+    height: auto;
     background: var(--ppm-glass-bg, rgba(255, 255, 255, 0.95));
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -103,8 +104,8 @@ const isActive = (path) => {
     display: none;
     justify-content: space-around;
     align-items: center;
-    padding: 0 12px;
-    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding: 8px 12px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
     box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.08), 
                 0 -1px 0 var(--ppm-glass-border, rgba(161, 227, 249, 0.3));
     z-index: 1000;
@@ -283,9 +284,10 @@ const isActive = (path) => {
 /* Smaller screens adjustments */
 @media (max-width: 600px) {
     .bottom-nav {
-        height: 64px;
+        min-height: 64px;
         border-radius: 20px 20px 0 0;
-        padding: 0 8px;
+        padding: 6px 8px;
+        padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
     }
     
     .nav-item {

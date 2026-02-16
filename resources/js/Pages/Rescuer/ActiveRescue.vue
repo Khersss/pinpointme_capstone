@@ -355,7 +355,7 @@
                                     <div 
                                         class="slide-thumb" 
                                         :class="{ 'slide-complete': isSlideComplete, 'slide-active': isSliding }"
-                                        :style="{ transform: `translateX(${slidePosition}px)` }"
+                                        :style="{ transform: `translateX(${slidePosition}px) translateY(-50%)` }"
                                     >
                                         <v-icon size="24" color="white">
                                             {{ isSlideComplete ? 'mdi-check' : 'mdi-shield-check' }}
@@ -667,7 +667,10 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { apiFetch, getProfilePictureUrl, getUnreadMessageCount, translateRescueRequest } from '@/Composables/useApi';
+import { useDarkMode } from '@/Composables/useDarkMode';
 import RescuerBottomNav from '@/Components/Pages/Rescuer/Menu/RescuerBottomNav.vue';
+
+const { isDark } = useDarkMode();
 
 const props = defineProps({
     rescueId: {
@@ -1501,9 +1504,10 @@ onUnmounted(() => {
 
 /* Main Content */
 .rescue-main {
-    padding-bottom: 200px;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 120px);
     background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
     min-height: 100vh;
+    min-height: 100dvh;
 }
 
 .loading-container {
@@ -1849,7 +1853,7 @@ onUnmounted(() => {
 
 /* Action Section */
 .action-section {
-    margin-top: 24px;
+    margin-top: 14px;
     padding: 0;
 }
 
@@ -1858,12 +1862,14 @@ onUnmounted(() => {
     flex-direction: column;
     gap: 16px;
     padding: 20px;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
     border-radius: 24px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
+    margin-bottom: 60px;
 }
 
 .action-container:hover {
@@ -1913,7 +1919,7 @@ onUnmounted(() => {
     transform: translateY(-50%);
     width: 56px;
     height: 56px;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -1922,12 +1928,18 @@ onUnmounted(() => {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 2;
     cursor: grab;
+    flex-shrink: 0;
 }
 
 .slide-thumb .v-icon {
-    position: relative;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     z-index: 1;
     pointer-events: none;
+    margin: 0;
+    padding: 0;
 }
 
 .slide-thumb:active {
@@ -1935,7 +1947,7 @@ onUnmounted(() => {
 }
 
 .slide-thumb.slide-active {
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
     transform: translateY(-50%) scale(1.05);
 }
 
@@ -2265,6 +2277,10 @@ onUnmounted(() => {
 
 /* Responsive */
 @media (max-width: 600px) {
+    .rescue-main {
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 130px);
+    }
+    
     .rescue-content {
         padding: 14px;
     }
@@ -2381,6 +2397,10 @@ onUnmounted(() => {
 
 /* Desktop visibility */
 @media (max-width: 1024px) {
+    .rescue-main {
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 120px);
+    }
+    
     .desktop-only {
         display: none !important;
     }
@@ -2434,5 +2454,131 @@ onUnmounted(() => {
     .secondary-btn:active {
         transform: scale(0.98);
     }
+}
+
+/* Dark Mode Overrides */
+.dark-mode .rescue-header {
+    background: var(--dm-bg-surface) !important;
+    border-bottom: 1px solid var(--dm-border) !important;
+}
+
+.dark-mode .rescue-main {
+    background: var(--dm-bg-base) !important;
+}
+
+.dark-mode .info-card {
+    background: var(--dm-bg-surface) !important;
+    border: 1px solid var(--dm-border) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+.dark-mode .info-card:hover {
+    background: var(--dm-bg-surface) !important;
+    box-shadow: 0 4px 16px var(--dm-shadow) !important;
+}
+
+.dark-mode .card-header {
+    color: var(--dm-text-secondary) !important;
+}
+
+.dark-mode .person-name,
+.dark-mode .room-name {
+    color: var(--dm-text-primary) !important;
+}
+
+.dark-mode .person-contact,
+.dark-mode .person-reporter,
+.dark-mode .location-secondary {
+    color: var(--dm-text-secondary) !important;
+}
+
+.dark-mode .separator {
+    color: var(--dm-text-muted) !important;
+}
+
+.dark-mode .description-text {
+    color: var(--dm-text-primary) !important;
+}
+
+.dark-mode .medical-value {
+    color: var(--dm-text-primary) !important;
+}
+
+.dark-mode .medical-label {
+    color: var(--dm-text-secondary) !important;
+}
+
+.dark-mode .urgency-time {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.dark-mode .action-container {
+    background: var(--dm-bg-surface) !important;
+    border: 1px solid var(--dm-border) !important;
+    backdrop-filter: none;
+}
+
+.dark-mode .slide-track {
+    background: var(--dm-bg-input) !important;
+    border: 2px solid var(--dm-border-light) !important;
+}
+
+.dark-mode .slide-instruction {
+    color: var(--dm-text-secondary) !important;
+}
+
+.dark-mode .empty-state h3 {
+    color: var(--dm-text-secondary) !important;
+}
+
+.dark-mode .empty-state p {
+    color: var(--dm-text-muted) !important;
+}
+
+.dark-mode .header-title h1,
+.dark-mode .back-btn {
+    color: var(--dm-text-primary) !important;
+}
+
+.dark-mode .header-title p {
+    color: var(--dm-text-secondary) !important;
+}
+
+.dark-mode .media-section,
+.dark-mode .medical-section,
+.dark-mode .emergency-section {
+    border-color: var(--dm-border) !important;
+}
+
+.dark-mode .media-section-header,
+.dark-mode .medical-section-header,
+.dark-mode .emergency-section-header {
+    color: var(--dm-text-secondary) !important;
+}
+
+.dark-mode .media-overlay {
+    background: var(--dm-bg-overlay) !important;
+}
+
+.dark-mode .nav-arrow {
+    background: var(--dm-bg-surface) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+.dark-mode .nav-arrow:hover {
+    background: var(--dm-bg-elevated) !important;
+}
+
+.dark-mode .completed-banner {
+    background: var(--dm-bg-surface) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+.dark-mode .completion-title {
+    color: var(--dm-text-primary) !important;
+}
+
+.dark-mode .completion-subtitle {
+    color: var(--dm-text-secondary) !important;
 }
 </style>

@@ -93,54 +93,10 @@
 
 /* =================================================================
    Dark Mode Support
+   =================================================================
+   Dark mode styles are now centralized in dark-mode.css
+   Imported globally via app.js
    ================================================================= */
-html.dark-mode {
-    /* Dark mode colors */
-    --ppm-color-1: #1a2733;
-    --ppm-color-2: #1e3a3a;
-    --ppm-color-3: #2d2d2d;
-    --ppm-color-4: #1e1e1e;
-    --ppm-color-5: #252525;
-    --ppm-color-6: #2d2d2d;
-    
-    /* Dark mode text */
-    --ppm-text-primary: #ECEFF1;
-    --ppm-text-secondary: #B0BEC5;
-    --ppm-text-muted: #78909C;
-    
-    /* Dark mode glass */
-    --ppm-glass-bg: rgba(30, 30, 30, 0.95);
-    --ppm-glass-border: rgba(100, 150, 180, 0.2);
-}
-
-html.dark-mode .bg-user-gradient,
-html.dark-mode .bg-user-gradient-light {
-    background: linear-gradient(
-        to bottom,
-        #1e1e1e 0%,
-        #252525 40%,
-        #1e3a3a 80%,
-        #1a2733 100%
-    ) !important;
-}
-
-html.dark-mode .v-card,
-html.dark-mode .v-list,
-html.dark-mode .v-expansion-panel {
-    background-color: #2d2d2d !important;
-    color: #ECEFF1 !important;
-}
-
-html.dark-mode .v-list-item-title,
-html.dark-mode .v-list-item-subtitle,
-html.dark-mode .v-expansion-panel-title {
-    color: #ECEFF1 !important;
-}
-
-html.dark-mode .text-grey,
-html.dark-mode .text-grey-darken-1 {
-    color: #B0BEC5 !important;
-}
 
 /* =================================================================
    Prevent Page Dragging/Bouncing (Mobile & Desktop)
@@ -153,7 +109,39 @@ html, body {
     height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
-    touch-action: none;
+    touch-action: manipulation;
+    -ms-touch-action: manipulation;
+}
+
+/* =================================================================
+   Prevent Zoom on Input Focus (iOS/Android)
+   ================================================================= */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+textarea,
+select,
+.v-field__input,
+.v-field input,
+.v-text-field input,
+.v-textarea textarea,
+.v-select .v-field__input,
+.v-autocomplete input,
+.v-otp-input input {
+    font-size: 16px !important;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* Prevent double-tap zoom globally */
+* {
+    touch-action: manipulation;
 }
 
 /* Allow scrolling only within the main content area */

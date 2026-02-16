@@ -178,8 +178,11 @@ import { router, usePage } from '@inertiajs/vue3';
 import { apiFetch } from '@/Composables/useApi';
 import { useNotificationAlert } from '@/Composables/useNotificationAlert';
 import { useUnreadMessages } from '@/Composables/useUnreadMessages';
+import { useDarkMode } from '@/Composables/useDarkMode';
 import RescuerMenu from '@/Components/Pages/Rescuer/Menu/RescuerMenu.vue';
 import RescuerBottomNav from '@/Components/Pages/Rescuer/Menu/RescuerBottomNav.vue';
+
+const { isDark } = useDarkMode();
 
 // Auth
 const page = usePage();

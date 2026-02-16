@@ -3,6 +3,13 @@ import { createInertiaApp } from "@inertiajs/vue3";
 import Layout from "@/App.vue";
 import vuetify from "./vuetify";
 import { registerServiceWorker } from "./Utilities/pushNotifications";
+import { initDarkMode } from "./Composables/useDarkMode";
+
+// Import global dark mode stylesheet
+import "../css/dark-mode.css";
+
+// Initialize dark mode from persisted preference (before rendering)
+initDarkMode();
 
 // Add global error handler for debugging white screen issues
 window.addEventListener('error', (event) => {
