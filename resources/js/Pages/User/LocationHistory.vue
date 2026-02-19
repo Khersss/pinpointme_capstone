@@ -37,7 +37,6 @@
                         hide-details
                         rounded="lg"
                         clearable
-                        bg-color="white"
                         class="filter-input"
                     />
                     <v-text-field
@@ -49,7 +48,6 @@
                         hide-details
                         rounded="lg"
                         clearable
-                        bg-color="white"
                         class="filter-input date-input"
                     />
                 </div>
@@ -886,13 +884,13 @@ const viewLocation = (location) => {
     }
     
     .main-content :deep(.v-container) {
-        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 120px) !important;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 180px) !important;
     }
 }
 
 @media (max-width: 600px) {
     .main-content :deep(.v-container) {
-        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 140px) !important;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 180px) !important;
         padding-left: 12px !important;
         padding-right: 12px !important;
     }
@@ -964,7 +962,7 @@ const viewLocation = (location) => {
     .main-content :deep(.v-container) {
         max-width: 1200px;
         margin: 0 auto;
-        padding-bottom: 40px !important;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 180px) !important;
     }
     
     .history-cards-container {

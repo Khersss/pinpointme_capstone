@@ -214,7 +214,7 @@ const isActive = (path) => {
     min-width: 18px;
     height: 18px;
     padding: 0 5px;
-    background: linear-gradient(135deg, #3674B5 0%, #2d5f96 100%);
+    background: linear-gradient(135deg, var(--ppm-header-bg, #3674B5) 0%, #2d5f96 100%);
     color: white;
     font-size: 0.6rem;
     font-weight: 700;

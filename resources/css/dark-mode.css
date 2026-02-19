@@ -2253,3 +2253,240 @@ html.dark-mode .v-main {
 .dark-mode .hero-section .v-icon {
     color: inherit !important;
 }
+
+
+/* =================================================================
+   24. Enhanced Eye-Friendly & Comprehensive Coverage
+   ================================================================= */
+
+/* ---- Vuetify color="white" prop override ---- 
+   Vuetify sets background via CSS vars; !important overrides them */
+.dark-mode .v-card.bg-white,
+.dark-mode .v-sheet.bg-white,
+.dark-mode .bg-white {
+    background-color: var(--dm-bg-surface) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+/* ---- Login / Verify / ChangePassword Pages ---- */
+.dark-mode .login-container,
+.dark-mode .verify-container,
+.dark-mode .change-password-container {
+    background: var(--dm-bg-base) !important;
+}
+
+.dark-mode .login-card,
+.dark-mode .verify-card,
+.dark-mode .change-password-card {
+    background: var(--dm-bg-surface) !important;
+    color: var(--dm-text-primary) !important;
+    border: 1px solid var(--dm-border) !important;
+}
+
+/* ---- Reduced Blue Light for Eye Comfort ---- */
+html.dark-mode {
+    /* Slightly warm the text colors for reduced eye strain */
+    --dm-text-primary: #e8edf4;
+    --dm-text-secondary: #8e99ab;
+}
+
+/* ---- Improved Link Contrast ---- */
+.dark-mode a {
+    color: var(--dm-primary) !important;
+}
+
+.dark-mode a:hover {
+    color: #93c5fd !important;
+}
+
+/* ---- Image brightness reduction for eye comfort ---- */
+.dark-mode img:not([src*="avatar"]):not([src*="profile"]):not(.preserve-brightness) {
+    filter: brightness(0.88) contrast(1.05);
+}
+
+/* ---- Date Picker / Time Picker ---- */
+.dark-mode .v-date-picker,
+.dark-mode .v-time-picker {
+    background: var(--dm-bg-surface) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+.dark-mode .v-date-picker-header {
+    background: var(--dm-bg-elevated) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+.dark-mode .v-date-picker-month__day--selected {
+    background: var(--dm-primary) !important;
+    color: var(--dm-bg-base) !important;
+}
+
+/* ---- Pagination ---- */
+.dark-mode .v-pagination .v-btn {
+    background: var(--dm-bg-surface) !important;
+    border: 1px solid var(--dm-border) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+.dark-mode .v-pagination .v-btn--active {
+    background: var(--dm-primary) !important;
+    color: var(--dm-bg-base) !important;
+    border-color: var(--dm-primary) !important;
+}
+
+/* ---- File Input ---- */
+.dark-mode .v-file-input .v-field {
+    background: var(--dm-bg-input) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+/* ---- Chip Groups ---- */
+.dark-mode .v-chip-group .v-chip--selected {
+    background: var(--dm-primary) !important;
+    color: var(--dm-bg-base) !important;
+}
+
+/* ---- Rating Stars ---- */
+.dark-mode .v-rating .v-icon {
+    color: var(--dm-text-muted) !important;
+}
+
+.dark-mode .v-rating .v-rating__item--full .v-icon {
+    color: var(--dm-warning) !important;
+}
+
+/* ---- Stepper ---- */
+.dark-mode .v-stepper {
+    background: var(--dm-bg-surface) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+.dark-mode .v-stepper-header {
+    background: var(--dm-bg-surface) !important;
+}
+
+/* ---- Rescue Request Details Page ---- */
+.dark-mode .rescue-detail-card {
+    background: var(--dm-bg-surface) !important;
+    border: 1px solid var(--dm-border) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+/* ---- Force Override Hardcoded White Backgrounds ---- */
+.dark-mode [style*="background: white"],
+.dark-mode [style*="background-color: white"],
+.dark-mode [style*="background: #fff"],
+.dark-mode [style*="background-color: #fff"],
+.dark-mode [style*="background: #ffffff"],
+.dark-mode [style*="background-color: #ffffff"],
+.dark-mode [style*="background: rgb(255, 255, 255)"],
+.dark-mode [style*="background-color: rgb(255, 255, 255)"] {
+    background-color: var(--dm-bg-surface) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+/* ---- Rescuer-specific overrides ---- */
+.dark-mode .rescuer-menu,
+.dark-mode .rescuer-sidebar {
+    background: var(--dm-bg-surface) !important;
+    color: var(--dm-text-primary) !important;
+    border-color: var(--dm-border) !important;
+}
+
+/* ---- Admin Panel overrides ---- */
+.dark-mode .admin-sidebar,
+.dark-mode .admin-header {
+    background: var(--dm-bg-surface) !important;
+    color: var(--dm-text-primary) !important;
+    border-color: var(--dm-border) !important;
+}
+
+.dark-mode .admin-card {
+    background: var(--dm-bg-surface) !important;
+    border: 1px solid var(--dm-border) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+/* ---- Reduced Harsh Whites on Vuetify Surfaces ---- */
+.dark-mode .v-card--variant-elevated,
+.dark-mode .v-card--variant-flat {
+    background-color: var(--dm-bg-surface) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+/* ---- Enhanced Focus States for Accessibility ---- */
+.dark-mode *:focus-visible {
+    outline: 2px solid var(--dm-primary) !important;
+    outline-offset: 2px;
+}
+
+/* ---- Softer box shadows for depth ---- */
+.dark-mode .elevation-1,
+.dark-mode .elevation-2,
+.dark-mode .elevation-3,
+.dark-mode .elevation-4 {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ---- Responsive text rendering ---- */
+html.dark-mode {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* ---- Help Improve / Feedback Page ---- */
+.dark-mode .feedback-card,
+.dark-mode .help-improve-card {
+    background: var(--dm-bg-surface) !important;
+    border: 1px solid var(--dm-border) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+.dark-mode .feedback-history-item {
+    background: var(--dm-bg-elevated) !important;
+    border: 1px solid var(--dm-border) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+/* ---- Google Complete / Verify Pages ---- */
+.dark-mode .google-complete-card,
+.dark-mode .google-verify-card {
+    background: var(--dm-bg-surface) !important;
+    color: var(--dm-text-primary) !important;
+}
+
+/* ---- Vuetify Empty Layout (Login wrapper) ---- */
+.dark-mode .v-application--wrap,
+.dark-mode .v-application .v-responsive {
+    background-color: var(--dm-bg-base) !important;
+}
+
+/* ---- Ensure Dialog backdrop is dark enough ---- */
+.dark-mode .v-overlay--active > .v-overlay__scrim {
+    background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* ---- Color-coded status chips should remain vibrant ---- */
+.dark-mode .v-chip.bg-success,
+.dark-mode .v-chip.bg-error,
+.dark-mode .v-chip.bg-warning,
+.dark-mode .v-chip.bg-info,
+.dark-mode .v-chip.bg-primary {
+    color: #fff !important;
+}
+
+/* ---- Bottom sheets ---- */
+.dark-mode .v-bottom-sheet > .v-overlay__content > .v-card {
+    background: var(--dm-bg-surface) !important;
+    color: var(--dm-text-primary) !important;
+    border-top: 1px solid var(--dm-border) !important;
+}
+
+/* ---- Ensure c-container and custom components inherit dark bg ---- */
+.dark-mode c-container,
+.dark-mode .c-container,
+.dark-mode [class*="c-col"],
+.dark-mode [class*="c-row"] {
+    color: var(--dm-text-primary) !important;
+}

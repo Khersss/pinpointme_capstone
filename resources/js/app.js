@@ -3,6 +3,8 @@ import { createInertiaApp } from "@inertiajs/vue3";
 import Layout from "@/App.vue";
 import vuetify from "./vuetify";
 import { registerSW } from 'virtual:pwa-register';
+import { initDarkMode } from '@/Composables/useDarkMode';
+import '../css/dark-mode.css';
 
 // Register Service Worker
 const updateSW = registerSW({
@@ -40,5 +42,8 @@ createInertiaApp({
         });
 
         app.use(plugin).use(vuetify).mount(el);
+        
+        // Initialize dark mode globally and sync Vuetify theme
+        initDarkMode(vuetify);
     }
 });

@@ -478,7 +478,7 @@ onUnmounted(() => {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: #3674B5;
+    background: var(--ppm-header-bg, #3674B5);
     padding: env(safe-area-inset-top, 0) 0 0 0;
 }
 

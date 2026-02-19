@@ -58,7 +58,7 @@
 
                                     <h3 class="section-title">1. Acceptance of Terms</h3>
                                     <p>
-                                        By accessing or using PinPointMe ("the App"), you agree to be bound by these Terms and Conditions. 
+                                        By accessing or using PinPointMe, you agree to be bound by these Terms and Conditions. 
                                         PinPointMe is an emergency rescue location system developed as a capstone project for St. Dominic College of Asia (SDCA).
                                         If you do not agree with any part of these terms, you may not use the service.
                                     </p>
@@ -114,7 +114,7 @@
                                         <v-icon color="#3674B5" class="mr-2">mdi-email-outline</v-icon>
                                         <div>
                                             <strong>Questions?</strong><br>
-                                            <span class="text-grey-darken-1">pinpointme@gmail.com</span>
+                                            <a href="mailto:pinpointme@gmail.com" class="text-grey-darken-1">pinpointme@gmail.com</a>
                                         </div>
                                     </div>
                                 </div>

@@ -16,6 +16,9 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\AuditTrailController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PushNotificationController;
+use App\Http\Controllers\RescueFeedbackController;
+use App\Http\Controllers\SystemFeedbackController;
+use App\Http\Controllers\AdminNotificationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -97,7 +100,19 @@ Route::put('/rescue-requests/{rescueRequest}', [RescueRequestController::class, 
 Route::get('/rescue-requests/code/{code}', [RescueRequestController::class, 'showByCode']);
 Route::patch('/rescue-requests/code/{code}/status', [RescueRequestController::class, 'updateStatus']);
 Route::post('/rescue-requests/{rescueRequest}/mark-safe', [RescueRequestController::class, 'markSafe']);
+Route::post('/rescue-requests/{rescueRequest}/approve-safe', [RescueRequestController::class, 'approveSafeRequest']);
+Route::post('/rescue-requests/{rescueRequest}/deny-safe', [RescueRequestController::class, 'denySafeRequest']);
+Route::post('/rescue-requests/{rescueRequest}/cancel-safe-approval', [RescueRequestController::class, 'cancelSafeApproval']);
 Route::post('/rescue-requests/{rescueRequest}/cancel', [RescueRequestController::class, 'cancelRequest']);
+Route::post('/rescue-requests/{rescueRequest}/approve-cancel', [RescueRequestController::class, 'approveCancelRequest']);
+Route::post('/rescue-requests/{rescueRequest}/deny-cancel', [RescueRequestController::class, 'denyCancelRequest']);
+Route::post('/rescue-requests/{rescueRequest}/withdraw-cancel', [RescueRequestController::class, 'withdrawCancelRequest']);
+Route::post('/rescue-requests/{rescueRequest}/cancel-in-progress', [RescueRequestController::class, 'setCancelInProgress']);
+Route::delete('/rescue-requests/{rescueRequest}/cancel-in-progress', [RescueRequestController::class, 'clearCancelInProgress']);
+Route::post('/rescue-requests/{rescueRequest}/marking-safe-in-progress', [RescueRequestController::class, 'setMarkingSafeInProgress']);
+Route::delete('/rescue-requests/{rescueRequest}/marking-safe-in-progress', [RescueRequestController::class, 'clearMarkingSafeInProgress']);
+Route::post('/rescue-requests/{rescueRequest}/report-false', [RescueRequestController::class, 'reportFalseRequest']);
+Route::post('/rescue-requests/{rescueRequest}/complete', [RescueRequestController::class, 'completeRescue']);
 Route::post('/rescue-requests/{rescueRequest}/translate', [RescueRequestController::class, 'translateRequest']);
 Route::get('/rescue-requests/rescuer/{rescuer}', [RescueRequestController::class, 'rescuerFeed']);
 Route::get('/users/{user}/rescue-history', [RescueRequestController::class, 'userHistory']);
@@ -114,6 +129,13 @@ Route::get('/push/test', [PushNotificationController::class, 'testNotification']
 Route::get('/push/status', [PushNotificationController::class, 'status'])->middleware('web');
 // Admin: get pending requests that have been waiting too long (>5 min)
 Route::get('/rescue-requests/pending-too-long', [RescueRequestController::class, 'pendingTooLong']);
+
+// Admin Notifications
+Route::post('/admin/notifications', [AdminNotificationController::class, 'store']);
+Route::get('/admin/notifications', [AdminNotificationController::class, 'index']);
+Route::get('/admin/notifications/unread-count', [AdminNotificationController::class, 'unreadCount']);
+Route::post('/admin/notifications/{adminNotification}/read', [AdminNotificationController::class, 'markAsRead']);
+Route::post('/admin/notifications/read-all', [AdminNotificationController::class, 'markAllAsRead']);
 
 // User profile routes - accessible with session or token auth
 Route::get('/users/{user}', [AuthController::class, 'showUser']);
@@ -140,6 +162,20 @@ Route::delete('/messages/{message}', [MessageController::class, 'destroy']);
 
 // Get rescuer user IDs for FCM notifications
 Route::get('/rescuers/ids', [RescueRequestController::class, 'getRescuerIds']);
+
+// Rescue Feedback API
+Route::post('/rescue-requests/{rescueRequest}/feedback', [RescueFeedbackController::class, 'store']);
+Route::get('/rescue-requests/{rescueRequest}/feedback', [RescueFeedbackController::class, 'show']);
+Route::get('/rescue-requests/{rescueRequest}/feedback/check', [RescueFeedbackController::class, 'check']);
+Route::get('/rescue-feedbacks', [RescueFeedbackController::class, 'index']);
+Route::get('/rescue-feedbacks/stats', [RescueFeedbackController::class, 'stats']);
+
+// System Feedback API (Bug Reports / Improvement Suggestions)
+Route::post('/system-feedbacks', [SystemFeedbackController::class, 'store']);
+Route::get('/system-feedbacks', [SystemFeedbackController::class, 'index']);
+Route::get('/system-feedbacks/stats', [SystemFeedbackController::class, 'stats']);
+Route::put('/system-feedbacks/{systemFeedback}', [SystemFeedbackController::class, 'update']);
+Route::get('/system-feedbacks/user/{userId}', [SystemFeedbackController::class, 'userFeedbacks']);
 
 // Protected API Routes (requires Sanctum token authentication - for mobile apps)
 Route::middleware('auth:sanctum')->group(function () {

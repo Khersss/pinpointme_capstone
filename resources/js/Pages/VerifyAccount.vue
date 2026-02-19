@@ -139,7 +139,6 @@
                                             @click:append-inner="showPassword = !showPassword"
                                             class="mb-3 password-field"
                                             hide-details="auto"
-                                            bg-color="white"
                                             rounded="lg"
                                         />
 
@@ -153,7 +152,6 @@
                                             @click:append-inner="showConfirmPassword = !showConfirmPassword"
                                             class="mb-4 password-field"
                                             hide-details="auto"
-                                            bg-color="white"
                                             rounded="lg"
                                         />
 

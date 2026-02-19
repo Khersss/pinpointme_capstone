@@ -269,7 +269,7 @@
                                         <v-autocomplete
                                             v-model="searchSelectedRoom"
                                             :items="allRoomsForSearch"
-                                            :item-title="item => `${item.room_name} (${item.building_name} - ${item.floor_name})`"
+                                            :item-title="item => item.room_name"
                                             label="Quick Search Room"
                                             variant="outlined"
                                             density="comfortable"
@@ -279,14 +279,14 @@
                                             hide-details
                                             prepend-inner-icon="mdi-magnify"
                                             placeholder="Search by room name..."
+                                            :menu-props="{ contentClass: 'room-search-dropdown', maxWidth: 'calc(100vw - 48px)' }"
                                         >
                                             <template v-slot:item="{ props, item }">
                                                 <v-list-item v-bind="props">
                                                     <template v-slot:prepend>
                                                         <v-icon>mdi-door</v-icon>
                                                     </template>
-                                                    <v-list-item-title>{{ item.raw.room_name }}</v-list-item-title>
-                                                    <v-list-item-subtitle>{{ item.raw.building_name }} - {{ item.raw.floor_name }}</v-list-item-subtitle>
+                                                     <v-list-item-subtitle>{{ item.raw.building_name }} - {{ item.raw.floor_name }}</v-list-item-subtitle>
                                                 </v-list-item>
                                             </template>
                                         </v-autocomplete>
@@ -373,6 +373,8 @@
                                                 hide-details
                                                 placeholder="Your first name"
                                                 :readonly="!isProfileComplete"
+                                                @keypress="preventInvalidNameChars"
+                                                @input="sanitizeEmergencyNameField('firstName')"
                                             />
                                         </v-col>
                                         <v-col cols="6">
@@ -385,6 +387,8 @@
                                                 hide-details
                                                 placeholder="Your last name"
                                                 :readonly="!isProfileComplete"
+                                                @keypress="preventInvalidNameChars"
+                                                @input="sanitizeEmergencyNameField('lastName')"
                                             />
                                         </v-col>
                                         <v-col cols="12">
@@ -398,6 +402,7 @@
                                                 class="mt-3"
                                                 placeholder="Briefly describe the situation if you can"
                                                 :readonly="!isProfileComplete"
+                                                @input="sanitizeNoEmojiField('description')"
                                             />
                                             <div class="text-caption text-grey mt-1 d-flex align-center">
                                                 <v-icon size="12" class="mr-1">mdi-translate</v-icon>
@@ -458,6 +463,8 @@
                                                 hide-details
                                                 class="mt-3"
                                                 :readonly="!isProfileComplete"
+                                                @keypress="preventInvalidNameChars"
+                                                @input="sanitizeEmergencyNameField('otherInjury')"
                                             />
                                         </v-col>
                                         
@@ -467,9 +474,7 @@
                                                 <div class="section-label mb-2">
                                                     <v-icon size="18" color="grey-darken-1" class="mr-1">mdi-paperclip</v-icon>
                                                     <span class="text-body-2 font-weight-medium">Attach Photos/Videos (Optional)</span>
-                                                    <v-chip size="x-small" color="grey" variant="tonal" class="ml-2">
-                                                        {{ mediaFiles.length }}/5
-                                                    </v-chip>
+                                                   
                                                 </div>
                                                 
                                                 <!-- Media Preview Grid -->
@@ -579,11 +584,6 @@
                                                     style="display: none"
                                                     @change="handleMediaSelect"
                                                 />
-                                                
-                                                <p class="text-caption text-grey mt-2">
-                                                    <v-icon size="12">mdi-information</v-icon>
-                                                    Max 5 files, 10MB each. Photos & videos help rescuers assess the situation.
-                                                </p>
                                             </div>
                                         </v-col>
                                     </v-row>
@@ -1026,6 +1026,7 @@ const isLoadingBuildings = ref(false);
 const selectedBuilding = ref(null);
 const selectedFloor = ref(null);
 const selectedRoom = ref(null);
+const searchSelectedRoom = ref(null);
 const locationScanned = ref(false); // Track if location was scanned via QR
 const locationCard = ref(null); // Reference to location card for scrolling
 const emergencyFormCard = ref(null); // Reference to emergency form card
@@ -1135,6 +1136,43 @@ const emergencyForm = ref({
     otherInjury: '',
     additionalInfo: '',
 });
+
+const nameAllowedCharRegex = /^[A-Za-z\s]$/;
+const nameInvalidCharsRegex = /[^A-Za-z\s]/g;
+const emojiRegex = /[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu;
+
+// Real-time prevention - blocks special chars, numbers, and emojis in name fields
+const preventInvalidNameChars = (event) => {
+    const char = event.key || String.fromCharCode(event.keyCode || event.which);
+    // Allow control keys (Backspace, Delete, Tab, arrows, etc.)
+    if (char.length > 1) return;
+    if (!nameAllowedCharRegex.test(char)) {
+        event.preventDefault();
+        showNotification('Special characters are not allowed in this field', 'warning');
+    }
+};
+
+// Sanitize pasted/input content - strips invalid characters from name fields
+const sanitizeEmergencyNameField = (field) => {
+    const val = emergencyForm.value[field];
+    if (!val) return;
+    const sanitized = val.replace(nameInvalidCharsRegex, '');
+    if (sanitized !== val) {
+        emergencyForm.value[field] = sanitized;
+        showNotification('Special characters are not allowed in this field', 'warning');
+    }
+};
+
+// Sanitize pasted/input content - strips emojis only
+const sanitizeNoEmojiField = (field) => {
+    const val = emergencyForm.value[field];
+    if (!val) return;
+    const sanitized = val.replace(emojiRegex, '');
+    if (sanitized !== val) {
+        emergencyForm.value[field] = sanitized;
+        showNotification('Emojis are not allowed in this field', 'warning');
+    }
+};
 
 // Form Persistence Functions
 const FORM_STORAGE_KEY = 'emergency_form_data';
@@ -1308,9 +1346,9 @@ const mobilityOptions = [
 
 const urgencyOptions = [
     { title: 'Low - Not life threatening', value: 'low' },
-    { title: 'Medium - Needs attention soon', value: 'medium' },
-    { title: 'High - Urgent attention needed', value: 'high' },
-    { title: 'Critical - Life threatening', value: 'critical' },
+    { title: 'Medium - Needs Attention Soon', value: 'medium' },
+    { title: 'High - Urgent Attention Needed', value: 'high' },
+    { title: 'Critical - Life Threatening', value: 'critical' },
 ];
 
 const injuryOptions = [
@@ -4575,6 +4613,239 @@ input, textarea {
     
     .requirement-list {
         font-size: 0.85rem;
+    }
+}
+</style>
+
+<!-- Global (unscoped) styles for teleported autocomplete dropdown -->
+<style>
+.room-search-dropdown {
+    max-width: calc(100vw - 48px) !important;
+    overflow: hidden;
+}
+
+.room-search-dropdown .v-list {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+.room-search-dropdown .v-list-item {
+    min-height: 48px !important;
+    padding: 4px 12px !important;
+    max-width: 100% !important;
+    overflow: hidden;
+}
+
+.room-search-dropdown .v-list-item__prepend {
+    margin-inline-end: 12px !important;
+    min-width: auto !important;
+}
+
+.room-search-dropdown .v-list-item__content {
+    overflow: hidden !important;
+    min-width: 0 !important;
+    flex: 1 1 0 !important;
+    padding: 4px 0 !important;
+}
+
+.room-search-dropdown .v-list-item-title,
+.room-search-dropdown .v-list-item-subtitle {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    display: block !important;
+    max-width: 100% !important;
+}
+
+.room-search-dropdown .v-list-item-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.room-search-dropdown .v-list-item-subtitle {
+    font-size: 0.75rem !important;
+    color: #757575;
+}
+
+/* ===================================================================
+   DARK MODE OVERRIDES FOR LOCATION SCANNER
+   =================================================================== */
+html.dark-mode .v-application {
+    /* ---- Page Background ---- */
+    .bg-user-gradient-light {
+        background: var(--dm-bg-base, #0f172a) !important;
+    }
+    
+    .main-container {
+        background: var(--dm-bg-base, #0f172a) !important;
+    }
+    
+    .scanner-content {
+        background: transparent !important;
+    }
+    
+    /* ---- Manual Location Card ---- */
+    .manual-location-card {
+        background: var(--dm-bg-surface, #1e293b) !important;
+        border: 1px solid var(--dm-border, #475569) !important;
+        color: var(--dm-text-primary, #f1f5f9) !important;
+    }
+    
+    .manual-location-header {
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.15) 0%, rgba(96, 165, 250, 0.08) 100%) !important;
+        border-bottom: 1px solid var(--dm-border, #475569) !important;
+    }
+    
+    .manual-location-header h3 {
+        color: var(--dm-text-primary, #f1f5f9) !important;
+    }
+    
+    .manual-location-header p {
+        color: var(--dm-text-secondary, #94a3b8) !important;
+    }
+    
+    /* ---- Location Status Card ---- */
+    .location-status-card {
+        background: var(--dm-bg-surface, #1e293b) !important;
+        border: 2px solid var(--dm-border, #475569) !important;
+        color: var(--dm-text-primary, #f1f5f9) !important;
+    }
+    
+    .location-status-header {
+        background: rgba(96, 165, 250, 0.15) !important;
+        color: var(--dm-text-primary, #f1f5f9) !important;
+    }
+    
+    /* ---- Emergency Form Card ---- */
+    .emergency-form-card {
+        background: var(--dm-bg-surface, #1e293b) !important;
+        border: 2px solid var(--dm-error, #f87171) !important;
+        color: var(--dm-text-primary, #f1f5f9) !important;
+    }
+    
+    /* ---- All v-cards default override ---- */
+    .v-card {
+        background: var(--dm-bg-surface, #1e293b) !important;
+        color: var(--dm-text-primary, #f1f5f9) !important;
+        border: 1px solid var(--dm-border, #475569) !important;
+    }
+    
+    /* ---- Form Elements ---- */
+    .v-text-field .v-field,
+    .v-textarea .v-field,
+    .v-select .v-field,
+    .v-autocomplete .v-field {
+        background: var(--dm-bg-elevated, #334155) !important;
+        color: var(--dm-text-primary, #f1f5f9) !important;
+        border: 1px solid var(--dm-border-light, #64748b) !important;
+    }
+    
+    .v-field input,
+    .v-field textarea {
+        color: var(--dm-text-primary, #f1f5f9) !important;
+        caret-color: var(--dm-primary, #60a5fa) !important;
+    }
+    
+    .v-field-label {
+        color: var(--dm-text-secondary, #94a3b8) !important;
+    }
+    
+    /* ---- Notification Panel ---- */
+    .notification-drawer {
+        background: var(--dm-bg-surface, #1e293b) !important;
+        color: var(--dm-text-primary, #f1f5f9) !important;
+    }
+    
+    .notification-header {
+        background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%) !important;
+    }
+    
+    .notification-item {
+        border-bottom: 1px solid var(--dm-border, #475569) !important;
+        color: var(--dm-text-primary, #f1f5f9) !important;
+    }
+    
+    .notification-item:hover {
+        background: var(--dm-bg-elevated, #334155) !important;
+    }
+    
+    /* ---- Voice Tips Alert ---- */
+    .voice-tips-alert {
+        border: 1px solid var(--dm-primary, #60a5fa) !important;
+        background: rgba(96, 165, 250, 0.1) !important;
+    }
+    
+    .voice-tip-header {
+        color: var(--dm-text-primary, #f1f5f9) !important;
+    }
+    
+    /* ---- Media Attachments ---- */
+    .media-attachments-section {
+        background: var(--dm-bg-elevated, #334155) !important;
+        border: 1px dashed var(--dm-border, #475569) !important;
+    }
+    
+    .media-preview-item.add-more {
+        background: var(--dm-bg-surface, #1e293b) !important;
+        border: 2px dashed var(--dm-border, #475569) !important;
+    }
+    
+    .media-preview-item.add-more:hover {
+        border-color: var(--dm-primary, #60a5fa) !important;
+        background: var(--dm-bg-elevated, #334155) !important;
+    }
+    
+    /* ---- Samaritan Note ---- */
+    .samaritan-note {
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.15) 0%, rgba(96, 165, 250, 0.08) 100%) !important;
+        border-left: 3px solid var(--dm-primary, #60a5fa) !important;
+        color: var(--dm-text-primary, #f1f5f9) !important;
+    }
+    
+    /* ---- Text Colors ---- */
+    .text-grey,
+    .text-grey-darken-1,
+    .text-grey-darken-2 {
+        color: var(--dm-text-secondary, #94a3b8) !important;
+    }
+    
+    .text-caption {
+        color: var(--dm-text-secondary, #94a3b8) !important;
+    }
+    
+    .text-subtitle-1,
+    .text-subtitle-2 {
+        color: var(--dm-text-primary, #f1f5f9) !important;
+    }
+    
+    /* ---- Empty States & Loading ---- */
+    .no-notifications {
+        color: var(--dm-text-secondary, #94a3b8) !important;
+    }
+    
+    /* ---- QR Scanner Dialog ---- */
+    .qr-scanner-dialog {
+        background: var(--dm-bg-base, #0f172a) !important;
+    }
+    
+    /* ---- Enhanced Spacing for Better Visual Hierarchy ---- */
+    .action-cards {
+        margin-bottom: 1.5rem;
+    }
+    
+    .manual-location-card {
+        margin-bottom: 1.5rem;
+    }
+    
+    /* ---- Improved Contrast for Action Cards ---- */
+    .action-card.primary {
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4) !important;
+    }
+    
+    .action-card.success {
+        background: linear-gradient(135deg, #15803d 0%, #22c55e 100%) !important;
+        box-shadow: 0 4px 16px rgba(34, 197, 94, 0.4) !important;
     }
 }
 </style>

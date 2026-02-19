@@ -299,14 +299,48 @@ class AdminController extends Controller
             'status' => $r->status,
             'urgency_level' => $r->urgency_level,
             'rescuer_name' => $r->rescuer ? "{$r->rescuer->first_name} {$r->rescuer->last_name}" : null,
+            'completion_photo' => $r->completion_photo,
+            'completion_notes' => $r->completion_notes,
+            'cancellation_reason' => $r->cancellation_reason,
+            'cancelled_at' => $r->cancelled_at?->toISOString(),
         ]);
+
+        // Also fetch false report logs from AuditTrail
+        $falseReports = \App\Models\AuditTrail::where('action', 'false_report')
+            ->where('created_at', '>=', $startDate)
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(fn($a) => [
+                'id' => 'fr_' . $a->id,
+                'rescue_code' => null,
+                'name' => 'False Report',
+                'time' => $a->created_at->format('h:i A'),
+                'date' => $a->created_at->format('M d, Y'),
+                'location' => null,
+                'building' => null,
+                'status' => 'false_report',
+                'urgency_level' => null,
+                'rescuer_name' => $a->user ? "{$a->user->first_name} {$a->user->last_name}" : null,
+                'completion_photo' => null,
+                'completion_notes' => null,
+                'cancellation_reason' => $a->description,
+                'cancelled_at' => $a->created_at->toISOString(),
+            ]);
 
         $counts = [
             'total' => $rescueRequests->count(),
             'pending' => $rescueRequests->where('status', 'pending')->count(),
             'in_progress' => $rescueRequests->whereIn('status', ['accepted', 'in_progress', 'en_route'])->count(),
             'completed' => $rescueRequests->whereIn('status', ['completed', 'rescued', 'safe'])->count(),
+            'cancelled' => $rescueRequests->where('status', 'cancelled')->count(),
+            'false_reports' => $falseReports->count(),
         ];
+
+        // Merge false reports into report data when showing all or filtering for false reports
+        if ($statusFilter === 'all' || $statusFilter === 'false_report') {
+            $reportData = $reportData->concat($falseReports)->sortByDesc('date')->values();
+        }
 
         if ($request->expectsJson() || $request->is('api/*')) {
             return response()->json([
@@ -317,6 +351,38 @@ class AdminController extends Controller
         }
 
         return Inertia::render('Admin/Reports', compact('reportData', 'counts'));
+    }
+
+    /**
+     * Self-Safe Reports - Get all rescue requests that were self-marked as safe with proof
+     */
+    public function selfSafeReports(Request $request)
+    {
+        $timeFilter = $request->get('time_filter', 'day');
+        $startDate = $this->getStartDate($timeFilter);
+
+        $selfSafeRequests = RescueRequest::with(['building', 'floor', 'room', 'requester'])
+            ->whereNotNull('self_marked_safe_at')
+            ->where('created_at', '>=', $startDate)
+            ->orderBy('self_marked_safe_at', 'desc')
+            ->get();
+
+        $data = $selfSafeRequests->map(fn($r) => [
+            'id' => $r->id,
+            'rescue_code' => $r->rescue_code,
+            'user_name' => $r->firstName ? "{$r->firstName} {$r->lastName}" : 
+                          ($r->requester ? "{$r->requester->first_name} {$r->requester->last_name}" : 'Anonymous'),
+            'location' => $r->building?->name . ' - ' . $r->floor?->floor_name . ' - ' . $r->room?->room_name,
+            'safe_proof_photo' => $r->safe_proof_photo,
+            'safe_proof_reason' => $r->safe_proof_reason,
+            'self_marked_safe_at' => $r->self_marked_safe_at?->toISOString(),
+            'created_at' => $r->created_at->toISOString(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+        ]);
     }
 
     /**
@@ -866,5 +932,55 @@ class AdminController extends Controller
             'year' => Carbon::now()->startOfYear(),
             default => Carbon::now()->startOfWeek(),
         };
+    }
+
+    /**
+     * Feedback & Ratings page
+     */
+    public function feedbacks(Request $request)
+    {
+        return Inertia::render('Admin/Feedbacks');
+    }
+
+    /**
+     * False Alarm Reports page
+     */
+    public function falseReports(Request $request)
+    {
+        $timeFilter = $request->get('time_filter', 'all');
+        
+        $query = AuditTrail::where('action', 'false_report')->orderBy('created_at', 'desc');
+        
+        if ($timeFilter !== 'all') {
+            $startDate = $this->getStartDate($timeFilter);
+            $query->where('created_at', '>=', $startDate);
+        }
+
+        $reports = $query->get()->map(function ($audit) {
+            return [
+                'id' => $audit->id,
+                'description' => $audit->description,
+                'details' => $audit->details,
+                'initiator' => $audit->initiator,
+                'ip_address' => $audit->ip_address,
+                'created_at' => $audit->created_at->toISOString(),
+                'user' => $audit->user ? [
+                    'id' => $audit->user->id,
+                    'first_name' => $audit->user->first_name,
+                    'last_name' => $audit->user->last_name,
+                ] : null,
+            ];
+        });
+
+        if ($request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return response()->json([
+                'success' => true,
+                'data' => $reports,
+            ]);
+        }
+
+        return Inertia::render('Admin/FalseReports', [
+            'falseReports' => $reports,
+        ]);
     }
 }

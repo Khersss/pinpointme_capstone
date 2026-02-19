@@ -19,26 +19,34 @@ const light = {
 const dark = {
     dark: true,
     colors: {
-        background: "#252525",
-        primary: "#BAA82C", //gold
-        secondary: "#2C3E50", //midnight blue
-        accent: "#4C3629", //brown
-        error: "#F44336", //red
-        "search-bg": "#252525",
-        "primary-tonal": "#BAA82C",
-        "secondary-tonal": "#FFD700", //gold
-        "accent-tonal": "#4C3629", //brown
-        "error-tonal": "#F44336", //red
-        "primary-tonal-alert": "#BAA82C",
-        "secondary-tonal-alert": "#FFD700", //gold
-        "accent-tonal-alert": "#4C3629", //brown
-        "error-tonal-alert": "#F44336", //red
-        "status-occupied": "#c1b7b1", //brown
-        "expansion-panel-bg": "#252525",
+        background: "#0f172a",           // Matched to --dm-bg-base (deep slate)
+        surface: "#1e293b",              // Matched to --dm-bg-surface
+        "surface-variant": "#334155",    // Matched to --dm-bg-elevated
+        primary: "#60a5fa",              // Bright blue – readable on dark bg
+        secondary: "#fbbf24",            // Amber – warm accent
+        accent: "#4ade80",               // Green accent
+        error: "#f87171",               // Soft red
+        info: "#38bdf8",                // Cyan
+        success: "#4ade80",             // Green
+        warning: "#fbbf24",             // Amber
+        "on-background": "#f1f5f9",     // Light text on dark bg
+        "on-surface": "#f1f5f9",        // Light text on dark surfaces
+        "on-primary": "#0f172a",        // Dark text on bright primary
+        "search-bg": "#1e293b",
+        "primary-tonal": "#60a5fa",
+        "secondary-tonal": "#fbbf24",
+        "accent-tonal": "#4ade80",
+        "error-tonal": "#f87171",
+        "primary-tonal-alert": "#60a5fa",
+        "secondary-tonal-alert": "#fbbf24",
+        "accent-tonal-alert": "#4ade80",
+        "error-tonal-alert": "#f87171",
+        "status-occupied": "#c1b7b1",
+        "expansion-panel-bg": "#1e293b",
         // User App colors
-        "user-bg-start": "#1a1a2e", // dark gradient start
-        "user-bg-end": "#16213e", // dark gradient end
-        "user-surface": "#252525", // dark surface
+        "user-bg-start": "#0f172a",      // Deep slate start
+        "user-bg-end": "#1e293b",        // Slate surface end
+        "user-surface": "#1e293b",       // Dark surface
     },
 };
 

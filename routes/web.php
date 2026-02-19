@@ -271,6 +271,11 @@ Route::middleware(['auth'])->prefix('rescuer')->name('rescuer.')->group(function
     Route::get('/profile', function () {
         return Inertia::render('Rescuer/Profile');
     })->name('profile');
+
+    // Help Improve PinPointMe - System Feedback
+    Route::get('/feedback', function () {
+        return Inertia::render('Rescuer/HelpImprove');
+    })->name('feedback');
 });
 
 
@@ -340,6 +345,13 @@ Route::middleware(['auth'])->group(function () {
         
         // Reports
         Route::get('/reports', [AdminController::class, 'reports'])->name('reports');
+        Route::get('/reports/self-safe', [AdminController::class, 'selfSafeReports'])->name('reports.self-safe');
+        
+        // Feedback & Ratings
+        Route::get('/feedbacks', [AdminController::class, 'feedbacks'])->name('feedbacks');
+        
+        // False Alarm Reports
+        Route::get('/false-reports', [AdminController::class, 'falseReports'])->name('false-reports');
         
         // Preventive Measures admin
         Route::get('/preventive-measures', [PreventiveMeasureController::class, 'adminIndex'])->name('preventive-measures');

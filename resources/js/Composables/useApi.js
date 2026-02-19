@@ -126,15 +126,75 @@ export async function updateRescueStatus(code, status) {
     });
 }
 
-export async function markRescueSafe(rescueRequestId) {
-    return apiFetch(`/api/rescue-requests/${rescueRequestId}/mark-safe`, { method: 'POST' });
+export async function markRescueSafe(rescueRequestId, requestData = {}) {
+    const options = { method: 'POST' };
+    if (Object.keys(requestData).length > 0) {
+        options.body = JSON.stringify(requestData);
+        options.headers = { 'Content-Type': 'application/json' };
+    }
+    return apiFetch(`/api/rescue-requests/${rescueRequestId}/mark-safe`, options);
 }
 
-export async function cancelRescueRequest(rescueRequestId, reason) {
+export async function approveSafeRequest(rescueRequestId, reason = '') {
+    return apiFetch(`/api/rescue-requests/${rescueRequestId}/approve-safe`, {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+    });
+}
+
+export async function denySafeRequest(rescueRequestId, reason) {
+    return apiFetch(`/api/rescue-requests/${rescueRequestId}/deny-safe`, {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+    });
+}
+
+export async function cancelSafeApproval(rescueRequestId) {
+    return apiFetch(`/api/rescue-requests/${rescueRequestId}/cancel-safe-approval`, { method: 'POST' });
+}
+
+export async function cancelRescueRequest(rescueRequestId, reason, proofDetails = null, proofPhoto = null) {
+    const formData = new FormData();
+    formData.append('cancellation_reason', reason);
+    if (proofDetails) formData.append('cancel_proof_details', proofDetails);
+    if (proofPhoto) formData.append('cancel_proof_photo', proofPhoto);
+    
     return apiFetch(`/api/rescue-requests/${rescueRequestId}/cancel`, {
         method: 'POST',
-        body: JSON.stringify({ cancellation_reason: reason }),
+        body: formData,
     });
+}
+
+export async function approveCancelRequest(rescueRequestId) {
+    return apiFetch(`/api/rescue-requests/${rescueRequestId}/approve-cancel`, { method: 'POST' });
+}
+
+export async function denyCancelRequest(rescueRequestId, denyReason) {
+    return apiFetch(`/api/rescue-requests/${rescueRequestId}/deny-cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deny_reason: denyReason }),
+    });
+}
+
+export async function withdrawCancelRequest(rescueRequestId) {
+    return apiFetch(`/api/rescue-requests/${rescueRequestId}/withdraw-cancel`, { method: 'POST' });
+}
+
+export async function setCancelInProgress(rescueRequestId) {
+    return apiFetch(`/api/rescue-requests/${rescueRequestId}/cancel-in-progress`, { method: 'POST' });
+}
+
+export async function clearCancelInProgress(rescueRequestId) {
+    return apiFetch(`/api/rescue-requests/${rescueRequestId}/cancel-in-progress`, { method: 'DELETE' });
+}
+
+export async function setMarkingSafeInProgress(rescueRequestId) {
+    return apiFetch(`/api/rescue-requests/${rescueRequestId}/marking-safe-in-progress`, { method: 'POST' });
+}
+
+export async function clearMarkingSafeInProgress(rescueRequestId) {
+    return apiFetch(`/api/rescue-requests/${rescueRequestId}/marking-safe-in-progress`, { method: 'DELETE' });
 }
 
 export async function updateRescueRequest(rescueRequestId, payload) {
@@ -179,6 +239,58 @@ export async function getRescuerFeed(rescuerId) {
 export async function getRescuerIds() {
     const data = await apiFetch('/api/rescuers/ids', { method: 'GET' });
     return data.rescuer_ids || [];
+}
+
+// ── Rescue Feedback ────────────────────────────────────────────
+export async function submitRescueFeedback(rescueRequestId, payload) {
+    return apiFetch(`/api/rescue-requests/${rescueRequestId}/feedback`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function checkRescueFeedback(rescueRequestId) {
+    return apiFetch(`/api/rescue-requests/${rescueRequestId}/feedback/check`, { method: 'GET' });
+}
+
+export async function getRescueFeedback(rescueRequestId) {
+    return apiFetch(`/api/rescue-requests/${rescueRequestId}/feedback`, { method: 'GET' });
+}
+
+export async function getRescueFeedbackStats(rescuerId = null) {
+    const params = rescuerId ? `?rescuer_id=${rescuerId}` : '';
+    return apiFetch(`/api/rescue-feedbacks/stats${params}`, { method: 'GET' });
+}
+
+// ── System Feedback (Bug Reports / Improvement Suggestions) ────
+export async function submitSystemFeedback(formData) {
+    // formData is a FormData object (to support file upload)
+    return apiFetch('/api/system-feedbacks', {
+        method: 'POST',
+        body: formData,
+        // Don't set Content-Type — browser sets it with boundary for FormData
+        headers: {},
+    });
+}
+
+export async function getSystemFeedbacks(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return apiFetch(`/api/system-feedbacks${query ? '?' + query : ''}`, { method: 'GET' });
+}
+
+export async function getSystemFeedbackStats() {
+    return apiFetch('/api/system-feedbacks/stats', { method: 'GET' });
+}
+
+export async function updateSystemFeedback(id, payload) {
+    return apiFetch(`/api/system-feedbacks/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+    });
+}
+
+export async function getUserSystemFeedbacks(userId) {
+    return apiFetch(`/api/system-feedbacks/user/${userId}`, { method: 'GET' });
 }
 
 // ── Admin: get ALL conversations (read-only overview) ──────────
@@ -446,8 +558,11 @@ export async function deleteProfilePicture(userId) {
 
 export function getProfilePictureUrl(path) {
     if (!path) return null;
-    if (path.startsWith('http')) return path;
-    return `${API_BASE}/storage/${path}`;
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    // Use window.location.origin so static storage files resolve correctly
+    // (Vite dev server proxies API calls but not /storage paths)
+    const base = API_BASE || window.location.origin;
+    return `${base}/storage/${path}`;
 }
 
 export async function registerUser(userData) {
@@ -581,4 +696,34 @@ export function useApi() {
     };
 
     return { get, post, put, patch, del, delete: del, loading, error };
+}
+
+// Send admin notification about event (cancellation, etc.)
+export async function sendAdminNotification(notificationData) {
+    return apiFetch('/api/admin/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(notificationData),
+    });
+}
+
+// Get admin notifications list
+export async function getAdminNotifications(params = {}) {
+    const query = new URLSearchParams(params).toString();
+    return apiFetch(`/api/admin/notifications${query ? '?' + query : ''}`, { method: 'GET' });
+}
+
+// Get admin notifications unread count
+export async function getAdminNotificationsUnreadCount() {
+    return apiFetch('/api/admin/notifications/unread-count', { method: 'GET' });
+}
+
+// Mark single admin notification as read
+export async function markAdminNotificationRead(notificationId) {
+    return apiFetch(`/api/admin/notifications/${notificationId}/read`, { method: 'POST' });
+}
+
+// Mark all admin notifications as read
+export async function markAllAdminNotificationsRead() {
+    return apiFetch('/api/admin/notifications/read-all', { method: 'POST' });
 }

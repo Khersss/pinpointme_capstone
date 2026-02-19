@@ -1,29 +1,36 @@
 <template>
-    <v-app class="bg-user-gradient-light">
-        <!-- App Bar -->
-        <v-app-bar color="primary" density="comfortable">
-            <v-btn icon @click="drawer = true">
-                <v-icon>mdi-menu</v-icon>
-            </v-btn>
-            <v-app-bar-title>Rescue History</v-app-bar-title>
-            <v-spacer />
-            <v-btn icon @click="showFilters = !showFilters">
-                <v-badge v-if="hasActiveFilters" dot color="error">
-                    <v-icon>mdi-filter</v-icon>
-                </v-badge>
-                <v-icon v-else>mdi-filter-outline</v-icon>
-            </v-btn>
-        </v-app-bar>
-
+    <v-app class="history-viewport bg-user-gradient-light">
         <!-- Navigation Drawer -->
         <RescuerMenu v-model="drawer" />
 
-        <!-- Main Content -->
-        <v-main>
+        <!-- Fixed Header (consistent with Dashboard/Chats) -->
+        <div class="history-header">
+            <div class="header-content">
+                <v-btn icon variant="text" @click="drawer = true" class="menu-btn desktop-only">
+                    <v-icon>mdi-menu</v-icon>
+                </v-btn>
+                <div class="header-title">
+                    <div class="title-with-icon">
+                        <v-icon size="24" class="mr-2">mdi-history</v-icon>
+                        <h1>Rescue History</h1>
+                    </div>
+                    <p v-if="filteredHistory.length > 0">{{ filteredHistory.length }} rescue{{ filteredHistory.length !== 1 ? 's' : '' }} recorded</p>
+                </div>
+                <v-btn icon variant="text" class="refresh-btn" @click="showFilters = !showFilters">
+                    <v-badge v-if="hasActiveFilters" dot color="error">
+                        <v-icon>mdi-filter</v-icon>
+                    </v-badge>
+                    <v-icon v-else>mdi-filter-outline</v-icon>
+                </v-btn>
+            </div>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="history-content">
             <!-- Filters -->
             <v-expand-transition>
                 <v-sheet v-if="showFilters" class="pa-4" color="grey-lighten-4">
-                    <div class="text-subtitle-2 mb-3">Filter Results</div>
+                    <div class="text-subtitle-2 mb-3" style="color: var(--ppm-text-primary);">Filter Results</div>
                     <v-row dense>
                         <v-col cols="6">
                             <v-select
@@ -78,19 +85,19 @@
             <div class="pa-4">
                 <v-row dense>
                     <v-col cols="4">
-                        <v-card variant="tonal" color="success" class="text-center pa-3">
+                        <v-card variant="tonal" color="success" class="text-center pa-3 rounded-xl">
                             <div class="text-h5 font-weight-bold">{{ stats.completed }}</div>
                             <div class="text-caption">Completed</div>
                         </v-card>
                     </v-col>
                     <v-col cols="4">
-                        <v-card variant="tonal" color="error" class="text-center pa-3">
+                        <v-card variant="tonal" color="error" class="text-center pa-3 rounded-xl">
                             <div class="text-h5 font-weight-bold">{{ stats.cancelled }}</div>
                             <div class="text-caption">Cancelled</div>
                         </v-card>
                     </v-col>
                     <v-col cols="4">
-                        <v-card variant="tonal" color="info" class="text-center pa-3">
+                        <v-card variant="tonal" color="info" class="text-center pa-3 rounded-xl">
                             <div class="text-h5 font-weight-bold">{{ stats.avgTime }}</div>
                             <div class="text-caption">Avg Time</div>
                         </v-card>
@@ -132,8 +139,8 @@
                 <v-card
                     v-for="rescue in filteredHistory"
                     :key="rescue.id"
-                    class="mb-3"
-                    elevation="1"
+                    class="mb-3 rounded-xl"
+                    elevation="0"
                     @click="viewDetails(rescue)"
                 >
                     <v-card-item>
@@ -202,7 +209,7 @@
                     Load More
                 </v-btn>
             </div>
-        </v-main>
+        </div>
 
         <!-- Detail Dialog -->
         <v-dialog v-model="showDetailDialog" max-width="500" scrollable>
@@ -606,7 +613,99 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* Fixed Viewport Layout */
+.history-viewport {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Fixed Header - consistent with Dashboard/Chats */
+.history-header {
+    flex-shrink: 0;
+    z-index: 100;
+    background: var(--ppm-header-bg, #3674B5);
+    padding: env(safe-area-inset-top, 0) 0 0 0;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    gap: 12px;
+}
+
+.menu-btn, .refresh-btn {
+    color: white;
+}
+
+.header-title {
+    flex: 1;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.title-with-icon {
+    display: flex;
+    align-items: center;
+}
+
+.title-with-icon .v-icon {
+    color: white;
+}
+
+.header-title h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+}
+
+.header-title p {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+    padding-left: 32px;
+}
+
+/* Scrollable Content Area */
+.history-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
 .border-t {
     border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Desktop only visibility */
+.desktop-only {
+    display: flex;
+}
+
+@media (max-width: 1023px) {
+    .desktop-only {
+        display: none !important;
+    }
+
+    .history-content {
+        padding-bottom: calc(16px + 90px);
+    }
+}
+
+@media (min-width: 1024px) {
+    .desktop-only {
+        display: flex;
+    }
+
+    .history-content {
+        padding-bottom: 16px;
+    }
 }
 </style>

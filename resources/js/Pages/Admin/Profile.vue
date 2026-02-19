@@ -70,24 +70,28 @@
                                             <v-text-field
                                                 v-model="editData.first_name"
                                                 label="First Name"
-                                                :rules="[rules.required]"
+                                                :rules="[rules.required, rules.nameOnly]"
                                                 variant="outlined"
                                                 density="comfortable"
                                                 hide-details="auto"
                                                 class="mb-3"
                                                 prepend-inner-icon="mdi-account-outline"
+                                                @keypress="preventInvalidNameChars"
+                                                @input="sanitizeNameField('first_name')"
                                             ></v-text-field>
                                         </v-col>
                                         <v-col cols="12" sm="6">
                                             <v-text-field
                                                 v-model="editData.last_name"
                                                 label="Last Name"
-                                                :rules="[rules.required]"
+                                                :rules="[rules.required, rules.nameOnly]"
                                                 variant="outlined"
                                                 density="comfortable"
                                                 hide-details="auto"
                                                 class="mb-3"
                                                 prepend-inner-icon="mdi-account-outline"
+                                                @keypress="preventInvalidNameChars"
+                                                @input="sanitizeNameField('last_name')"
                                             ></v-text-field>
                                         </v-col>
                                         <v-col cols="12">
@@ -276,6 +280,14 @@ const rules = {
     hasNumber: (v) => /[0-9]/.test(v) || 'Must contain a number',
     hasSpecial: (v) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(v) || 'Must contain special character',
     passwordMatch: (v) => v === passwordData.new_password || 'Passwords do not match',
+    // Name validation - only letters and spaces allowed (no numbers, special chars, emojis)
+    nameOnly: (v) => {
+        if (!v) return true;
+        if (!/^[a-zA-Z\s]+$/.test(v)) {
+            return 'Only letters and spaces are allowed';
+        }
+        return true;
+    },
     // Phone number validation
     phoneNumber: (v) => {
         if (!v) return true; // Optional field
@@ -350,6 +362,29 @@ const formatPhoneNumber = (event) => {
     }
     
     editData.phone_number = value;
+};
+
+// Real-time prevention - blocks special chars, numbers, and emojis in name fields
+const preventInvalidNameChars = (event) => {
+    const char = event.key || String.fromCharCode(event.keyCode || event.which);
+    // Allow control keys (Backspace, Delete, Tab, arrows, etc.)
+    if (char.length > 1) return;
+    // Only allow letters and spaces
+    if (!/^[a-zA-Z\s]$/.test(char)) {
+        event.preventDefault();
+        showSnackbar('Special characters are not allowed in this field', 'warning');
+    }
+};
+
+// Sanitize pasted/input content - strips invalid characters from name fields
+const sanitizeNameField = (field) => {
+    const val = editData[field];
+    if (!val) return;
+    const sanitized = val.replace(/[^a-zA-Z\s]/g, '');
+    if (sanitized !== val) {
+        editData[field] = sanitized;
+        showSnackbar('Special characters are not allowed in this field', 'warning');
+    }
 };
 
 const loadProfile = () => {

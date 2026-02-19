@@ -11,6 +11,7 @@
  *   - Single localStorage key ('ppm-dark-mode') for all roles
  *   - Reactive state that auto-persists
  *   - Applies 'dark-mode' class to both <html> and <body>
+ *   - Also switches Vuetify's global theme between 'light' and 'dark'
  *   - Can be initialized at app startup (initDarkMode)
  */
 
@@ -21,14 +22,21 @@ const STORAGE_KEY = 'ppm-dark-mode';
 // Shared reactive state (singleton across all imports)
 const isDark = ref(false);
 let initialized = false;
+let vuetifyInstance = null;
 
 /**
- * Apply or remove the dark-mode class on html and body
+ * Apply or remove the dark-mode class on html and body,
+ * AND switch the Vuetify theme globally.
  */
-function applyDarkModeClass(enabled) {
+function applyDarkMode(enabled) {
     const action = enabled ? 'add' : 'remove';
     document.documentElement.classList[action]('dark-mode');
     document.body.classList[action]('dark-mode');
+
+    // Switch Vuetify theme
+    if (vuetifyInstance?.theme?.global?.name != null) {
+        vuetifyInstance.theme.global.name.value = enabled ? 'dark' : 'light';
+    }
 }
 
 /**
@@ -37,6 +45,21 @@ function applyDarkModeClass(enabled) {
 function persist(enabled) {
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(enabled));
+        // Also sync to legacy keys so settings toggles stay in sync
+        try {
+            const userSettings = localStorage.getItem('userSettings');
+            if (userSettings) {
+                const parsed = JSON.parse(userSettings);
+                parsed.darkMode = enabled;
+                localStorage.setItem('userSettings', JSON.stringify(parsed));
+            }
+            const rescuerSettings = localStorage.getItem('rescuerSettings');
+            if (rescuerSettings) {
+                const parsed = JSON.parse(rescuerSettings);
+                parsed.darkMode = enabled;
+                localStorage.setItem('rescuerSettings', JSON.stringify(parsed));
+            }
+        } catch { /* ignore */ }
     } catch {
         // Silently fail if localStorage is unavailable
     }
@@ -81,14 +104,23 @@ function readPersistedValue() {
 /**
  * Initialize dark mode from persisted state.
  * Should be called once at app startup (e.g., in app.js).
+ * @param {object} vuetify - The Vuetify instance for theme switching
  */
-export function initDarkMode() {
-    if (initialized) return;
+export function initDarkMode(vuetify) {
+    if (vuetify) {
+        vuetifyInstance = vuetify;
+    }
+
+    if (initialized) {
+        // If already initialized but Vuetify just became available, sync theme
+        if (vuetify) applyDarkMode(isDark.value);
+        return;
+    }
     initialized = true;
 
     const persisted = readPersistedValue();
     isDark.value = persisted;
-    applyDarkModeClass(persisted);
+    applyDarkMode(persisted);
 
     // Persist to unified key (handles migration)
     persist(persisted);
@@ -105,7 +137,7 @@ export function useDarkMode() {
 
     // Watch for changes and apply
     watch(isDark, (newVal) => {
-        applyDarkModeClass(newVal);
+        applyDarkMode(newVal);
         persist(newVal);
     });
 

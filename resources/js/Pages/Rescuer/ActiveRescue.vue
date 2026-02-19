@@ -316,6 +316,32 @@
                     <!-- Pending or Assigned Status - Accept & Start in one action -->
                     <div v-if="currentStatus === 'pending' || currentStatus === 'assigned'" class="action-container">
                         <div class="primary-action">
+                            <!-- Cancel In Progress Warning -->
+                            <v-alert 
+                                v-if="rescueRequest?.cancel_in_progress_at"
+                                type="warning"
+                                variant="tonal"
+                                density="compact"
+                                class="mb-3"
+                                icon="mdi-clock-alert-outline"
+                            >
+                                <div class="text-subtitle-2 font-weight-bold">User Processing Cancellation</div>
+                                <div class="text-body-2">You cannot accept this request while the user is going through cancellation steps.</div>
+                            </v-alert>
+
+                            <!-- Marking Safe In Progress Warning -->
+                            <v-alert 
+                                v-if="rescueRequest?.marking_safe_in_progress_at"
+                                type="info"
+                                variant="tonal"
+                                density="compact"
+                                class="mb-3"
+                                icon="mdi-shield-check-outline"
+                            >
+                                <div class="text-subtitle-2 font-weight-bold">User Considering Marking Self Safe</div>
+                                <div class="text-body-2">You cannot accept this request while the user is considering marking themselves as safe.</div>
+                            </v-alert>
+
                             <v-btn
                                 color="success"
                                 size="x-large"
@@ -323,6 +349,7 @@
                                 rounded="xl"
                                 @click="acceptRescue"
                                 :loading="updating"
+                                :disabled="!!rescueRequest?.cancel_in_progress_at || !!rescueRequest?.marking_safe_in_progress_at"
                                 class="main-action-btn accept-btn"
                                 elevation="3"
                             >
@@ -349,6 +376,64 @@
 
                     <!-- In Progress Status -->
                     <div v-else-if="currentStatus === 'in_progress'" class="action-container">
+                        <!-- Pending Safe Approval Banner -->
+                        <div 
+                            v-if="rescueRequest?.safe_approval_requested && rescueRequest?.safe_approval_status === 'pending'" 
+                            class="pending-approval-banner"
+                            @click="showSafeApprovalDialog = true"
+                        >
+                            <div class="banner-pulse"></div>
+                            <v-icon color="info" size="24" class="mr-3">mdi-account-clock</v-icon>
+                            <div class="banner-content">
+                                <span class="banner-title">User Requesting Safe Status</span>
+                                <span class="banner-subtitle">Tap to review and respond</span>
+                            </div>
+                            <v-icon color="grey" size="20">mdi-chevron-right</v-icon>
+                        </div>
+
+                        <!-- Cancel In Progress Banner -->
+                        <div 
+                            v-if="rescueRequest?.cancel_in_progress_at && !(rescueRequest?.cancel_approval_requested && rescueRequest?.cancel_approval_status === 'pending')" 
+                            class="pending-approval-banner cancel-in-progress-banner"
+                        >
+                            <div class="banner-pulse-orange"></div>
+                            <v-icon color="orange" size="24" class="mr-3">mdi-clock-outline</v-icon>
+                            <div class="banner-content">
+                                <span class="banner-title">User Considering Cancellation</span>
+                                <span class="banner-subtitle">Started {{ getElapsedTime(rescueRequest.cancel_in_progress_at) }}</span>
+                            </div>
+                            <v-icon color="grey" size="20">mdi-information</v-icon>
+                        </div>
+
+                        <!-- Marking Safe In Progress Banner -->
+                        <div 
+                            v-if="rescueRequest?.marking_safe_in_progress_at && !(rescueRequest?.safe_approval_requested && rescueRequest?.safe_approval_status === 'pending')" 
+                            class="pending-approval-banner marking-safe-in-progress-banner"
+                        >
+                            <div class="banner-pulse-blue"></div>
+                            <v-icon color="info" size="24" class="mr-3">mdi-shield-check-outline</v-icon>
+                            <div class="banner-content">
+                                <span class="banner-title">User Considering Marking Self Safe</span>
+                                <span class="banner-subtitle">Started {{ getElapsedTime(rescueRequest.marking_safe_in_progress_at) }}</span>
+                            </div>
+                            <v-icon color="grey" size="20">mdi-information</v-icon>
+                        </div>
+
+                        <!-- Pending Cancel Approval Banner -->
+                        <div 
+                            v-if="rescueRequest?.cancel_approval_requested && rescueRequest?.cancel_approval_status === 'pending'" 
+                            class="pending-approval-banner cancel-approval-banner"
+                            @click="showCancelApprovalDialog = true"
+                        >
+                            <div class="banner-pulse"></div>
+                            <v-icon color="warning" size="24" class="mr-3">mdi-cancel</v-icon>
+                            <div class="banner-content">
+                                <span class="banner-title">User Requesting Cancellation</span>
+                                <span class="banner-subtitle">Tap to review and respond</span>
+                            </div>
+                            <v-icon color="grey" size="20">mdi-chevron-right</v-icon>
+                        </div>
+                        
                         <div class="primary-action">
                             <!-- Slide to confirm Mark as Safe -->
                             <div class="slide-to-confirm" @mousedown="startSlide" @touchstart="startSlide">
@@ -415,6 +500,58 @@
                             <h3 class="completion-title">Rescue Completed Successfully</h3>
                             <p class="completion-subtitle">The person has been marked as safe and secure.</p>
                         </div>
+
+                        <!-- Rescue Summary Card -->
+                        <div class="rescue-summary-card">
+                            <div class="summary-header">
+                                <v-icon size="20" color="primary">mdi-clipboard-text</v-icon>
+                                <span class="summary-header-text">Rescue Summary</span>
+                            </div>
+
+                            <div class="summary-details">
+                                <div class="summary-row">
+                                    <v-icon size="16" color="grey">mdi-account</v-icon>
+                                    <span class="summary-label">Person Rescued</span>
+                                    <span class="summary-value">{{ rescueRequest?.firstName }} {{ rescueRequest?.lastName }}</span>
+                                </div>
+                                <div class="summary-row">
+                                    <v-icon size="16" color="grey">mdi-map-marker</v-icon>
+                                    <span class="summary-label">Location</span>
+                                    <span class="summary-value">{{ rescueRequest?.room?.room_name || rescueRequest?.floor?.floor_name || 'N/A' }}</span>
+                                </div>
+                                <div class="summary-row">
+                                    <v-icon size="16" color="grey">mdi-alert-circle</v-icon>
+                                    <span class="summary-label">Urgency</span>
+                                    <v-chip :color="getUrgencyColor(rescueRequest?.urgency_level)" size="x-small" class="text-capitalize">
+                                        {{ rescueRequest?.urgency_level || 'Medium' }}
+                                    </v-chip>
+                                </div>
+                                <div class="summary-row">
+                                    <v-icon size="16" color="grey">mdi-clock-outline</v-icon>
+                                    <span class="summary-label">Duration</span>
+                                    <span class="summary-value">{{ rescueDuration }}</span>
+                                </div>
+                                <div v-if="rescueRequest?.completion_notes" class="summary-row summary-row-block">
+                                    <v-icon size="16" color="grey">mdi-note-text</v-icon>
+                                    <span class="summary-label">Notes</span>
+                                    <p class="summary-notes">{{ rescueRequest.completion_notes }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Completion Photo -->
+                            <div v-if="rescueRequest?.completion_photo" class="summary-photo-section">
+                                <div class="summary-photo-label">
+                                    <v-icon size="16" color="grey">mdi-camera</v-icon>
+                                    <span>Documentation Photo</span>
+                                </div>
+                                <div class="summary-photo-wrap" @click="openPhotoViewer(rescueRequest.completion_photo, 'Rescue Completion Photo')">
+                                    <img :src="rescueRequest.completion_photo" alt="Rescue completion photo" class="summary-photo" />
+                                    <div class="summary-photo-overlay">
+                                        <v-icon color="white" size="24">mdi-magnify-plus</v-icon>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         
                         <div class="primary-action">
                             <v-btn
@@ -436,29 +573,86 @@
         </v-main>
 
         <!-- Mark as Safe Dialog -->
-        <v-dialog v-model="showCompleteDialog" max-width="400">
-            <v-card>
-                <v-card-title class="text-h6">Mark as Safe</v-card-title>
-                <v-card-text>
-                    <p class="mb-4">Please confirm that the person has been rescued and is now safe.</p>
+        <v-dialog v-model="showCompleteDialog" max-width="480">
+            <v-card rounded="xl">
+                <div class="complete-dialog-header">
+                    <v-icon size="28" color="white">mdi-shield-check</v-icon>
+                    <span class="complete-dialog-title">Mark as Safe</span>
+                </div>
+                <v-card-text class="pa-5">
+                    <p class="text-body-2 text-medium-emphasis mb-4">
+                        Confirm the person is rescued and safe. You may add notes and a photo of the rescue for documentation.
+                    </p>
+
                     <v-textarea
                         v-model="completionNotes"
-                        label="Notes (optional)"
-                        placeholder="Add any notes about the rescue..."
+                        label="Rescue Notes (optional)"
+                        placeholder="Describe what you did, condition of the person, etc."
                         rows="3"
                         variant="outlined"
                         density="comfortable"
+                        class="mb-3"
                     />
+
+                    <!-- Photo Upload -->
+                    <div class="completion-photo-section">
+                        <label class="photo-upload-label">
+                            <v-icon start size="18">mdi-camera</v-icon>
+                            Completion Photo <span style="color: #C62828;">*</span>
+                        </label>
+                        <p class="text-caption text-medium-emphasis mb-2">
+                            Take or upload a photo as proof that the patient is okay. <strong>Required.</strong>
+                        </p>
+
+                        <div v-if="completionPhotoPreview" class="completion-photo-preview">
+                            <img :src="completionPhotoPreview" alt="Completion photo preview" />
+                            <v-btn
+                                icon
+                                size="x-small"
+                                color="error"
+                                class="remove-photo-btn"
+                                @click="removeCompletionPhoto"
+                            >
+                                <v-icon size="16">mdi-close</v-icon>
+                            </v-btn>
+                        </div>
+
+                        <v-btn
+                            v-else
+                            variant="outlined"
+                            color="primary"
+                            block
+                            rounded="lg"
+                            @click="triggerCompletionPhotoInput"
+                            class="photo-upload-btn"
+                        >
+                            <v-icon start>mdi-camera-plus</v-icon>
+                            Take or Upload Photo
+                        </v-btn>
+
+                        <input
+                            ref="completionPhotoInputRef"
+                            type="file"
+                            accept="image/jpeg,image/png,image/jpg,image/webp"
+                            capture="environment"
+                            style="display: none"
+                            @change="onCompletionPhotoSelected"
+                        />
+                    </div>
                 </v-card-text>
-                <v-card-actions>
+                <v-card-actions class="px-5 pb-4">
+                    <v-btn variant="text" rounded="lg" @click="showCompleteDialog = false; resetSlide()">Cancel</v-btn>
                     <v-spacer />
-                    <v-btn variant="text" @click="showCompleteDialog = false">Cancel</v-btn>
                     <v-btn
                         color="success"
                         variant="flat"
+                        rounded="lg"
                         @click="completeRescue"
                         :loading="updating"
+                        :disabled="!completionPhotoFile"
+                        class="px-6"
                     >
+                        <v-icon start size="18">mdi-check-circle</v-icon>
                         Confirm Safe
                     </v-btn>
                 </v-card-actions>
@@ -466,41 +660,367 @@
         </v-dialog>
 
         <!-- Cancel Dialog -->
-        <v-dialog v-model="showCancelDialog" max-width="400">
-            <v-card>
-                <v-card-title class="text-h6">
-                    {{ currentStatus === 'assigned' ? 'Cancel Assignment' : 'Cancel Rescue' }}
+        <v-dialog v-model="showCancelDialog" max-width="440">
+            <v-card rounded="xl">
+                <v-card-title class="d-flex align-center pa-4 bg-primary">
+                    <v-icon color="white" class="mr-2">mdi-alert-circle</v-icon>
+                    <span class="text-white text-subtitle-1 font-weight-bold">
+                        {{ currentStatus === 'assigned' ? 'Cancel Assignment' : 'Cancel Rescue' }}
+                    </span>
+                    <v-spacer />
+                    <v-btn icon variant="text" size="small" @click="showCancelDialog = false; cancellationReason = ''; cancelType = 'valid'">
+                        <v-icon color="white">mdi-close</v-icon>
+                    </v-btn>
                 </v-card-title>
-                <v-card-text>
-                    <p class="mb-4">
-                        {{ currentStatus === 'assigned' 
-                            ? 'Are you sure you want to cancel this assignment? The request will be made available for other rescuers.' 
-                            : 'Are you sure you want to cancel this rescue? The request will be made available for other rescuers.' 
-                        }}
-                    </p>
+                <v-card-text class="pa-5">
+                    <!-- Cancel Type Selection -->
+                    <p class="text-body-2 text-grey-darken-1 mb-3">What is the reason for cancellation?</p>
+                    
+                    <div class="cancel-type-options mb-4">
+                        <div 
+                            :class="['cancel-option', cancelType === 'valid' ? 'cancel-option-active' : '']"
+                            @click="cancelType = 'valid'"
+                        >
+                            <v-icon :color="cancelType === 'valid' ? 'warning' : 'grey'" size="24" class="mb-1">mdi-arrow-u-left-top</v-icon>
+                            <span class="cancel-option-title">Valid Cancel</span>
+                            <span class="cancel-option-desc">Return request to Need Help queue</span>
+                        </div>
+                        <div 
+                            :class="['cancel-option', cancelType === 'invalid' ? 'cancel-option-active cancel-option-danger' : '']"
+                            @click="cancelType = 'invalid'"
+                        >
+                            <v-icon :color="cancelType === 'invalid' ? 'error' : 'grey'" size="24" class="mb-1">mdi-delete-alert</v-icon>
+                            <span class="cancel-option-title">False Report</span>
+                            <span class="cancel-option-desc">Delete & report to admin</span>
+                        </div>
+                    </div>
+
+                    <v-alert v-if="cancelType === 'invalid'" type="warning" variant="tonal" density="compact" class="mb-4">
+                        <span class="text-caption">This will permanently delete the request and notify the administrator about the false report.</span>
+                    </v-alert>
+
                     <v-textarea
                         v-model="cancellationReason"
-                        label="Reason for cancellation"
-                        placeholder="Please provide a reason..."
+                        :label="cancelType === 'invalid' ? 'Reason for reporting (required)' : 'Reason for cancellation (required)'"
                         rows="3"
                         variant="outlined"
                         density="comfortable"
                         :rules="[v => !!v || 'Reason is required']"
                     />
                 </v-card-text>
-                <v-card-actions>
-                    <v-spacer />
-                    <v-btn variant="text" @click="showCancelDialog = false; cancellationReason = ''">
+                <v-card-actions class="pa-4 pt-0">
+                    <v-btn variant="outlined" color="grey" @click="showCancelDialog = false; cancellationReason = ''; cancelType = 'valid'" class="rounded-lg">
                         {{ currentStatus === 'assigned' ? 'Keep Assignment' : 'Keep Rescue' }}
                     </v-btn>
+                    <v-spacer />
                     <v-btn
-                        color="error"
+                        :color="cancelType === 'invalid' ? 'error' : 'warning'"
                         variant="flat"
                         @click="cancelRescue"
                         :loading="updating"
                         :disabled="!cancellationReason"
+                        class="rounded-lg"
                     >
-                        {{ currentStatus === 'assigned' ? 'Cancel Assignment' : 'Cancel Rescue' }}
+                        <v-icon start size="18">{{ cancelType === 'invalid' ? 'mdi-delete' : 'mdi-close-circle' }}</v-icon>
+                        {{ cancelType === 'invalid' ? 'Delete & Report' : 'Cancel Request' }}
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Safe Approval Request Dialog -->
+        <v-dialog v-model="showSafeApprovalDialog" max-width="440" persistent>
+            <v-card rounded="xl" class="safe-approval-dialog">
+                <v-card-title class="d-flex align-center pa-4 bg-info">
+                    <div class="pulse-icon mr-3">
+                        <v-icon color="white" size="28">mdi-account-check</v-icon>
+                    </div>
+                    <div class="flex-grow-1">
+                        <span class="text-white text-subtitle-1 font-weight-bold d-block">Safe Request Received</span>
+                        <span class="text-white-darken-1 text-caption">User wants to mark themselves as safe</span>
+                    </div>
+                </v-card-title>
+                
+                <v-card-text class="pa-5">
+                    <div class="request-info-card mb-4">
+                        <div class="d-flex align-center mb-3">
+                            <v-avatar 
+                                size="48"
+                                :color="requesterProfilePicture ? 'transparent' : 'info'"
+                                class="mr-3"
+                            >
+                                <v-img v-if="requesterProfilePicture" :src="requesterProfilePicture" cover />
+                                <span v-else class="text-white text-subtitle-1">{{ getPersonInNeedInitials() }}</span>
+                            </v-avatar>
+                            <div>
+                                <h4 class="text-subtitle-1 font-weight-bold mb-0">{{ getPersonInNeedName() }}</h4>
+                                <p class="text-caption text-grey mb-0">is requesting to be marked as safe</p>
+                            </div>
+                        </div>
+                        
+                        <v-alert type="info" variant="tonal" density="compact" class="mb-0">
+                            <div class="text-caption">
+                                <strong>Before approving:</strong> Verify the user is actually safe. 
+                                If you're unsure, deny the request and assess in person.
+                            </div>
+                        </v-alert>
+                    </div>
+                    
+                    <!-- Safe Proof Photo and Reason -->
+                    <div v-if="rescueRequest?.safe_proof_photo || rescueRequest?.safe_proof_reason" class="proof-section mb-4">
+                        <div class="d-flex align-center mb-2">
+                            <v-icon size="18" color="success" class="mr-2">mdi-shield-check</v-icon>
+                            <span class="text-subtitle-2 text-grey-darken-2">Safety Proof Submitted</span>
+                        </div>
+                        
+                        <!-- Proof Photo -->
+                        <div v-if="rescueRequest?.safe_proof_photo" class="proof-photo-container mb-3">
+                            <p class="text-caption text-grey-darken-1 mb-2">
+                                <v-icon size="16" class="mr-1">mdi-camera</v-icon>
+                                Photo Proof
+                            </p>
+                            <v-img 
+                                :src="getStorageUrl(rescueRequest.safe_proof_photo)"
+                                max-height="150"
+                                cover
+                                class="rounded-lg proof-photo cursor-pointer"
+                                style="border: 2px solid #4CAF50;"
+                                @click="viewSafeProofPhoto"
+                            />
+                        </div>
+                        
+                        <!-- Proof Reason -->
+                        <div v-if="rescueRequest?.safe_proof_reason" class="proof-reason-container">
+                            <p class="text-caption text-grey-darken-1 mb-2">
+                                <v-icon size="16" class="mr-1">mdi-text-box</v-icon>
+                                Reason for Safety
+                            </p>
+                            <v-card variant="outlined" class="pa-3 rounded-lg" style="border-color: #4CAF50;">
+                                <p class="text-body-2 mb-0">{{ rescueRequest.safe_proof_reason }}</p>
+                            </v-card>
+                        </div>
+                    </div>
+                    
+                    <v-tabs v-model="safeApprovalTab" density="compact" class="mb-4" color="info">
+                        <v-tab value="approve" prepend-icon="mdi-check-circle">
+                            <span class="text-caption">Approve</span>
+                        </v-tab>
+                        <v-tab value="deny" prepend-icon="mdi-close-circle">
+                            <span class="text-caption">Deny</span>
+                        </v-tab>
+                    </v-tabs>
+                    
+                    <v-window v-model="safeApprovalTab">
+                        <v-window-item value="approve">
+                            <div class="text-center py-4">
+                                <v-icon size="48" color="success" class="mb-3">mdi-shield-check</v-icon>
+                                <p class="text-body-2 text-grey-darken-1">
+                                    Confirming this means you verify that the user is safe and no longer requires assistance.
+                                    This will complete the rescue operation.
+                                </p>
+                            </div>
+                        </v-window-item>
+                        
+                        <v-window-item value="deny">
+                            <v-textarea
+                                v-model="safeApprovalDenyReason"
+                                label="Reason for denying (required)"
+                                placeholder="e.g., Still need to verify in person, user may be disoriented..."
+                                rows="3"
+                                variant="outlined"
+                                density="comfortable"
+                                prepend-inner-icon="mdi-text"
+                                :rules="[v => !!v || 'Reason is required']"
+                            />
+                            <v-alert type="warning" variant="tonal" density="compact" class="mt-2">
+                                <div class="text-caption">
+                                    The user will be notified that their request was denied and will need to wait for your assessment.
+                                </div>
+                            </v-alert>
+                        </v-window-item>
+                    </v-window>
+                </v-card-text>
+                
+                <v-card-actions class="pa-4 pt-0">
+                    <v-btn 
+                        variant="outlined" 
+                        color="grey" 
+                        @click="closeSafeApprovalDialog" 
+                        class="rounded-lg"
+                        :disabled="safeApprovalProcessing"
+                    >
+                        Decide Later
+                    </v-btn>
+                    <v-spacer />
+                    <v-btn
+                        v-if="safeApprovalTab === 'approve'"
+                        color="success"
+                        variant="flat"
+                        @click="handleApproveSafeRequest"
+                        :loading="safeApprovalProcessing"
+                        class="rounded-lg"
+                    >
+                        <v-icon start size="18">mdi-check-circle</v-icon>
+                        Approve & Complete
+                    </v-btn>
+                    <v-btn
+                        v-else
+                        color="warning"
+                        variant="flat"
+                        @click="handleDenySafeRequest"
+                        :loading="safeApprovalProcessing"
+                        :disabled="!safeApprovalDenyReason.trim()"
+                        class="rounded-lg"
+                    >
+                        <v-icon start size="18">mdi-close-circle</v-icon>
+                        Deny Request
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Cancel Approval Request Dialog -->
+        <v-dialog v-model="showCancelApprovalDialog" max-width="440" persistent>
+            <v-card rounded="xl" class="cancel-approval-dialog">
+                <v-card-title class="d-flex align-center pa-4 bg-warning">
+                    <div class="pulse-icon mr-3">
+                        <v-icon color="white" size="28">mdi-cancel</v-icon>
+                    </div>
+                    <div class="flex-grow-1">
+                        <span class="text-white text-subtitle-1 font-weight-bold d-block">Cancel Request Received</span>
+                        <span class="text-white-darken-1 text-caption">User wants to cancel the rescue</span>
+                    </div>
+                </v-card-title>
+                
+                <v-card-text class="pa-5">
+                    <div class="request-info-card mb-4">
+                        <div class="d-flex align-center mb-3">
+                            <v-avatar 
+                                size="48"
+                                :color="requesterProfilePicture ? 'transparent' : 'warning'"
+                                class="mr-3"
+                            >
+                                <v-img v-if="requesterProfilePicture" :src="requesterProfilePicture" cover />
+                                <span v-else class="text-white text-subtitle-1">{{ getPersonInNeedInitials() }}</span>
+                            </v-avatar>
+                            <div>
+                                <h4 class="text-subtitle-1 font-weight-bold mb-0">{{ getPersonInNeedName() }}</h4>
+                                <p class="text-caption text-grey mb-0">is requesting to cancel the rescue</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Show cancel reason -->
+                        <v-alert type="info" variant="tonal" density="compact" class="mb-3">
+                            <div class="text-caption"><strong>Reason:</strong></div>
+                            <div class="text-body-2">{{ rescueRequest?.cancel_approval_reason || 'No reason provided' }}</div>
+                        </v-alert>
+                        
+                        <!-- Show proof details if provided -->
+                        <v-alert v-if="rescueRequest?.cancel_proof_details" type="info" variant="tonal" density="compact" class="mb-3">
+                            <div class="text-caption"><strong>Proof of safety:</strong></div>
+                            <div class="text-body-2">{{ rescueRequest.cancel_proof_details }}</div>
+                        </v-alert>
+
+                        <!-- Show proof photo if provided -->
+                        <div v-if="rescueRequest?.cancel_proof_photo" class="proof-photo-container mb-3">
+                            <div class="text-caption font-weight-bold mb-2">
+                                <v-icon size="14" class="mr-1">mdi-camera</v-icon>
+                                Photo proof:
+                            </div>
+                            <v-img
+                                :src="`/storage/${rescueRequest.cancel_proof_photo}`"
+                                aspect-ratio="16/9"
+                                class="rounded-lg proof-photo"
+                                cover
+                                @click="viewProofPhoto"
+                            >
+                                <template v-slot:placeholder>
+                                    <v-row class="fill-height ma-0" align="center" justify="center">
+                                        <v-progress-circular indeterminate color="grey-lighten-5"></v-progress-circular>
+                                    </v-row>
+                                </template>
+                            </v-img>
+                        </div>
+                    </div>
+                    
+                    <v-tabs v-model="cancelApprovalTab" density="compact" class="mb-4" color="warning">
+                        <v-tab value="approve" prepend-icon="mdi-check-circle">
+                            <span class="text-caption">Approve</span>
+                        </v-tab>
+                        <v-tab value="deny" prepend-icon="mdi-close-circle">
+                            <span class="text-caption">Deny</span>
+                        </v-tab>
+                    </v-tabs>
+                    
+                    <v-window v-model="cancelApprovalTab">
+                        <v-window-item value="approve">
+                            <div class="text-center py-4">
+                                <v-icon size="48" color="success" class="mb-3">mdi-check-circle</v-icon>
+                                <p class="text-body-2 text-grey-darken-1">
+                                    Confirming this means you verify that the user is safe and no longer requires assistance.
+                                    This will cancel the rescue request.
+                                </p>
+                                <v-alert type="success" variant="tonal" density="compact" class="mt-3">
+                                    <div class="text-caption">
+                                        <strong>Approving will:</strong> Cancel the rescue request, free you for other assignments, and mark as resolved.
+                                    </div>
+                                </v-alert>
+                            </div>
+                        </v-window-item>
+                        
+                        <v-window-item value="deny">
+                            <v-textarea
+                                v-model="cancelApprovalDenyReason"
+                                label="Reason for denying cancellation (required)"
+                                placeholder="e.g., Based on our conversation, I believe you still need assistance..."
+                                rows="3"
+                                variant="outlined"
+                                density="comfortable"
+                                prepend-inner-icon="mdi-text"
+                                :rules="[v => !!v || 'Reason is required']"
+                            />
+                            <v-alert type="warning" variant="tonal" density="compact" class="mt-2">
+                                <div class="text-caption">
+                                    The user will be notified that their cancellation was denied and can continue to communicate via chat.
+                                </div>
+                            </v-alert>
+                        </v-window-item>
+                    </v-window>
+                </v-card-text>
+                
+                <v-card-actions class="pa-4 pt-0">
+                    <v-btn 
+                        variant="outlined" 
+                        color="grey" 
+                        @click="closeCancelApprovalDialog" 
+                        class="rounded-lg"
+                        :disabled="cancelApprovalProcessing"
+                    >
+                        Decide Later
+                    </v-btn>
+                    <v-spacer />
+                    <v-btn
+                        v-if="cancelApprovalTab === 'approve'"
+                        color="success"
+                        variant="flat"
+                        @click="handleApproveCancelRequest"
+                        :loading="cancelApprovalProcessing"
+                        class="rounded-lg"
+                    >
+                        <v-icon start size="18">mdi-check-circle</v-icon>
+                        Approve Cancel
+                    </v-btn>
+                    <v-btn
+                        v-else
+                        color="warning"
+                        variant="flat"
+                        @click="handleDenyCancelRequest"
+                        :loading="cancelApprovalProcessing"
+                        :disabled="!cancelApprovalDenyReason.trim()"
+                        class="rounded-lg"
+                    >
+                        <v-icon start size="18">mdi-close-circle</v-icon>
+                        Deny Cancel
                     </v-btn>
                 </v-card-actions>
             </v-card>
@@ -655,6 +1175,35 @@
             </v-card>
         </v-dialog>
 
+        <!-- Proof Photo Viewer Dialog -->
+        <v-dialog v-model="showProofPhotoViewer" max-width="600" content-class="proof-photo-viewer-dialog">
+            <v-card class="bg-black rounded-xl">
+                <v-card-title class="d-flex align-center justify-space-between text-white pa-3">
+                    <span class="text-subtitle-1">Proof Photo</span>
+                    <v-btn icon variant="text" color="white" size="small" @click="showProofPhotoViewer = false">
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                </v-card-title>
+                <v-card-text class="pa-0">
+                    <v-img
+                        :src="proofPhotoUrl"
+                        contain
+                        class="bg-black"
+                        style="max-height: 60vh;"
+                    />
+                </v-card-text>
+                <v-card-actions class="pa-3">
+                    <v-btn variant="outlined" color="white" prepend-icon="mdi-download" @click="downloadProofPhoto">
+                        Download
+                    </v-btn>
+                    <v-spacer />
+                    <v-btn variant="text" color="white" @click="showProofPhotoViewer = false">
+                        Close
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
         <!-- Snackbar -->
         <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000">
             {{ snackbar.message }}
@@ -666,9 +1215,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
-import { apiFetch, getProfilePictureUrl, getUnreadMessageCount, translateRescueRequest } from '@/Composables/useApi';
+import { apiFetch, getProfilePictureUrl, getUnreadMessageCount, translateRescueRequest, approveSafeRequest, denySafeRequest, approveCancelRequest, denyCancelRequest } from '@/Composables/useApi';
 import { useDarkMode } from '@/Composables/useDarkMode';
 import RescuerBottomNav from '@/Components/Pages/Rescuer/Menu/RescuerBottomNav.vue';
 
@@ -695,10 +1244,28 @@ const showCancelDialog = ref(false);
 const showUserProfile = ref(false);
 const completionNotes = ref('');
 const cancellationReason = ref('');
+const cancelType = ref('valid'); // 'valid' = return to pending, 'invalid' = delete + report
 const pollingInterval = ref(null);
 const unreadMessageCount = ref(0);
+const completionPhotoFile = ref(null);
+const completionPhotoPreview = ref(null);
+const completionPhotoInputRef = ref(null);
 
-// Slide to confirm state
+// Safe approval state
+const showSafeApprovalDialog = ref(false);
+const safeApprovalProcessing = ref(false);
+const safeApprovalDenyReason = ref('');
+const safeApprovalTab = ref('approve'); // 'approve' or 'deny'
+const previousSafeApprovalRequested = ref(false);
+
+// Cancel approval state
+const showCancelApprovalDialog = ref(false);
+const cancelApprovalProcessing = ref(false);
+const cancelApprovalDenyReason = ref('');
+const cancelApprovalTab = ref('approve'); // 'approve' or 'deny'
+const previousCancelApprovalRequested = ref(false);
+const showProofPhotoViewer = ref(false);
+const proofPhotoUrl = ref('');
 const isSliding = ref(false);
 const slidePosition = ref(0);
 const slideProgress = ref(0);
@@ -875,6 +1442,62 @@ const fetchRescueDetails = async () => {
         const data = response.data || response;
         
         if (data) {
+            // Detect new safe approval request
+            const wasPreviouslySafeApprovalRequested = previousSafeApprovalRequested.value;
+            const isNowSafeApprovalRequested = data.safe_approval_requested && data.safe_approval_status === 'pending';
+            
+            if (!wasPreviouslySafeApprovalRequested && isNowSafeApprovalRequested) {
+                // New safe approval request detected - show dialog
+                showSafeApprovalDialog.value = true;
+                
+                // Vibrate and play sound to alert rescuer
+                if (navigator.vibrate) {
+                    navigator.vibrate([200, 100, 200, 100, 200]);
+                }
+                
+                // Send browser notification to alert rescuer even if in another tab
+                if (Notification.permission === 'granted') {
+                    new Notification('🆘 Safe Request Received', {
+                        body: `${data.firstName || 'User'} wants to mark themselves as safe and needs your approval.`,
+                        icon: '/images/logo.png',
+                        badge: '/images/logo.png',
+                        tag: 'safe-approval-request',
+                        requireInteraction: true,
+                        actions: [
+                            { action: 'view', title: 'View Request' },
+                            { action: 'dismiss', title: 'Dismiss' }
+                        ]
+                    });
+                } else if (Notification.permission !== 'denied') {
+                    // Request permission for future notifications
+                    Notification.requestPermission();
+                }
+                
+                showSnackbar('User is requesting to mark themselves as safe', 'info');
+            }
+            
+            // Update the tracking ref
+            previousSafeApprovalRequested.value = isNowSafeApprovalRequested;
+            
+            // Detect new cancel approval request
+            const wasPreviouslyCancelApprovalRequested = previousCancelApprovalRequested.value;
+            const isNowCancelApprovalRequested = data.cancel_approval_requested && data.cancel_approval_status === 'pending';
+            
+            if (!wasPreviouslyCancelApprovalRequested && isNowCancelApprovalRequested) {
+                // New cancel approval request detected - show dialog
+                showCancelApprovalDialog.value = true;
+                
+                // Vibrate and play sound to alert rescuer
+                if (navigator.vibrate) {
+                    navigator.vibrate([200, 100, 200, 100, 200]);
+                }
+                
+                showSnackbar('User is requesting to cancel the rescue', 'warning');
+            }
+            
+            // Update the tracking ref
+            previousCancelApprovalRequested.value = isNowCancelApprovalRequested;
+            
             rescueRequest.value = data;
             currentStatus.value = data.status || 'pending';
             
@@ -917,6 +1540,20 @@ const handleTranslate = async () => {
 const acceptRescue = async () => {
     updating.value = true;
     try {
+        // Block if user is currently processing cancellation
+        if (rescueRequest.value?.cancel_in_progress_at) {
+            showSnackbar('User is currently processing a cancellation. You cannot accept this request.', 'warning');
+            updating.value = false;
+            return;
+        }
+
+        // Block if user is currently considering marking themselves safe
+        if (rescueRequest.value?.marking_safe_in_progress_at) {
+            showSnackbar('User is currently considering marking themselves safe. Please wait.', 'warning');
+            updating.value = false;
+            return;
+        }
+
         // Get rescuer ID from localStorage
         const userData = JSON.parse(localStorage.getItem('userData') || '{}');
         const rescuerId = userData.id;
@@ -967,7 +1604,18 @@ const acceptRescue = async () => {
         }
     } catch (error) {
         console.error('Error accepting rescue:', error);
-        showSnackbar('Failed to accept rescue', 'error');
+        if (error?.status === 409 && error?.data?.cancel_in_progress) {
+            showSnackbar('User is currently processing a cancellation. Please wait.', 'warning');
+            // Refresh data to update UI
+            await fetchActiveRescue();
+        } else if (error?.status === 409 && error?.data?.marking_safe_in_progress) {
+            showSnackbar('User is currently considering marking themselves safe. Please wait.', 'warning');
+            await fetchActiveRescue();
+        } else if (error?.status === 409 && error?.data?.already_accepted) {
+            showSnackbar(error.data?.message || 'Already accepted by another rescuer.', 'warning');
+        } else {
+            showSnackbar('Failed to accept rescue', 'error');
+        }
     } finally {
         updating.value = false;
     }
@@ -1041,22 +1689,31 @@ const updateStatus = async (newStatus) => {
 const completeRescue = async () => {
     updating.value = true;
     try {
-        const response = await apiFetch(`/api/rescue-requests/${rescueRequest.value.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                status: 'safe',
-                additional_info: completionNotes.value,
-            }),
+        const formData = new FormData();
+        if (completionNotes.value) {
+            formData.append('completion_notes', completionNotes.value);
+        }
+        if (completionPhotoFile.value) {
+            formData.append('completion_photo', completionPhotoFile.value);
+        }
+
+        const response = await apiFetch(`/api/rescue-requests/${rescueRequest.value.id}/complete`, {
+            method: 'POST',
+            body: formData,
         });
 
         const data = response.data || response;
         if (data) {
+            // Update local rescue request with completion data
+            if (data.data) {
+                rescueRequest.value = { ...rescueRequest.value, ...data.data };
+            }
+            currentStatus.value = 'safe';
             showSnackbar('Person marked as safe!', 'success');
             showCompleteDialog.value = false;
-            resetSlide(); // Reset slide state
+            resetSlide();
+            removeCompletionPhoto();
             localStorage.removeItem('lastRescueRequestId');
-            setTimeout(() => router.visit('/rescuer/dashboard'), 1500);
         }
     } catch (error) {
         console.error('Error completing rescue:', error);
@@ -1071,22 +1728,43 @@ const cancelRescue = async () => {
 
     updating.value = true;
     try {
-        const response = await apiFetch(`/api/rescue-requests/${rescueRequest.value.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                status: 'cancelled',
-                cancellation_reason: cancellationReason.value,
-                assigned_rescuer: null,
-            }),
-        });
+        if (cancelType.value === 'invalid') {
+            // False/joke report — delete the request and report to admin
+            const response = await apiFetch(`/api/rescue-requests/${rescueRequest.value.id}/report-false`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cancellation_reason: cancellationReason.value,
+                    reported_by: JSON.parse(localStorage.getItem('userData') || '{}')?.id,
+                }),
+            });
 
-        const data = response.data || response;
-        if (data) {
-            showSnackbar('Rescue cancelled', 'warning');
-            showCancelDialog.value = false;
-            localStorage.removeItem('lastRescueRequestId');
-            setTimeout(() => router.visit('/rescuer/dashboard'), 1500);
+            const data = response.data || response;
+            if (data) {
+                showSnackbar('False report deleted and admin notified', 'error');
+                showCancelDialog.value = false;
+                localStorage.removeItem('lastRescueRequestId');
+                setTimeout(() => router.visit('/rescuer/dashboard'), 1500);
+            }
+        } else {
+            // Valid cancel — return request back to pending so other rescuers can pick it up
+            const response = await apiFetch(`/api/rescue-requests/${rescueRequest.value.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    status: 'pending',
+                    cancellation_reason: cancellationReason.value,
+                    assigned_rescuer: null,
+                }),
+            });
+
+            const data = response.data || response;
+            if (data) {
+                showSnackbar('Request returned to Need Help queue', 'warning');
+                showCancelDialog.value = false;
+                localStorage.removeItem('lastRescueRequestId');
+                setTimeout(() => router.visit('/rescuer/dashboard'), 1500);
+            }
         }
     } catch (error) {
         console.error('Error cancelling rescue:', error);
@@ -1166,6 +1844,40 @@ const getUrgencyIcon = (level) => {
         'critical': 'mdi-fire-alert',
     };
     return icons[level] || 'mdi-alert-circle';
+};
+
+// Computed rescue duration (from created_at to updated_at / now)
+const rescueDuration = computed(() => {
+    if (!rescueRequest.value) return 'N/A';
+    const start = new Date(rescueRequest.value.created_at);
+    const end = rescueRequest.value.updated_at ? new Date(rescueRequest.value.updated_at) : new Date();
+    const diffMs = end - start;
+    const mins = Math.floor(diffMs / 60000);
+    const hrs = Math.floor(mins / 60);
+    const remainMins = mins % 60;
+    if (hrs > 0) return `${hrs}h ${remainMins}m`;
+    return `${mins}m`;
+});
+
+// Completion photo helpers
+const triggerCompletionPhotoInput = () => {
+    completionPhotoInputRef.value?.click();
+};
+
+const onCompletionPhotoSelected = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    completionPhotoFile.value = file;
+    completionPhotoPreview.value = URL.createObjectURL(file);
+};
+
+const removeCompletionPhoto = () => {
+    if (completionPhotoPreview.value) {
+        URL.revokeObjectURL(completionPhotoPreview.value);
+    }
+    completionPhotoFile.value = null;
+    completionPhotoPreview.value = null;
+    if (completionPhotoInputRef.value) completionPhotoInputRef.value.value = '';
 };
 
 const getUrgencyColor = (level) => {
@@ -1296,6 +2008,152 @@ const showSnackbar = (message, color = 'success') => {
     snackbar.value = { show: true, message, color };
 };
 
+// Safe Approval Handling
+const handleApproveSafeRequest = async () => {
+    if (!rescueRequest.value?.id) return;
+    
+    safeApprovalProcessing.value = true;
+    try {
+        const response = await approveSafeRequest(rescueRequest.value.id, 'Confirmed safe by rescuer');
+        
+        // Update local state
+        if (response.data) {
+            rescueRequest.value = response.data;
+            currentStatus.value = response.data.status;
+        }
+        
+        showSafeApprovalDialog.value = false;
+        showSnackbar('User marked as safe. Rescue completed.', 'success');
+        
+        // Vibrate for successful completion
+        if (navigator.vibrate) {
+            navigator.vibrate([100, 50, 200]);
+        }
+        
+        // Redirect to dashboard after a short delay
+        setTimeout(() => {
+            router.visit('/rescuer/dashboard');
+        }, 2000);
+    } catch (error) {
+        console.error('Failed to approve safe request:', error);
+        showSnackbar('Failed to approve safe request. Please try again.', 'error');
+    } finally {
+        safeApprovalProcessing.value = false;
+    }
+};
+
+const handleDenySafeRequest = async () => {
+    if (!rescueRequest.value?.id || !safeApprovalDenyReason.value.trim()) {
+        showSnackbar('Please provide a reason for denying the safe request.', 'warning');
+        return;
+    }
+    
+    safeApprovalProcessing.value = true;
+    try {
+        const response = await denySafeRequest(rescueRequest.value.id, safeApprovalDenyReason.value.trim());
+        
+        // Update local state
+        if (response.data) {
+            rescueRequest.value = response.data;
+        }
+        
+        showSafeApprovalDialog.value = false;
+        safeApprovalDenyReason.value = '';
+        safeApprovalTab.value = 'approve';
+        showSnackbar('Safe request denied. User has been notified to wait for your assessment.', 'info');
+    } catch (error) {
+        console.error('Failed to deny safe request:', error);
+        showSnackbar('Failed to deny safe request. Please try again.', 'error');
+    } finally {
+        safeApprovalProcessing.value = false;
+    }
+};
+
+const closeSafeApprovalDialog = () => {
+    showSafeApprovalDialog.value = false;
+    safeApprovalDenyReason.value = '';
+    safeApprovalTab.value = 'approve';
+};
+
+// Cancel Approval handlers
+const handleApproveCancelRequest = async () => {
+    cancelApprovalProcessing.value = true;
+    try {
+        const result = await approveCancelRequest(rescueRequest.value.id);
+        const data = result.data || result;
+        if (data) {
+            rescueRequest.value = data;
+            showCancelApprovalDialog.value = false;
+            showSnackbar('Cancellation approved. Request has been cancelled.', 'success');
+            
+            // Redirect to dashboard after successful approval
+            setTimeout(() => {
+                router.visit('/rescuer/dashboard');
+            }, 1500);
+        }
+    } catch (error) {
+        console.error('Error approving cancel request:', error);
+        showSnackbar('Failed to approve cancellation', 'error');
+    } finally {
+        cancelApprovalProcessing.value = false;
+    }
+};
+
+const handleDenyCancelRequest = async () => {
+    if (!cancelApprovalDenyReason.value) return;
+    
+    cancelApprovalProcessing.value = true;
+    try {
+        const result = await denyCancelRequest(rescueRequest.value.id, cancelApprovalDenyReason.value);
+        const data = result.data || result;
+        if (data) {
+            rescueRequest.value = data;
+            showCancelApprovalDialog.value = false;
+            showSnackbar('Cancellation denied. User has been notified.', 'warning');
+        }
+    } catch (error) {
+        console.error('Error denying cancel request:', error);
+        showSnackbar('Failed to deny cancellation', 'error');
+    } finally {
+        cancelApprovalProcessing.value = false;
+    }
+};
+
+const closeCancelApprovalDialog = () => {
+    showCancelApprovalDialog.value = false;
+    cancelApprovalDenyReason.value = '';
+    cancelApprovalTab.value = 'approve';
+};
+
+// View proof photo in fullscreen
+const viewProofPhoto = () => {
+    proofPhotoUrl.value = `/storage/${rescueRequest.value.cancel_proof_photo}`;
+    showProofPhotoViewer.value = true;
+};
+
+// View safe proof photo in fullscreen
+const viewSafeProofPhoto = () => {
+    proofPhotoUrl.value = getStorageUrl(rescueRequest.value.safe_proof_photo);
+    showProofPhotoViewer.value = true;
+};
+
+// Get storage URL for images
+const getStorageUrl = (path) => {
+    if (!path) return '';
+    if (path.startsWith('http') || path.startsWith('data:')) return path;
+    return `/storage/${path}`;
+};
+
+// Download proof photo
+const downloadProofPhoto = () => {
+    const link = document.createElement('a');
+    link.href = proofPhotoUrl.value;
+    link.download = `cancel-proof-${rescueRequest.value.id}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
 // Slide to confirm functionality
 const startSlide = (event) => {
     if (updating.value || isSlideComplete.value) return;
@@ -1363,9 +2221,9 @@ const completeSlide = () => {
         navigator.vibrate([100, 50, 100]);
     }
     
-    // Complete the rescue after a short delay
+    // Open the Mark as Safe dialog so rescuer can upload proof photo
     completionTimer.value = setTimeout(() => {
-        completeRescue();
+        showCompleteDialog.value = true;
     }, 800);
 };
 
@@ -1426,6 +2284,11 @@ const fetchUnreadMessageCount = async () => {
 onMounted(async () => {
     fetchRescueDetails();
     await fetchUnreadMessageCount();
+    
+    // Request notification permission for real-time alerts
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
     
     // Poll for updates every 10 seconds
     pollingInterval.value = setInterval(async () => {
@@ -1878,6 +2741,188 @@ onUnmounted(() => {
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
 }
 
+/* Pending Safe Approval Banner */
+.pending-approval-banner {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.15) 100%);
+    border: 2px solid rgba(33, 150, 243, 0.3);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.pending-approval-banner:hover {
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.15) 0%, rgba(33, 150, 243, 0.2) 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+}
+
+.pending-approval-banner:active {
+    transform: translateY(0);
+}
+
+.banner-pulse {
+    position: absolute;
+    top: 50%;
+    left: -10px;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    background: #2196F3;
+    border-radius: 50%;
+    animation: banner-pulse-anim 1.5s ease-in-out infinite;
+}
+
+@keyframes banner-pulse-anim {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(33, 150, 243, 0);
+    }
+}
+
+.banner-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.banner-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.banner-subtitle {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+/* Cancel Approval Banner Variant */
+.cancel-approval-banner {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 152, 0, 0.15) 100%) !important;
+    border-color: rgba(255, 152, 0, 0.3) !important;
+}
+
+.cancel-approval-banner:hover {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.15) 0%, rgba(255, 152, 0, 0.2) 100%) !important;
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2) !important;
+}
+
+.cancel-approval-banner .banner-pulse {
+    background: #FF9800 !important;
+}
+
+@keyframes cancel-banner-pulse-anim {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(255, 152, 0, 0);
+    }
+}
+
+.cancel-approval-banner .banner-pulse {
+    animation: cancel-banner-pulse-anim 1.5s ease-in-out infinite;
+}
+
+/* Cancel In Progress Banner */
+.cancel-in-progress-banner {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.15) 100%) !important;
+    border-color: rgba(255, 193, 7, 0.3) !important;
+}
+
+.cancel-in-progress-banner .banner-pulse-orange {
+    position: absolute;
+    top: 50%;
+    left: 24px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(255, 193, 7, 0.8);
+    transform: translateY(-50%);
+    animation: cancel-in-progress-pulse-anim 2s ease-in-out infinite;
+}
+
+@keyframes cancel-in-progress-pulse-anim {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(255, 193, 7, 0);
+    }
+}
+
+.marking-safe-in-progress-banner {
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.15) 100%) !important;
+    border-color: rgba(33, 150, 243, 0.3) !important;
+}
+
+.marking-safe-in-progress-banner .banner-pulse-blue {
+    position: absolute;
+    top: 50%;
+    left: 24px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(33, 150, 243, 0.8);
+    transform: translateY(-50%);
+    animation: marking-safe-pulse-anim 2s ease-in-out infinite;
+}
+
+@keyframes marking-safe-pulse-anim {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(33, 150, 243, 0);
+    }
+}
+
+/* Proof Photo Styles */
+.proof-photo-container {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px;
+    background: #fafafa;
+}
+
+.proof-photo {
+    cursor: pointer;
+    transition: opacity 0.2s;
+    border: 1px solid #ddd;
+}
+
+.proof-photo:hover {
+    opacity: 0.8;
+}
+
+/* Safe Approval Dialog Styles */
+.safe-approval-dialog .pulse-icon {
+    animation: pulse-icon-anim 2s ease-in-out infinite;
+}
+
+@keyframes pulse-icon-anim {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.safe-approval-dialog .request-info-card {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+}
+
 /* Slide to Confirm Component */
 .slide-to-confirm {
     width: 100%;
@@ -1979,6 +3024,9 @@ onUnmounted(() => {
     letter-spacing: 0.3px;
 }
 
+.slide-thumb.slide-active ~ .slide-text .slide-instruction {
+    color: rgb(12, 12, 12);
+}
 .slide-success {
     font-size: 0.9rem;
     font-weight: 700;
@@ -2130,6 +3178,162 @@ onUnmounted(() => {
     font-weight: 600;
     font-size: 1rem !important;
     letter-spacing: 0.3px;
+}
+
+/* Complete Dialog Header */
+.complete-dialog-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    border-radius: 12px 12px 0 0;
+}
+.complete-dialog-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* Completion Photo Section */
+.completion-photo-section {
+    margin-top: 4px;
+}
+.photo-upload-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 4px;
+}
+.completion-photo-preview {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid #e2e8f0;
+    max-height: 200px;
+}
+.completion-photo-preview img {
+    width: 100%;
+    max-height: 196px;
+    object-fit: cover;
+    display: block;
+}
+.remove-photo-btn {
+    position: absolute !important;
+    top: 6px;
+    right: 6px;
+}
+.photo-upload-btn {
+    height: 48px !important;
+    border-style: dashed !important;
+    border-width: 2px !important;
+}
+
+/* Rescue Summary Card */
+.rescue-summary-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+.summary-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.summary-header-text {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+.summary-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.summary-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+}
+.summary-row-block {
+    flex-wrap: wrap;
+}
+.summary-label {
+    color: #64748b;
+    font-weight: 500;
+    min-width: 100px;
+}
+.summary-value {
+    color: #1e293b;
+    font-weight: 600;
+    flex: 1;
+}
+.summary-notes {
+    width: 100%;
+    padding: 8px 12px;
+    margin-top: 4px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    font-size: 0.84rem;
+    color: #334155;
+    line-height: 1.5;
+}
+
+/* Summary Photo */
+.summary-photo-section {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+}
+.summary-photo-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 8px;
+}
+.summary-photo-wrap {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid #e2e8f0;
+    transition: border-color 0.2s;
+}
+.summary-photo-wrap:hover {
+    border-color: #3b82f6;
+}
+.summary-photo {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    display: block;
+}
+.summary-photo-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.summary-photo-wrap:hover .summary-photo-overlay {
+    opacity: 1;
 }
 
 /* Emergency Contact Section */
@@ -2353,6 +3557,20 @@ onUnmounted(() => {
     
     .completion-subtitle {
         font-size: 0.9rem;
+    }
+
+    .rescue-summary-card {
+        padding: 12px;
+    }
+    .summary-label {
+        min-width: 80px;
+        font-size: 0.78rem;
+    }
+    .summary-value {
+        font-size: 0.82rem;
+    }
+    .summary-row {
+        font-size: 0.82rem;
     }
     
     .media-grid {
@@ -2582,5 +3800,120 @@ onUnmounted(() => {
 
 .dark-mode .completion-subtitle {
     color: var(--dm-text-secondary) !important;
+}
+
+/* Dark mode for rescue summary */
+.dark-mode .rescue-summary-card {
+    background: var(--dm-bg-surface) !important;
+    border-color: var(--dm-border) !important;
+}
+.dark-mode .summary-header {
+    border-color: var(--dm-border) !important;
+}
+.dark-mode .summary-header-text {
+    color: var(--dm-text-primary) !important;
+}
+.dark-mode .summary-label {
+    color: var(--dm-text-secondary) !important;
+}
+.dark-mode .summary-value {
+    color: var(--dm-text-primary) !important;
+}
+.dark-mode .summary-notes {
+    background: var(--dm-bg-input, #1e1e1e) !important;
+    border-color: var(--dm-border) !important;
+    color: var(--dm-text-primary) !important;
+}
+.dark-mode .summary-photo-section {
+    border-color: var(--dm-border) !important;
+}
+.dark-mode .summary-photo-label {
+    color: var(--dm-text-secondary) !important;
+}
+.dark-mode .summary-photo-wrap {
+    border-color: var(--dm-border) !important;
+}
+.dark-mode .photo-upload-label {
+    color: var(--dm-text-primary) !important;
+}
+.dark-mode .completion-photo-preview {
+    border-color: var(--dm-border) !important;
+}
+
+/* Cancel Dialog Options */
+.cancel-type-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.cancel-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 14px 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #fafafa;
+}
+
+.cancel-option:hover {
+    border-color: #bbb;
+    background: #f5f5f5;
+}
+
+.cancel-option-active {
+    border-color: #FFA726;
+    background: #FFF8E1;
+}
+
+.cancel-option-active.cancel-option-danger {
+    border-color: #ef5350;
+    background: #FFEBEE;
+}
+
+.cancel-option-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #333;
+    margin-top: 2px;
+}
+
+.cancel-option-desc {
+    font-size: 0.65rem;
+    color: #888;
+    margin-top: 2px;
+    line-height: 1.3;
+}
+
+@media (max-width: 360px) {
+    .cancel-type-options {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Safe Proof Section */
+.proof-section {
+    border: 1px solid #E8F5E9;
+    border-radius: 12px;
+    padding: 16px;
+    background: #F9FBE7;
+}
+
+.proof-photo {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.proof-photo:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.proof-reason-container {
+    margin-top: 12px;
 }
 </style>

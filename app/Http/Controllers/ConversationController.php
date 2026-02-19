@@ -97,23 +97,43 @@ class ConversationController extends Controller
                 'rescue_request_id' => 'required|exists:rescue_requests,id',
             ]);
 
-            $rescueRequest = RescueRequest::with(['requester', 'rescuer'])->findOrFail($data['rescue_request_id']);
+            // Use transaction with lock to prevent duplicate conversations
+            return DB::transaction(function () use ($data) {
+                $rescueRequest = RescueRequest::lockForUpdate()->with(['requester', 'rescuer'])->findOrFail($data['rescue_request_id']);
 
-            // Check if rescuer is assigned
-            if (!$rescueRequest->assigned_rescuer) {
-                return response()->json([
-                    'error' => 'Cannot create conversation without an assigned rescuer'
-                ], 400);
-            }
+                // Check if rescuer is assigned
+                if (!$rescueRequest->assigned_rescuer) {
+                    return response()->json([
+                        'error' => 'Cannot create conversation without an assigned rescuer'
+                    ], 400);
+                }
 
-            // Check if conversation already exists
-            if ($rescueRequest->conversation_id) {
-                $conversation = Conversation::with(['participants.user', 'rescueRequest'])->find($rescueRequest->conversation_id);
-                return response()->json(['data' => $conversation]);
-            }
+                // Check if this rescue request already has a conversation
+                if ($rescueRequest->conversation_id) {
+                    $conversation = Conversation::with(['participants.user', 'rescueRequest'])->find($rescueRequest->conversation_id);
+                    return response()->json(['data' => $conversation]);
+                }
 
-            // Create new conversation
-            $result = DB::transaction(function () use ($rescueRequest) {
+                // Check if there's already a conversation between these same participants
+                $existingConversation = Conversation::whereHas('participants', function ($query) use ($rescueRequest) {
+                    $query->where('user_id', $rescueRequest->user_id);
+                })
+                ->whereHas('participants', function ($query) use ($rescueRequest) {
+                    $query->where('user_id', $rescueRequest->assigned_rescuer);
+                })
+                ->whereHas('participants', function ($query) {
+                    $query->havingRaw('COUNT(*) = 2'); // Ensure only 2 participants (user + rescuer)
+                })
+                ->with(['participants.user', 'rescueRequest'])
+                ->first();
+
+                if ($existingConversation) {
+                    // Reuse existing conversation - just link it to this rescue request
+                    $rescueRequest->update(['conversation_id' => $existingConversation->id]);
+                    return response()->json(['data' => $existingConversation, 'reused' => true]);
+                }
+
+                // Create new conversation (no existing conversation between these participants)
                 $conversation = Conversation::create([]);
 
                 // Add requester (user)
@@ -135,10 +155,8 @@ class ConversationController extends Controller
                 // Link conversation to rescue request
                 $rescueRequest->update(['conversation_id' => $conversation->id]);
 
-                return $conversation->load(['participants.user', 'rescueRequest']);
+                return response()->json(['data' => $conversation->load(['participants.user', 'rescueRequest'])], 201);
             });
-
-            return response()->json(['data' => $result], 201);
         }
 
         // Original web behavior
@@ -170,35 +188,68 @@ class ConversationController extends Controller
      */
     public function getOrCreateForRescue(Request $request, $rescueRequestId)
     {
-        $rescueRequest = RescueRequest::with(['requester', 'rescuer'])->findOrFail($rescueRequestId);
+        // Use transaction with lock to prevent duplicate conversations
+        return DB::transaction(function () use ($rescueRequestId) {
+            $rescueRequest = RescueRequest::lockForUpdate()->with(['requester', 'rescuer'])->findOrFail($rescueRequestId);
 
-        // Check if rescuer is assigned
-        if (!$rescueRequest->assigned_rescuer && !$rescueRequest->rescuer_id) {
-            return response()->json([
-                'error' => 'Cannot create conversation without an assigned rescuer',
-                'has_rescuer' => false
-            ], 400);
-        }
+            // Check if rescuer is assigned
+            if (!$rescueRequest->assigned_rescuer && !$rescueRequest->rescuer_id) {
+                return response()->json([
+                    'error' => 'Cannot create conversation without an assigned rescuer',
+                    'has_rescuer' => false
+                ], 400);
+            }
 
-        // Return existing conversation if exists
-        if ($rescueRequest->conversation_id) {
-            $conversation = Conversation::with([
+            $rescuerId = $rescueRequest->rescuer_id ?? $rescueRequest->assigned_rescuer;
+
+            // Return existing conversation if this rescue request already has one
+            if ($rescueRequest->conversation_id) {
+                $conversation = Conversation::with([
+                    'participants.user:id,first_name,last_name,email,profile_picture,role',
+                    'rescueRequest.requester:id,first_name,last_name,email,profile_picture',
+                    'rescueRequest.rescuer:id,first_name,last_name,email,profile_picture',
+                    'rescueRequest.room',
+                    'rescueRequest.floor',
+                    'rescueRequest.building'
+                ])->find($rescueRequest->conversation_id);
+                
+                return response()->json([
+                    'data' => $conversation,
+                    'created' => false
+                ]);
+            }
+
+            // Check if there's already a conversation between these same participants
+            $existingConversation = Conversation::whereHas('participants', function ($query) use ($rescueRequest) {
+                $query->where('user_id', $rescueRequest->user_id);
+            })
+            ->whereHas('participants', function ($query) use ($rescuerId) {
+                $query->where('user_id', $rescuerId);
+            })
+            ->whereDoesntHave('participants', function ($query) use ($rescueRequest, $rescuerId) {
+                $query->whereNotIn('user_id', [$rescueRequest->user_id, $rescuerId]);
+            })
+            ->with([
                 'participants.user:id,first_name,last_name,email,profile_picture,role',
                 'rescueRequest.requester:id,first_name,last_name,email,profile_picture',
                 'rescueRequest.rescuer:id,first_name,last_name,email,profile_picture',
                 'rescueRequest.room',
                 'rescueRequest.floor',
                 'rescueRequest.building'
-            ])->find($rescueRequest->conversation_id);
-            
-            return response()->json([
-                'data' => $conversation,
-                'created' => false
-            ]);
-        }
+            ])
+            ->first();
 
-        // Create new conversation
-        $conversation = DB::transaction(function () use ($rescueRequest) {
+            if ($existingConversation) {
+                // Reuse existing conversation - just link it to this rescue request
+                $rescueRequest->update(['conversation_id' => $existingConversation->id]);
+                return response()->json([
+                    'data' => $existingConversation,
+                    'created' => false,
+                    'reused' => true
+                ]);
+            }
+
+            // Create new conversation (no existing conversation between these participants)
             $conversation = Conversation::create([]);
 
             // Add requester (user)
@@ -210,8 +261,7 @@ class ConversationController extends Controller
                 ]);
             }
 
-            // Add rescuer (use rescuer_id or assigned_rescuer)
-            $rescuerId = $rescueRequest->rescuer_id ?? $rescueRequest->assigned_rescuer;
+            // Add rescuer
             if ($rescuerId) {
                 $conversation->participants()->create([
                     'user_id' => $rescuerId,
@@ -223,7 +273,7 @@ class ConversationController extends Controller
             // Link conversation to rescue request
             $rescueRequest->update(['conversation_id' => $conversation->id]);
 
-            return $conversation->load([
+            $conversation->load([
                 'participants.user:id,first_name,last_name,email,profile_picture,role',
                 'rescueRequest.requester:id,first_name,last_name,email,profile_picture',
                 'rescueRequest.rescuer:id,first_name,last_name,email,profile_picture',
@@ -231,12 +281,12 @@ class ConversationController extends Controller
                 'rescueRequest.floor',
                 'rescueRequest.building'
             ]);
-        });
 
-        return response()->json([
-            'data' => $conversation,
-            'created' => true
-        ], 201);
+            return response()->json([
+                'data' => $conversation,
+                'created' => true
+            ], 201);
+        });
     }
 
     /**

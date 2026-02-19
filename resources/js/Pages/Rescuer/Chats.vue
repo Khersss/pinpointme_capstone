@@ -408,7 +408,7 @@ onUnmounted(() => {
 .messages-header {
     flex-shrink: 0;
     z-index: 100;
-    background: #3674B5;
+    background: var(--ppm-header-bg, #3674B5);
     padding: env(safe-area-inset-top, 0) 0 0 0;
 }
 
@@ -484,6 +484,10 @@ onUnmounted(() => {
     .bottom-nav-container {
         display: block;
     }
+
+    .messages-content {
+        padding-bottom: calc(16px + 90px);
+    }
 }
 
 @media (min-width: 1024px) {
@@ -493,6 +497,10 @@ onUnmounted(() => {
     
     .bottom-nav-container {
         display: none;
+    }
+
+    .messages-content {
+        padding-bottom: 16px;
     }
 }
 

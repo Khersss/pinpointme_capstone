@@ -60,7 +60,7 @@
                         </div>
                         
                         <h2 class="text-h5 font-weight-bold mt-3 text-white">{{ fullName }}</h2>
-                        <p class="text-body-2 text-white-darken-1 mb-0">
+                        <p class="text-body-2 mb-0" style="color: #ffffff !important;">
                             {{ profile.email }}
                         </p>
                         
@@ -111,7 +111,7 @@
                 </v-card>
 
                 <!-- Personal Information -->
-                <v-card class="mb-4 rounded-xl" elevation="0" color="white">
+                <v-card class="mb-4 rounded-xl" elevation="0">
                     <div class="d-flex align-center py-3 px-4">
                         <v-icon color="primary" class="mr-2" size="20">mdi-account</v-icon>
                         <span class="text-subtitle-1 font-weight-bold">Personal Information</span>
@@ -130,6 +130,8 @@
                                         density="compact"
                                         hide-details="auto"
                                         class="mb-3"
+                                        @keypress="preventInvalidNameChars"
+                                        @input="sanitizeNameField('first_name')"
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="12" sm="6">
@@ -142,6 +144,8 @@
                                         density="compact"
                                         hide-details="auto"
                                         class="mb-3"
+                                        @keypress="preventInvalidNameChars"
+                                        @input="sanitizeNameField('last_name')"
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="12">
@@ -236,34 +240,8 @@
                     </div>
                 </v-card>
 
-                <!-- Security Section -->
-                <v-card class="mb-4 rounded-xl" elevation="0" color="white">
-                    <v-expansion-panels flat v-model="securityPanel">
-                        <v-expansion-panel>
-                            <v-expansion-panel-title class="py-3 px-4">
-                                <div class="d-flex align-center">
-                                    <v-icon color="primary" class="mr-2" size="20">mdi-shield-lock</v-icon>
-                                    <span class="text-subtitle-1 font-weight-bold">Security</span>
-                                </div>
-                            </v-expansion-panel-title>
-                            <v-expansion-panel-text>
-                                <v-btn
-                                    block
-                                    color="primary"
-                                    variant="tonal"
-                                    @click="openChangePasswordDialog"
-                                    class="rounded-lg"
-                                >
-                                    <v-icon start>mdi-lock-outline</v-icon>
-                                    Change Password
-                                </v-btn>
-                            </v-expansion-panel-text>
-                        </v-expansion-panel>
-                    </v-expansion-panels>
-                </v-card>
-
                 <!-- Settings Section -->
-                <v-card class="mb-4 rounded-xl" elevation="0" color="white">
+                <v-card class="mb-4 rounded-xl" elevation="0">
                     <v-expansion-panels flat v-model="settingsPanel">
                         <v-expansion-panel>
                             <v-expansion-panel-title class="py-3 px-4">
@@ -274,6 +252,28 @@
                             </v-expansion-panel-title>
                             <v-expansion-panel-text>
                                 <v-list class="bg-transparent pa-0 settings-list">
+                                    <!-- Security Dropdown -->
+                                    <v-list-item class="px-2 py-3 rounded-lg mb-2 setting-item">
+                                        <template v-slot:prepend>
+                                            <v-avatar color="red" variant="tonal" size="36" class="mr-3">
+                                                <v-icon size="20">mdi-shield-lock</v-icon>
+                                            </v-avatar>
+                                        </template>
+                                        <v-list-item-title class="text-body-2 font-weight-medium">Security</v-list-item-title>
+                                        <v-list-item-subtitle class="text-caption">Manage your account security</v-list-item-subtitle>
+                                        <template v-slot:append>
+                                            <v-btn
+                                                size="small"
+                                                color="primary"
+                                                variant="tonal"
+                                                @click="openChangePasswordDialog"
+                                                class="text-caption"
+                                            >
+                                                <v-icon size="16" start>mdi-lock-outline</v-icon>
+                                                Change Password
+                                            </v-btn>
+                                        </template>
+                                    </v-list-item>
                                     <v-list-item class="px-2 py-3 rounded-lg mb-2 setting-item">
                                         <template v-slot:prepend>
                                             <v-avatar color="primary" variant="tonal" size="36" class="mr-3">
@@ -334,17 +334,73 @@
                     </v-expansion-panels>
                 </v-card>
 
+                <!-- Help Improve PinPointMe Section -->
+                <v-card class="mb-4 rounded-xl section-card" elevation="0">
+                    <v-expansion-panels flat v-model="systemFeedbackPanel">
+                        <v-expansion-panel>
+                            <v-expansion-panel-title class="panel-title-mobile">
+                                <div class="d-flex align-center">
+                                    <v-avatar color="deep-orange" size="32" class="mr-3">
+                                        <v-icon color="white" size="18">mdi-lightbulb-on-outline</v-icon>
+                                    </v-avatar>
+                                    <span class="text-body-1 text-sm-subtitle-1 font-weight-bold">Help Improve</span>
+                                </div>
+                            </v-expansion-panel-title>
+                            <v-expansion-panel-text class="panel-content-mobile">
+                                <p class="text-body-2 text-grey-darken-1 mb-3">Report a bug or suggest an improvement to help us enhance the rescuer experience.</p>
+
+                                <!-- Previous submissions -->
+                                <div v-if="userSystemFeedbacks.length > 0" class="mb-3">
+                                    <p class="text-caption font-weight-bold text-grey-darken-2 mb-2">Your Reports</p>
+                                    <div
+                                        v-for="fb in userSystemFeedbacks.slice(0, 3)"
+                                        :key="fb.id"
+                                        class="sf-history-item mb-2 pa-3 rounded-lg"
+                                    >
+                                        <div class="d-flex align-center justify-space-between">
+                                            <div class="d-flex align-center">
+                                                <v-icon size="16" :color="fb.category === 'bug' ? '#C62828' : '#1565C0'" class="mr-2">
+                                                    {{ fb.category === 'bug' ? 'mdi-bug' : 'mdi-lightbulb-on-outline' }}
+                                                </v-icon>
+                                                <span class="text-caption font-weight-medium text-truncate" style="max-width: 180px;">{{ fb.area || fb.category }}</span>
+                                            </div>
+                                            <v-chip
+                                                size="x-small"
+                                                :color="getSfStatusColor(fb.status)"
+                                                variant="tonal"
+                                            >{{ getSfStatusLabel(fb.status) }}</v-chip>
+                                        </div>
+                                        <p class="text-caption text-grey mt-1 text-truncate">{{ fb.description }}</p>
+                                    </div>
+                                </div>
+
+                                <v-btn
+                                    block
+                                    color="#3674B5"
+                                    variant="tonal"
+                                    @click="openSystemFeedbackDialog"
+                                    class="rounded-lg mobile-btn"
+                                    size="large"
+                                >
+                                    <v-icon start>mdi-send-outline</v-icon>
+                                    Submit a Report
+                                </v-btn>
+                            </v-expansion-panel-text>
+                        </v-expansion-panel>
+                    </v-expansion-panels>
+                </v-card>
+
                 <!-- Logout Button -->
                 <v-btn
                     block
-                    color="error"
-                    variant="tonal"
+                    color="#D32F2F"
+                    variant="flat"
                     size="large"
-                    class="rounded-xl mb-4"
+                    class="rounded-xl mb-4 text-white"
                     @click="showLogoutDialog = true"
                 >
-                    <v-icon start>mdi-logout</v-icon>
-                    Logout
+                    <v-icon start color="white">mdi-logout</v-icon>
+                    <span style="color: white !important;">Logout</span>
                 </v-btn>
             </v-container>
         </v-main>
@@ -496,256 +552,405 @@
             </v-card>
         </v-dialog>
 
-        <!-- Change Password Dialog - OTP Based -->
-        <v-dialog v-model="passwordDialog" max-width="450" persistent>
-            <v-card rounded="lg">
-                <v-card-title class="d-flex align-center pa-4 bg-primary">
-                    <v-icon color="white" class="mr-2">mdi-lock-reset</v-icon>
-                    <span class="text-white">Change Password</span>
-                    <v-spacer />
-                    <v-btn icon variant="text" @click="closePasswordDialog" :disabled="sendingOtp || verifyingOtp || changingPassword">
-                        <v-icon color="white">mdi-close</v-icon>
-                    </v-btn>
-                </v-card-title>
-
-                <v-card-text class="pa-6">
-                    <!-- Step Indicator -->
-                    <div class="d-flex justify-center mb-4">
-                        <div class="d-flex align-center">
-                            <v-avatar :color="passwordStep >= 1 ? 'primary' : 'grey-lighten-2'" size="28">
-                                <span class="text-white text-caption font-weight-bold">1</span>
-                            </v-avatar>
-                            <div class="step-line" :class="{ 'active': passwordStep >= 2 }"></div>
-                            <v-avatar :color="passwordStep >= 2 ? 'primary' : 'grey-lighten-2'" size="28">
-                                <span :class="passwordStep >= 2 ? 'text-white' : 'text-grey'" class="text-caption font-weight-bold">2</span>
-                            </v-avatar>
-                            <div class="step-line" :class="{ 'active': passwordStep >= 3 }"></div>
-                            <v-avatar :color="passwordStep >= 3 ? 'primary' : 'grey-lighten-2'" size="28">
-                                <span :class="passwordStep >= 3 ? 'text-white' : 'text-grey'" class="text-caption font-weight-bold">3</span>
-                            </v-avatar>
-                        </div>
+        <!-- Change Password Dialog - OTP Based (ChangePassword.vue style) -->
+        <v-dialog v-model="passwordDialog" max-width="440" persistent>
+            <v-card rounded="xl" class="pwd-dialog-card" elevation="8">
+                <!-- Gradient Header -->
+                <div class="pwd-card-header">
+                    <div class="pwd-header-icon-wrap">
+                        <v-icon size="36" color="white">mdi-shield-lock</v-icon>
                     </div>
+                    <h1 class="pwd-header-title">Change Password</h1>
+                    <p class="pwd-header-subtitle">Verify your identity to update your password</p>
+                    <v-btn icon variant="text" size="small" class="pwd-close-btn" @click="closePasswordDialog" :disabled="sendingOtp || verifyingOtp || changingPassword">
+                        <v-icon color="white" size="20">mdi-close</v-icon>
+                    </v-btn>
+                </div>
 
+                <v-card-text class="pwd-card-body pa-6 pa-sm-8">
                     <!-- Success State -->
                     <div v-if="passwordComplete" class="text-center py-4">
-                        <v-icon size="64" color="success" class="mb-4">mdi-check-circle</v-icon>
-                        <h3 class="text-h6 font-weight-bold mb-2">Password Changed!</h3>
-                        <p class="text-body-2 text-grey mb-4">
+                        <div class="pwd-success-check-wrap mb-4">
+                            <div class="pwd-success-check-circle">
+                                <v-icon size="48" color="white">mdi-check</v-icon>
+                            </div>
+                        </div>
+                        <h2 class="text-h5 font-weight-bold mb-2" style="color: #13294B;">Password Updated!</h2>
+                        <p class="text-body-2 text-medium-emphasis mb-6">
                             Your password has been changed successfully.
                         </p>
+                        <v-btn
+                            size="large"
+                            color="#3674B5"
+                            @click="closePasswordDialog"
+                            class="pwd-action-btn px-10"
+                            rounded="lg"
+                            block
+                        >
+                            <v-icon start>mdi-check-circle</v-icon>
+                            Done
+                        </v-btn>
                     </div>
 
                     <!-- Step 1: Request OTP -->
-                    <div v-else-if="passwordStep === 1">
-                        <div class="text-center mb-4">
-                            <v-icon size="48" color="primary" class="mb-2">mdi-email-send-outline</v-icon>
-                            <p class="text-body-2 text-grey">
-                                We'll send a verification code to your email
-                            </p>
-                            <p class="text-body-2 font-weight-bold text-primary">{{ profile.email }}</p>
-                        </div>
+                    <div v-else-if="passwordStep === 1" class="text-center">
+                        <v-icon size="56" color="primary" class="mb-3">mdi-email-send-outline</v-icon>
+                        <p class="text-body-2 text-medium-emphasis mb-1">We'll send a verification code to</p>
+                        <p class="text-body-2 font-weight-bold mb-6" style="color: #3674B5;">{{ profile.email }}</p>
 
-                        <v-alert
-                            v-if="passwordError"
-                            type="error"
-                            variant="tonal"
-                            class="mb-4"
-                            closable
-                            @click:close="passwordError = ''"
-                        >
+                        <v-alert v-if="passwordError" type="error" variant="tonal" class="mb-4 text-left" closable @click:close="passwordError = ''">
                             {{ passwordError }}
                         </v-alert>
+
+                        <v-btn
+                            block
+                            size="large"
+                            color="#3674B5"
+                            :loading="sendingOtp"
+                            @click="sendPasswordOtp"
+                            class="pwd-action-btn"
+                            rounded="lg"
+                        >
+                            <v-icon start>mdi-send</v-icon>
+                            Send Verification Code
+                        </v-btn>
+                        <v-btn variant="text" color="grey" block size="small" class="mt-3 text-none" @click="closePasswordDialog">
+                            Cancel
+                        </v-btn>
                     </div>
 
                     <!-- Step 2: Enter OTP -->
                     <div v-else-if="passwordStep === 2">
-                        <div class="text-center mb-4">
-                            <v-icon size="48" color="primary" class="mb-2">mdi-email-check</v-icon>
-                            <p class="text-body-2 text-grey">
-                                Enter the 6-digit code sent to
-                            </p>
-                            <p class="text-body-2 font-weight-bold text-primary">{{ profile.email }}</p>
+                        <div class="text-center mb-5">
+                            <v-icon size="48" color="primary" class="mb-2">mdi-email-check-outline</v-icon>
+                            <p class="text-body-2 text-medium-emphasis">Enter the 6-digit code sent to</p>
+                            <p class="text-body-2 font-weight-bold" style="color: #3674B5;">{{ profile.email }}</p>
                         </div>
 
-                        <v-alert
-                            v-if="passwordError"
-                            type="error"
-                            variant="tonal"
-                            class="mb-4"
-                            closable
-                            @click:close="passwordError = ''"
-                        >
+                        <v-alert v-if="passwordError" type="error" variant="tonal" class="mb-4 text-left" closable @click:close="passwordError = ''">
                             {{ passwordError }}
                         </v-alert>
 
-                        <v-otp-input
-                            v-model="otpCode"
-                            length="6"
-                            variant="outlined"
-                            :disabled="verifyingOtp"
-                            class="mb-4"
-                        />
+                        <div class="pwd-otp-container mb-4">
+                            <v-otp-input
+                                v-model="otpCode"
+                                length="6"
+                                variant="outlined"
+                                :disabled="verifyingOtp"
+                                class="pwd-otp-input-custom"
+                            />
+                        </div>
 
-                        <p class="text-caption text-grey text-center">
-                            Didn't receive the code? 
-                            <v-btn 
-                                variant="text" 
-                                color="primary" 
-                                size="small" 
+                        <div class="text-center mb-5">
+                            <span class="text-caption text-medium-emphasis">Didn't receive it? </span>
+                            <v-btn
+                                variant="text"
+                                color="#3674B5"
+                                size="small"
+                                density="compact"
                                 @click="sendPasswordOtp"
                                 :disabled="resendCountdown > 0 || sendingOtp"
+                                class="text-none"
                             >
                                 {{ resendCountdown > 0 ? `Resend in ${resendCountdown}s` : 'Resend Code' }}
                             </v-btn>
-                        </p>
+                        </div>
+
+                        <v-btn
+                            block
+                            size="large"
+                            color="#3674B5"
+                            :loading="verifyingOtp"
+                            :disabled="otpCode.length !== 6"
+                            @click="verifyPasswordOtp"
+                            class="pwd-action-btn"
+                            rounded="lg"
+                        >
+                            <v-icon start>mdi-check-circle</v-icon>
+                            Verify Code
+                        </v-btn>
+                        <v-btn variant="text" color="grey" block size="small" class="mt-3 text-none" @click="passwordStep = 1; otpCode = ''">
+                            <v-icon start size="16">mdi-arrow-left</v-icon>
+                            Go Back
+                        </v-btn>
                     </div>
 
                     <!-- Step 3: Enter New Password -->
                     <div v-else-if="passwordStep === 3">
-                        <p class="text-body-2 text-grey mb-4 text-center">
-                            Create a new password for your account.
-                        </p>
-
-                        <v-alert
-                            v-if="passwordError"
-                            type="error"
-                            variant="tonal"
-                            class="mb-4"
-                            closable
-                            @click:close="passwordError = ''"
-                        >
+                        <v-alert v-if="passwordError" type="error" variant="tonal" class="mb-4" closable @click:close="passwordError = ''">
                             {{ passwordError }}
                         </v-alert>
 
                         <v-form ref="passwordFormRef" v-model="passwordFormValid">
+                            <label class="pwd-field-label">New Password</label>
                             <v-text-field
                                 v-model="passwordForm.new_password"
-                                label="New Password"
                                 :type="showNewPassword ? 'text' : 'password'"
+                                placeholder="Enter new password"
                                 variant="outlined"
-                                density="comfortable"
-                                prepend-inner-icon="mdi-lock"
-                                :append-inner-icon="showNewPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                                :append-inner-icon="showNewPassword ? 'mdi-eye' : 'mdi-eye-off'"
                                 @click:append-inner="showNewPassword = !showNewPassword"
-                                :rules="[rules.required, rules.minLength, rules.hasUppercase, rules.hasLowercase, rules.hasNumber, rules.hasSpecial]"
+                                class="mb-1 pwd-password-field"
+                                hide-details
+                                density="comfortable"
+                                rounded="lg"
                                 :disabled="changingPassword"
-                                class="mb-1"
                             />
 
-                            <!-- Password Requirements Checklist -->
-                            <div class="password-requirements mb-4 px-2">
-                                <p class="text-caption text-grey-darken-1 mb-2">Password must contain:</p>
-                                <div class="requirements-grid">
-                                    <div class="requirement-item" :class="{ 'met': passwordChecks.length }">
-                                        <v-icon size="14" :color="passwordChecks.length ? 'success' : 'grey-lighten-1'">
-                                            {{ passwordChecks.length ? 'mdi-check-circle' : 'mdi-circle-outline' }}
-                                        </v-icon>
-                                        <span>At least 8 characters</span>
-                                    </div>
-                                    <div class="requirement-item" :class="{ 'met': passwordChecks.uppercase }">
-                                        <v-icon size="14" :color="passwordChecks.uppercase ? 'success' : 'grey-lighten-1'">
-                                            {{ passwordChecks.uppercase ? 'mdi-check-circle' : 'mdi-circle-outline' }}
-                                        </v-icon>
-                                        <span>One uppercase letter (A-Z)</span>
-                                    </div>
-                                    <div class="requirement-item" :class="{ 'met': passwordChecks.lowercase }">
-                                        <v-icon size="14" :color="passwordChecks.lowercase ? 'success' : 'grey-lighten-1'">
-                                            {{ passwordChecks.lowercase ? 'mdi-check-circle' : 'mdi-circle-outline' }}
-                                        </v-icon>
-                                        <span>One lowercase letter (a-z)</span>
-                                    </div>
-                                    <div class="requirement-item" :class="{ 'met': passwordChecks.number }">
-                                        <v-icon size="14" :color="passwordChecks.number ? 'success' : 'grey-lighten-1'">
-                                            {{ passwordChecks.number ? 'mdi-check-circle' : 'mdi-circle-outline' }}
-                                        </v-icon>
-                                        <span>One number (0-9)</span>
-                                    </div>
-                                    <div class="requirement-item" :class="{ 'met': passwordChecks.special }">
-                                        <v-icon size="14" :color="passwordChecks.special ? 'success' : 'grey-lighten-1'">
-                                            {{ passwordChecks.special ? 'mdi-check-circle' : 'mdi-circle-outline' }}
-                                        </v-icon>
-                                        <span>One special character (!@#$%...)</span>
-                                    </div>
+                            <!-- Password Strength Bar -->
+                            <div class="pwd-strength-bar-wrap mt-2 mb-4" v-if="passwordForm.new_password.length > 0">
+                                <div class="pwd-strength-bar-track">
+                                    <div
+                                        class="pwd-strength-bar-fill"
+                                        :style="{ width: pwdStrength + '%', background: pwdStrengthGradient }"
+                                    ></div>
+                                </div>
+                                <div class="d-flex justify-space-between align-center mt-1">
+                                    <span class="text-caption" :style="{ color: pwdStrengthColor }">{{ pwdStrengthText }}</span>
+                                    <span class="text-caption text-medium-emphasis">{{ pwdStrength }}%</span>
                                 </div>
                             </div>
 
+                            <!-- Password Requirements (2-col grid) -->
+                            <div class="pwd-requirements-list mb-5" v-if="passwordForm.new_password.length > 0">
+                                <div class="pwd-req-item" :class="{ met: passwordChecks.length }">
+                                    <v-icon size="16" :color="passwordChecks.length ? '#3674B5' : '#ccc'">
+                                        {{ passwordChecks.length ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                                    </v-icon>
+                                    <span>At least 8 characters</span>
+                                </div>
+                                <div class="pwd-req-item" :class="{ met: passwordChecks.uppercase }">
+                                    <v-icon size="16" :color="passwordChecks.uppercase ? '#3674B5' : '#ccc'">
+                                        {{ passwordChecks.uppercase ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                                    </v-icon>
+                                    <span>One uppercase letter</span>
+                                </div>
+                                <div class="pwd-req-item" :class="{ met: passwordChecks.lowercase }">
+                                    <v-icon size="16" :color="passwordChecks.lowercase ? '#3674B5' : '#ccc'">
+                                        {{ passwordChecks.lowercase ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                                    </v-icon>
+                                    <span>One lowercase letter</span>
+                                </div>
+                                <div class="pwd-req-item" :class="{ met: passwordChecks.number }">
+                                    <v-icon size="16" :color="passwordChecks.number ? '#3674B5' : '#ccc'">
+                                        {{ passwordChecks.number ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                                    </v-icon>
+                                    <span>One number</span>
+                                </div>
+                                <div class="pwd-req-item" :class="{ met: passwordChecks.special }">
+                                    <v-icon size="16" :color="passwordChecks.special ? '#3674B5' : '#ccc'">
+                                        {{ passwordChecks.special ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                                    </v-icon>
+                                    <span>One special character</span>
+                                </div>
+                            </div>
+
+                            <label class="pwd-field-label">Confirm Password</label>
                             <v-text-field
                                 v-model="passwordForm.confirm_password"
-                                label="Confirm New Password"
                                 :type="showConfirmPassword ? 'text' : 'password'"
+                                placeholder="Confirm new password"
                                 variant="outlined"
-                                density="comfortable"
-                                prepend-inner-icon="mdi-lock-check"
-                                :append-inner-icon="showConfirmPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                                :append-inner-icon="showConfirmPassword ? 'mdi-eye' : 'mdi-eye-off'"
                                 @click:append-inner="showConfirmPassword = !showConfirmPassword"
-                                :rules="[rules.required, rules.passwordMatch]"
+                                class="pwd-password-field"
+                                hide-details
+                                density="comfortable"
+                                rounded="lg"
                                 :disabled="changingPassword"
-                                :error="passwordForm.confirm_password && passwordForm.confirm_password !== passwordForm.new_password"
                             />
-                            <p v-if="passwordForm.confirm_password && passwordForm.confirm_password === passwordForm.new_password" class="text-caption text-success mt-1 px-2">
-                                <v-icon size="14" color="success">mdi-check-circle</v-icon>
-                                Passwords match
-                            </p>
+
+                            <!-- Password match indicator -->
+                            <div v-if="passwordForm.confirm_password && passwordForm.confirm_password.length > 0" class="mt-2 mb-5">
+                                <div class="pwd-req-item" :class="{ met: passwordForm.confirm_password === passwordForm.new_password }">
+                                    <v-icon size="16" :color="passwordForm.confirm_password === passwordForm.new_password ? '#3674B5' : '#ef5350'">
+                                        {{ passwordForm.confirm_password === passwordForm.new_password ? 'mdi-check-circle' : 'mdi-close-circle' }}
+                                    </v-icon>
+                                    <span :style="{ color: passwordForm.confirm_password === passwordForm.new_password ? '#3674B5' : '#ef5350' }">
+                                        {{ passwordForm.confirm_password === passwordForm.new_password ? 'Passwords match' : 'Passwords do not match' }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div v-else class="mb-5"></div>
+
+                            <v-btn
+                                block
+                                size="large"
+                                color="#3674B5"
+                                :loading="changingPassword"
+                                :disabled="!isPasswordValid || !passwordForm.confirm_password || passwordForm.confirm_password !== passwordForm.new_password"
+                                @click="changePassword"
+                                class="pwd-action-btn"
+                                rounded="lg"
+                            >
+                                <v-icon start>mdi-lock-check</v-icon>
+                                Update Password
+                            </v-btn>
+                            <v-btn variant="text" color="grey" block size="small" class="mt-3 text-none" @click="passwordStep = 2; otpCode = ''" :disabled="changingPassword">
+                                <v-icon start size="16">mdi-arrow-left</v-icon>
+                                Go Back
+                            </v-btn>
                         </v-form>
                     </div>
                 </v-card-text>
+            </v-card>
+        </v-dialog>
 
-                <v-card-actions class="pa-4 pt-0">
-                    <!-- Success State Actions -->
-                    <template v-if="passwordComplete">
-                        <v-spacer />
-                        <v-btn color="primary" @click="closePasswordDialog">
-                            Done
-                        </v-btn>
-                    </template>
+        <!-- System Feedback Dialog -->
+        <v-dialog v-model="systemFeedbackDialog" max-width="460" persistent>
+            <v-card class="sf-dialog-card" elevation="4">
+                <!-- Header -->
+                <div class="sf-dialog-header">
+                    <div class="sf-dialog-header-content">
+                        <v-icon size="22" color="white" class="mr-2">mdi-lightbulb-on-outline</v-icon>
+                        <div>
+                            <h3 class="sf-dialog-title">Report &amp; Feedback</h3>
+                            <p class="sf-dialog-subtitle">Help us improve the rescuer experience</p>
+                        </div>
+                    </div>
+                    <v-btn icon variant="text" size="x-small" @click="closeSystemFeedbackDialog">
+                        <v-icon size="18" color="rgba(255,255,255,0.8)">mdi-close</v-icon>
+                    </v-btn>
+                </div>
 
-                    <!-- Step 1 Actions -->
-                    <template v-else-if="passwordStep === 1">
-                        <v-btn variant="text" @click="closePasswordDialog" :disabled="sendingOtp">
-                            Cancel
-                        </v-btn>
-                        <v-spacer />
-                        <v-btn 
-                            color="primary" 
-                            @click="sendPasswordOtp"
-                            :loading="sendingOtp"
+                <div class="sf-dialog-body">
+                    <v-form ref="sfFormRef" v-model="sfFormValid">
+                        <!-- Category Toggle -->
+                        <p class="sf-field-label">What would you like to do?</p>
+                        <v-btn-toggle
+                            v-model="sfForm.category"
+                            mandatory
+                            color="#3674B5"
+                            rounded="lg"
+                            density="comfortable"
+                            class="sf-category-toggle mb-4"
                         >
-                            Send Code
-                        </v-btn>
-                    </template>
+                            <v-btn value="bug" class="sf-cat-btn">
+                                <v-icon start size="18">mdi-bug</v-icon>
+                                Report a Bug
+                            </v-btn>
+                            <v-btn value="improvement" class="sf-cat-btn">
+                                <v-icon start size="18">mdi-lightbulb-on-outline</v-icon>
+                                Suggest Improvement
+                            </v-btn>
+                        </v-btn-toggle>
 
-                    <!-- Step 2 Actions -->
-                    <template v-else-if="passwordStep === 2">
-                        <v-btn variant="text" @click="passwordStep = 1" :disabled="verifyingOtp">
-                            Back
-                        </v-btn>
-                        <v-spacer />
-                        <v-btn 
-                            color="primary" 
-                            @click="verifyPasswordOtp"
-                            :loading="verifyingOtp"
-                            :disabled="otpCode.length !== 6"
+                        <!-- Area Dropdown -->
+                        <p class="sf-field-label">Related rescuer feature</p>
+                        <v-select
+                            v-model="sfForm.area"
+                            :items="sfAreaOptions"
+                            item-title="label"
+                            item-value="value"
+                            :placeholder="sfForm.category === 'bug' ? 'Where did the issue occur?' : 'Which feature?'"
+                            variant="outlined"
+                            density="comfortable"
+                            rounded="lg"
+                            color="#3674B5"
+                            hide-details="auto"
+                            class="mb-4"
+                            clearable
                         >
-                            Verify Code
-                        </v-btn>
-                    </template>
+                            <template v-slot:item="{ item, props }">
+                                <v-list-item v-bind="props">
+                                    <template v-slot:prepend>
+                                        <v-icon size="18" color="#3674B5">{{ getSfAreaIcon(item.value) }}</v-icon>
+                                    </template>
+                                </v-list-item>
+                            </template>
+                        </v-select>
 
-                    <!-- Step 3 Actions -->
-                    <template v-else-if="passwordStep === 3">
-                        <v-btn variant="text" @click="passwordStep = 2; otpCode = ''" :disabled="changingPassword">
-                            Back
-                        </v-btn>
-                        <v-spacer />
-                        <v-btn 
-                            color="primary" 
-                            @click="changePassword"
-                            :loading="changingPassword"
-                            :disabled="!isPasswordValid || !passwordForm.confirm_password || passwordForm.confirm_password !== passwordForm.new_password"
+                        <!-- Subject -->
+                        <p class="sf-field-label">{{ sfForm.category === 'bug' ? 'Brief title for the issue' : 'Brief title for your suggestion' }}</p>
+                        <v-text-field
+                            v-model="sfForm.subject"
+                            :placeholder="sfForm.category === 'bug' ? 'e.g. Map not loading properly' : 'e.g. Add quick response templates'"
+                            variant="outlined"
+                            density="comfortable"
+                            rounded="lg"
+                            color="#3674B5"
+                            hide-details="auto"
+                            :rules="[v => !!v || 'Title is required', v => (v && v.length >= 5) || 'Min 5 characters', v => (v && v.length <= 100) || 'Max 100 characters']"
+                            counter="100"
+                            maxlength="100"
+                            class="mb-4"
+                        />
+
+                        <!-- Description -->
+                        <p class="sf-field-label">{{ sfForm.category === 'bug' ? 'Describe the issue' : 'Describe your suggestion' }}</p>
+                        <v-textarea
+                            v-model="sfForm.description"
+                            :placeholder="sfForm.category === 'bug' ? 'What happened? What did you expect to happen instead?' : 'How would your suggestion improve the rescuer experience?'"
+                            variant="outlined"
+                            density="comfortable"
+                            rows="4"
+                            auto-grow
+                            max-rows="8"
+                            maxlength="3000"
+                            counter="3000"
+                            rounded="lg"
+                            color="#3674B5"
+                            hide-details="auto"
+                            :rules="[v => !!v || 'Description is required', v => (v && v.length >= 10) || 'Min 10 characters']"
+                            class="mb-4"
+                        />
+
+                        <!-- Upload Media -->
+                        <p class="sf-field-label">Attach screenshot or proof <span class="text-grey">(optional)</span></p>
+                        <div
+                            class="sf-upload-area mb-4"
+                            @click="triggerSfFileInput"
+                            @dragover.prevent
+                            @drop.prevent="handleSfFileDrop"
                         >
-                            Update Password
+                            <input
+                                ref="sfFileInputRef"
+                                type="file"
+                                accept="image/*,video/mp4,video/mov,application/pdf"
+                                style="display: none;"
+                                @change="handleSfFileSelect"
+                            />
+                            <div v-if="!sfPreviewUrl" class="sf-upload-placeholder">
+                                <v-icon size="36" color="#9E9E9E">mdi-cloud-upload-outline</v-icon>
+                                <p class="text-caption text-grey mt-1">Tap to upload or drag & drop</p>
+                                <p class="text-caption text-grey-lighten-1" style="font-size: 0.7rem;">JPG, PNG, GIF, MP4, PDF — max 10MB</p>
+                            </div>
+                            <div v-else class="sf-upload-preview">
+                                <v-img v-if="sfPreviewIsImage" :src="sfPreviewUrl" max-height="120" contain class="rounded-lg" />
+                                <div v-else class="d-flex align-center">
+                                    <v-icon size="24" color="#3674B5" class="mr-2">mdi-file-check</v-icon>
+                                    <span class="text-caption font-weight-medium">{{ sfSelectedFile?.name }}</span>
+                                </div>
+                                <v-btn
+                                    icon
+                                    size="x-small"
+                                    color="error"
+                                    variant="tonal"
+                                    class="sf-upload-remove"
+                                    @click.stop="removeSfFile"
+                                >
+                                    <v-icon size="14">mdi-close</v-icon>
+                                </v-btn>
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <v-btn
+                            block
+                            variant="flat"
+                            color="#3674B5"
+                            size="large"
+                            rounded="lg"
+                            :loading="submittingSf"
+                            :disabled="!sfFormValidComputed"
+                            class="sf-submit-btn"
+                            @click="submitSystemFeedbackForm"
+                        >
+                            <v-icon start>mdi-send</v-icon>
+                            Submit Report
                         </v-btn>
-                    </template>
-                </v-card-actions>
+                    </v-form>
+                </div>
             </v-card>
         </v-dialog>
 
@@ -762,11 +967,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import RescuerMenu from '@/Components/Pages/Rescuer/Menu/RescuerMenu.vue';
 import RescuerBottomNav from '@/Components/Pages/Rescuer/Menu/RescuerBottomNav.vue';
-import { apiFetch, getProfilePictureUrl, updateUser, uploadProfilePicture, deleteProfilePicture, getUnreadMessageCount } from '@/Composables/useApi';
+import { apiFetch, getProfilePictureUrl, updateUser, uploadProfilePicture, deleteProfilePicture, getUnreadMessageCount, submitSystemFeedback, getUserSystemFeedbacks } from '@/Composables/useApi';
+import { useDisplay } from 'vuetify';
 import { useNotificationAlert } from '@/Composables/useNotificationAlert';
 import { useDarkMode } from '@/Composables/useDarkMode';
 import { setUserActiveStatus } from '@/Utilities/firebase';
@@ -777,6 +983,10 @@ const authUser = computed(() => page.props?.auth?.user);
 
 // Dark mode composable
 const { isDark, set: setDarkMode } = useDarkMode();
+
+// Mobile detection
+const { mobile } = useDisplay();
+const isMobile = computed(() => mobile.value);
 
 // Notification Alert System
 const { playNotificationSound } = useNotificationAlert();
@@ -803,9 +1013,39 @@ const loggingOut = ref(false);
 const unreadMessageCount = ref(0);
 const refreshingStatus = ref(false);
 
+// Help Improve Feedback (Mobile)
+const feedbackFormRef = ref(null);
+const feedbackFormValid = ref(true);
+const submittingFeedback = ref(false);
+const feedbackCategoryError = ref(false);
+const feedbackForm = ref({
+    category: '',
+    area: '',
+    description: '',
+});
+
+// System Feedback Dialog States
+const systemFeedbackDialog = ref(false);
+const sfFormRef = ref(null);
+const sfFileInputRef = ref(null);
+const submittingSf = ref(false);
+const sfFormValid = ref(true);
+const systemFeedbacks = ref([]);
+const loadingSystemFeedbacks = ref(false);
+const sfSelectedFile = ref(null);
+const sfPreviewUrl = ref(null);
+const sfPreviewIsImage = ref(false);
+const sfForm = reactive({
+    category: 'issue',
+    area: '',
+    subject: '',
+    description: '',
+});
+
 // Panel states
 const securityPanel = ref(null);
 const settingsPanel = ref(null);
+const systemFeedbackPanel = ref(null);
 
 // Password change OTP flow
 const passwordDialog = ref(false);
@@ -874,16 +1114,11 @@ const rules = {
     hasNumber: v => /[0-9]/.test(v) || 'Must contain a number',
     hasSpecial: v => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(v) || 'Must contain special character',
     passwordMatch: v => v === passwordForm.value.new_password || 'Passwords do not match',
-    // Name validation - only accepts letters, spaces, hyphens, and apostrophes
+    // Name validation - only letters and spaces allowed (no numbers, special chars, emojis)
     nameOnly: (v) => {
         if (!v) return true; // Allow empty (use 'required' rule separately if needed)
-        // Allow letters (with diacritics), spaces, hyphens, apostrophes, and periods
-        if (!/^[a-zA-ZÀ-ÿ\s'.-]+$/.test(v)) {
-            return 'Name can only contain letters, spaces, hyphens, and apostrophes';
-        }
-        // Prevent numbers
-        if (/\d/.test(v)) {
-            return 'Name cannot contain numbers';
+        if (!/^[a-zA-Z\s]+$/.test(v)) {
+            return 'Only letters and spaces are allowed';
         }
         return true;
     },
@@ -924,6 +1159,29 @@ const passwordChecks = computed(() => {
     };
 });
 
+// Real-time prevention - blocks special chars, numbers, and emojis in name fields
+const preventInvalidNameChars = (event) => {
+    const char = event.key || String.fromCharCode(event.keyCode || event.which);
+    // Allow control keys (Backspace, Delete, Tab, arrows, etc.)
+    if (char.length > 1) return;
+    // Only allow letters and spaces
+    if (!/^[a-zA-Z\s]$/.test(char)) {
+        event.preventDefault();
+        showSnackbar('Special characters are not allowed in this field', 'warning');
+    }
+};
+
+// Sanitize pasted/input content - strips invalid characters from name fields
+const sanitizeNameField = (field) => {
+    const val = profile.value[field];
+    if (!val) return;
+    const sanitized = val.replace(/[^a-zA-Z\s]/g, '');
+    if (sanitized !== val) {
+        profile.value[field] = sanitized;
+        showSnackbar('Special characters are not allowed in this field', 'warning');
+    }
+};
+
 // Computed
 const fullName = computed(() => {
     return `${profile.value.first_name} ${profile.value.last_name}`.trim() || 'Rescuer';
@@ -947,6 +1205,90 @@ const isPasswordValid = computed(() => {
     const checks = passwordChecks.value;
     return checks.length && checks.uppercase && checks.lowercase && checks.number && checks.special;
 });
+
+const pwdStrength = computed(() => {
+    const checks = passwordChecks.value;
+    let score = 0;
+    if (checks.length) score += 20;
+    if (checks.uppercase) score += 20;
+    if (checks.lowercase) score += 20;
+    if (checks.number) score += 20;
+    if (checks.special) score += 20;
+    return score;
+});
+
+const pwdStrengthColor = computed(() => {
+    const s = pwdStrength.value;
+    if (s <= 20) return '#ef5350';
+    if (s <= 40) return '#ff9800';
+    if (s <= 60) return '#fdd835';
+    if (s <= 80) return '#66bb6a';
+    return '#43a047';
+});
+
+const pwdStrengthGradient = computed(() => {
+    const s = pwdStrength.value;
+    if (s <= 20) return '#ef5350';
+    if (s <= 40) return 'linear-gradient(90deg, #ef5350, #ff9800)';
+    if (s <= 60) return 'linear-gradient(90deg, #ef5350, #ff9800, #fdd835)';
+    if (s <= 80) return 'linear-gradient(90deg, #ff9800, #fdd835, #66bb6a)';
+    return 'linear-gradient(90deg, #66bb6a, #43a047)';
+});
+
+const pwdStrengthText = computed(() => {
+    const s = pwdStrength.value;
+    if (s <= 20) return 'Weak';
+    if (s <= 40) return 'Fair';
+    if (s <= 60) return 'Good';
+    if (s <= 80) return 'Strong';
+    return 'Very Strong';
+});
+
+// System feedback form validation
+const sfFormValidComputed = computed(() => {
+    return sfForm.subject?.trim() && 
+           sfForm.description?.trim() && 
+           sfFormValid.value;
+});
+
+// System feedback area options for rescuers
+const sfAreaOptions = computed(() => [
+    { label: 'Rescue Dashboard', value: 'dashboard', icon: 'mdi-view-dashboard' },
+    { label: 'Active Rescue Management', value: 'rescue_management', icon: 'mdi-alert-octagon' },
+    { label: 'Chat with Users', value: 'chat', icon: 'mdi-chat' },
+    { label: 'Profile & Settings', value: 'profile', icon: 'mdi-account-cog' },
+    { label: 'Status Management', value: 'status', icon: 'mdi-toggle-switch' },
+    { label: 'General App Experience', value: 'general', icon: 'mdi-application' }
+]);
+
+// Get icon for system feedback area
+const getSfAreaIcon = (area) => {
+    const option = sfAreaOptions.value.find(opt => opt.value === area);
+    return option?.icon || 'mdi-help-circle';
+};
+
+// System feedback history helpers
+const userSystemFeedbacks = computed(() => systemFeedbacks.value || []);
+
+const getSfStatusColor = (status) => {
+    switch (status) {
+        case 'pending': return 'orange';
+        case 'in_progress': return 'blue';
+        case 'resolved': return 'green';
+        case 'closed': return 'grey';
+        default: return 'grey';
+    }
+};
+
+const getSfStatusLabel = (status) => {
+    switch (status) {
+        case 'pending': return 'Pending';
+        case 'in_progress': return 'In Progress';
+        case 'resolved': return 'Resolved';
+        case 'closed': return 'Closed';
+        default: return 'Unknown';
+    }
+};
 
 // Methods
 const refreshStatus = async () => {
@@ -980,6 +1322,172 @@ const refreshStatus = async () => {
         showSnackbar('Failed to refresh status', 'error');
     } finally {
         refreshingStatus.value = false;
+    }
+};
+
+// Help Improve Feedback Methods
+const submitFeedback = async () => {
+    // Validate category
+    if (!feedbackForm.value.category) {
+        feedbackCategoryError.value = true;
+        return;
+    }
+    feedbackCategoryError.value = false;
+
+    // Validate form
+    const { valid } = await feedbackFormRef.value.validate();
+    if (!valid) return;
+
+    submittingFeedback.value = true;
+    try {
+        const formData = new FormData();
+        formData.append('user_id', authUser.value?.id);
+        formData.append('category', feedbackForm.value.category);
+        formData.append('description', feedbackForm.value.description);
+        if (feedbackForm.value.area) formData.append('area', feedbackForm.value.area);
+
+        const response = await submitSystemFeedback(formData);
+
+        if (response?.success) {
+            showSnackbar('Thank you! Your feedback has been submitted successfully.', 'success');
+            resetFeedbackForm();
+        } else {
+            showSnackbar(response?.message || 'Failed to submit. Please try again.', 'error');
+        }
+    } catch (error) {
+        console.error('Failed to submit feedback:', error);
+        showSnackbar('Something went wrong. Please try again later.', 'error');
+    } finally {
+        submittingFeedback.value = false;
+    }
+};
+
+const resetFeedbackForm = () => {
+    feedbackForm.value = { category: '', area: '', description: '' };
+    feedbackFormRef.value?.resetValidation();
+    feedbackCategoryError.value = false;
+};
+
+// System Feedback Dialog Methods
+const openSystemFeedbackDialog = () => {
+    systemFeedbackDialog.value = true;
+    resetSfForm();
+};
+
+const closeSystemFeedbackDialog = () => {
+    systemFeedbackDialog.value = false;
+    resetSfForm();
+};
+
+const resetSfForm = () => {
+    Object.assign(sfForm, {
+        category: 'issue',
+        area: '',
+        subject: '',
+        description: ''
+    });
+    sfSelectedFile.value = null;
+    sfPreviewUrl.value = null;
+    sfPreviewIsImage.value = false;
+    sfFormRef.value?.resetValidation();
+};
+
+const loadUserSystemFeedbacks = async () => {
+    if (!authUser.value?.id) return;
+    
+    loadingSystemFeedbacks.value = true;
+    try {
+        const response = await getUserSystemFeedbacks(authUser.value.id);
+        if (response?.success) {
+            systemFeedbacks.value = response.data || [];
+        }
+    } catch (error) {
+        console.error('Error loading system feedbacks:', error);
+    } finally {
+        loadingSystemFeedbacks.value = false;
+    }
+};
+
+const handleSfFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // File size validation (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+        showSnackbar('File size must be less than 10MB', 'error');
+        return;
+    }
+    
+    // File type validation
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+        showSnackbar('Only JPG, PNG, GIF, MP4, and PDF files are allowed', 'error');
+        return;
+    }
+    
+    sfSelectedFile.value = file;
+    sfPreviewIsImage.value = file.type.startsWith('image/');
+    
+    // Create preview URL
+    if (sfPreviewUrl.value) {
+        URL.revokeObjectURL(sfPreviewUrl.value);
+    }
+    sfPreviewUrl.value = URL.createObjectURL(file);
+};
+
+const removeSfFile = () => {
+    if (sfPreviewUrl.value) {
+        URL.revokeObjectURL(sfPreviewUrl.value);
+    }
+    sfSelectedFile.value = null;
+    sfPreviewUrl.value = null;
+    sfPreviewIsImage.value = false;
+};
+
+const triggerSfFileInput = () => {
+    const fileInput = sfFileInputRef.value;
+    if (fileInput) fileInput.click();
+};
+
+const handleSfFileDrop = (event) => {
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+        const fakeEvent = { target: { files: files } };
+        handleSfFileSelect(fakeEvent);
+    }
+};
+
+const submitSystemFeedbackForm = async () => {
+    const { valid } = await sfFormRef.value.validate();
+    if (!valid) return;
+    
+    submittingSf.value = true;
+    try {
+        const formData = new FormData();
+        formData.append('user_id', authUser.value.id);
+        formData.append('category', sfForm.category);
+        formData.append('area', sfForm.area || '');
+        formData.append('subject', sfForm.subject);
+        formData.append('description', sfForm.description);
+        
+        if (sfSelectedFile.value) {
+            formData.append('attachment', sfSelectedFile.value);
+        }
+        
+        const response = await submitSystemFeedback(formData);
+        
+        if (response?.success) {
+            showSnackbar('System feedback submitted successfully!', 'success');
+            closeSystemFeedbackDialog();
+            await loadUserSystemFeedbacks(); // Refresh the list
+        } else {
+            showSnackbar(response?.message || 'Failed to submit feedback', 'error');
+        }
+    } catch (error) {
+        console.error('Error submitting system feedback:', error);
+        showSnackbar('Error submitting feedback. Please try again.', 'error');
+    } finally {
+        submittingSf.value = false;
     }
 };
 
@@ -1603,6 +2111,11 @@ const fetchUnreadMessageCount = async () => {
     }
 };
 
+// Watch settings changes and save to localStorage
+watch(settings, (newSettings) => {
+    localStorage.setItem('rescuerSettings', JSON.stringify(newSettings));
+}, { deep: true });
+
 // Lifecycle
 onMounted(async () => {
     if (!authUser.value) {
@@ -1611,6 +2124,7 @@ onMounted(async () => {
     }
     fetchProfile();
     await fetchUnreadMessageCount();
+    await loadUserSystemFeedbacks();
     
     // Add visibility change listener to refresh status when user returns to page
     const handleVisibilityChange = () => {
@@ -1639,12 +2153,130 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Profile Page Header - matches other pages */
+/* System Feedback Dialog Styles */
+.sf-dialog-card {
+    overflow: hidden;
+}
+
+.sf-dialog-header {
+    background: linear-gradient(135deg, #3674B5, #2D5F96);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sf-dialog-header-content {
+    display: flex;
+    align-items: center;
+}
+
+.sf-dialog-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.sf-dialog-subtitle {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.8);
+    margin: 0;
+}
+
+.sf-dialog-body {
+    padding: 24px;
+}
+
+.sf-field-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 8px;
+}
+
+.sf-category-toggle {
+    width: 100%;
+}
+
+.sf-cat-btn {
+    flex: 1;
+    text-transform: none;
+    font-weight: 600;
+}
+
+.sf-upload-area {
+    border: 2px dashed #e0e0e0;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.sf-upload-area:hover {
+    border-color: #3674B5;
+}
+
+.sf-upload-placeholder {
+    color: #666;
+}
+
+.sf-upload-preview {
+    position: relative;
+}
+
+.sf-upload-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
+
+.sf-submit-btn {
+    text-transform: none;
+    font-weight: 600;
+}
+
+.sf-history-item {
+    background: rgba(54, 116, 181, 0.05);
+    border: 1px solid rgba(54, 116, 181, 0.1);
+}
+
+/* Panel titles - mobile-friendly with larger touch targets */
+.panel-title-mobile {
+    padding: 14px 12px !important;
+    min-height: 60px !important;
+}
+
+@media (min-width: 600px) {
+    .panel-title-mobile {
+        padding: 16px !important;
+        min-height: auto !important;
+    }
+}
+
+/* Panel content - mobile-friendly padding */
+.panel-content-mobile {
+    padding: 4px 0 !important;
+}
+
+:deep(.v-expansion-panel-text__wrapper) {
+    padding: 0 12px 16px !important;
+}
+
+@media (min-width: 600px) {
+    :deep(.v-expansion-panel-text__wrapper) {
+        padding: 0 16px 16px !important;
+    }
+}
+
+/* Category card styles (kept for consistency) */
 .profile-page-header {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: #3674B5;
+    background: var(--ppm-header-bg, #3674B5);
     padding: env(safe-area-inset-top, 0) 0 0 0;
 }
 
@@ -1727,13 +2359,13 @@ onUnmounted(() => {
 /* Profile Container - mobile-first padding */
 .profile-container {
     padding: 12px !important;
-    padding-bottom: 100px !important;
+    padding-bottom: 180px !important;
 }
 
 @media (min-width: 600px) {
     .profile-container {
         padding: 16px !important;
-        padding-bottom: 120px !important;
+        padding-bottom: 180px !important;
     }
     
     .header-title h1 {
@@ -1843,7 +2475,7 @@ onUnmounted(() => {
 /* Mobile responsive adjustments */
 @media (max-width: 600px) {
     .profile-main {
-        padding-bottom: 120px !important;
+        padding-bottom: 180px !important;
     }
     
     /* Ensure container has proper spacing */
@@ -1880,7 +2512,7 @@ onUnmounted(() => {
 
 @media (max-width: 400px) {
     .profile-main {
-        padding-bottom: 110px !important;
+        padding-bottom: 180px !important;
     }
     
     .header-content {
@@ -1911,46 +2543,152 @@ onUnmounted(() => {
     color: #666 !important;
 }
 
-/* Step Indicator */
-.step-line {
-    width: 40px;
-    height: 2px;
-    background-color: #e0e0e0;
-    margin: 0 8px;
-    transition: background-color 0.3s ease;
+/* ═══ Password Dialog (ChangePassword.vue style) ═══ */
+.pwd-dialog-card {
+    overflow: hidden;
 }
 
-.step-line.active {
-    background-color: #3674B5;
+.pwd-card-header {
+    background: linear-gradient(135deg, #3674B5, #2D5F96);
+    padding: 32px 24px 28px;
+    text-align: center;
+    position: relative;
+}
+.pwd-card-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--ppm-secondary, #DFA92C), transparent);
 }
 
-/* Password Requirements */
-.password-requirements {
-    background: #f5f5f5;
-    border-radius: 8px;
-    padding: 12px;
-}
-
-.requirements-grid {
-    display: grid;
-    gap: 6px;
-}
-
-.requirement-item {
+.pwd-header-icon-wrap {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 12px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
     display: flex;
     align-items: center;
+    justify-content: center;
+}
+
+.pwd-header-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.pwd-header-subtitle {
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.75);
+    margin: 0;
+}
+
+.pwd-close-btn {
+    position: absolute !important;
+    top: 12px;
+    right: 12px;
+}
+
+.pwd-card-body {
+    background: #fff;
+}
+
+.pwd-action-btn {
+    text-transform: none;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.pwd-otp-container {
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.pwd-otp-input-custom :deep(.v-otp-input__content) {
     gap: 8px;
-    font-size: 12px;
-    color: #9e9e9e;
-    transition: color 0.2s ease;
 }
 
-.requirement-item.met {
-    color: #4caf50;
+.pwd-field-label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 6px;
 }
 
-.requirement-item span {
-    line-height: 1.2;
+.pwd-password-field :deep(.v-field) {
+    border-radius: 12px !important;
+    border: 1.5px solid #e0e0e0;
+    transition: border-color 0.2s;
+}
+.pwd-password-field :deep(.v-field--focused) {
+    border-color: #3674B5 !important;
+}
+
+.pwd-strength-bar-wrap {
+    padding: 0 2px;
+}
+.pwd-strength-bar-track {
+    height: 6px;
+    background: #eee;
+    border-radius: 3px;
+    overflow: hidden;
+}
+.pwd-strength-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease, background 0.4s ease;
+}
+
+.pwd-requirements-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+    padding: 12px 14px;
+    background: #f8f9fb;
+    border-radius: 10px;
+}
+
+.pwd-req-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: #999;
+    transition: color 0.2s;
+}
+.pwd-req-item.met {
+    color: #3674B5;
+    font-weight: 500;
+}
+
+.pwd-success-check-wrap {
+    display: flex;
+    justify-content: center;
+}
+
+.pwd-success-check-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--ppm-header-bg, #3674B5), var(--ppm-header-bg-light, #4a8fd4));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(54, 116, 181, 0.3);
+    animation: pwdSuccessPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes pwdSuccessPop {
+    0% { transform: scale(0); opacity: 0; }
+    60% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
 }
 
 /* Settings list mobile styling */
@@ -2054,17 +2792,34 @@ onUnmounted(() => {
     background: var(--dm-bg-input) !important;
 }
 
-/* Password requirements dark mode */
-.dark-mode .password-requirements {
+/* Password dialog dark mode */
+.dark-mode .pwd-card-body {
+    background: var(--dm-bg-surface) !important;
+}
+
+.dark-mode .pwd-field-label {
+    color: var(--dm-text-secondary) !important;
+}
+
+.dark-mode .pwd-password-field :deep(.v-field) {
+    border-color: var(--dm-border) !important;
+    background: var(--dm-bg-input) !important;
+}
+
+.dark-mode .pwd-requirements-list {
     background: var(--dm-bg-input) !important;
     border: 1px solid var(--dm-border) !important;
 }
 
-.dark-mode .requirement-item {
+.dark-mode .pwd-req-item {
     color: var(--dm-text-muted) !important;
 }
 
-.dark-mode .requirement-item.met {
-    color: var(--dm-success) !important;
+.dark-mode .pwd-req-item.met {
+    color: #5ba3e6 !important;
+}
+
+.dark-mode .pwd-strength-bar-track {
+    background: var(--dm-border) !important;
 }
 </style>

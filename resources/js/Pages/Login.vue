@@ -197,16 +197,16 @@
             </c-col>
         </c-row>
         <c-fab-lower-right
-            @click="isDarkMode = !isDarkMode"
-            :icon="isDarkMode ? 'mdi-weather-sunny' : 'mdi-weather-night'"
+            @click="toggle"
+            :icon="isDark ? 'mdi-weather-sunny' : 'mdi-weather-night'"
             style="bottom: 20px"
         />
     </empty-layout>
 </template>
 <script setup>
 import { router, Head, usePage } from "@inertiajs/vue3";
-import { computed, ref, onMounted, watch } from "vue";
-import { useTheme } from "vuetify";
+import { computed, ref } from "vue";
+import { useDarkMode } from '@/Composables/useDarkMode';
 
 // layout
 import EmptyLayout from "@/Layouts/EmptyLayout.vue";
@@ -234,27 +234,10 @@ const appDeveloper = computed(() => {
     return page.props.appDeveloper ?? "Developer";
 });
 
-const theme = useTheme();
-const isDarkMode = ref(false);
+const { isDark, toggle } = useDarkMode();
 
 const appVersion = computed(() => {
     return page.props.appVersion;
-});
-
-// Sync Vuetify theme and localStorage based on isDarkMode
-watch(isDarkMode, (enabled) => {
-    const newTheme = enabled ? "dark" : "light";
-    // theme.global.name.value = newTheme;
-    theme.change(newTheme);
-    localStorage.setItem("theme", newTheme);
-});
-
-// On mount, read theme from localStorage and apply
-onMounted(() => {
-    const savedTheme = localStorage.getItem("theme") || "light";
-    // theme.global.name.value = savedTheme;
-    theme.change(savedTheme);
-    isDarkMode.value = savedTheme === "dark";
 });
 
 const btnDisabled = ref(false);

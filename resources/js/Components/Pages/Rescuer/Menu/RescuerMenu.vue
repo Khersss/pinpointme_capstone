@@ -38,6 +38,12 @@
                 @click="navigateTo('/rescuer/profile')"
                 class="menu-item"
             />
+            <v-list-item
+                prepend-icon="mdi-lightbulb-on-outline"
+                title="Help Improve"
+                @click="navigateTo('/rescuer/feedback')"
+                class="menu-item desktop-only"
+            />
         </v-list>
     </v-navigation-drawer>
 </template>
@@ -218,5 +224,12 @@ const handleLogout = async () => {
 
 .text-white-darken-1 {
     color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Hide desktop-only items on mobile */
+@media (max-width: 1023px) {
+    .desktop-only {
+        display: none !important;
+    }
 }
 </style>

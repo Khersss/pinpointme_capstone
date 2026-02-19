@@ -24,9 +24,6 @@
                 
                 <div class="flex-grow-1">
                     <v-toolbar-title class="text-body-1 font-weight-medium">{{ chatTitle }}</v-toolbar-title>
-                    <div v-if="rescueRequest" class="text-caption" style="opacity: 0.8;">
-                        {{ rescueRequest.room?.room_name || rescueRequest.room?.name }} • {{ formatStatus(rescueRequest.status) }}
-                    </div>
                 </div>
             </v-toolbar>
         </div>
@@ -76,11 +73,6 @@
                             :class="['message-wrapper mb-2', isOwnMessage(message) ? 'own-message' : 'other-message']"
                         >
                             <div :class="['message-bubble pa-3', isOwnMessage(message) ? 'bg-primary' : 'bg-white']">
-                                <!-- Sender Name for other messages -->
-                                <div v-if="!isOwnMessage(message)" class="text-caption text-primary font-weight-medium mb-1">
-                                    {{ message.sender_name || getMessageSenderName(message) }}
-                                </div>
-
                                 <!-- Text Message -->
                                 <div v-if="!message.attachment_url" class="message-content">
                                     {{ message.content }}
@@ -242,15 +234,19 @@
                         </v-btn>
                         
                         <!-- Text Input -->
-                        <v-text-field
+                        <v-textarea
                             v-model="messageInput"
                             placeholder="Aa"
                             variant="outlined"
                             density="compact"
                             hide-details
                             rounded
+                            rows="1"
+                            auto-grow
+                            max-rows="4"
                             class="flex-grow-1 chat-text-input"
-                            @keyup.enter="sendTextMessage"
+                            @keyup.enter.exact="sendTextMessage"
+                            @keyup.enter.shift.prevent
                         />
                         
                         <!-- Send Button -->
@@ -1475,7 +1471,7 @@ watch(() => conversation.value?.id, (newId) => {
 
 .message-meta {
     opacity: 0.7;
-    font-size: 10px;
+    font-size: 6px;
     margin-top: 4px;
 }
 
@@ -1636,6 +1632,15 @@ watch(() => conversation.value?.id, (newId) => {
     font-size: 15px;
     min-height: auto;
     line-height: 1.4;
+    overflow-y: auto;
+}
+
+.chat-text-input :deep(.v-field__field) {
+    padding-block: 0;
+}
+
+.chat-text-input :deep(textarea) {
+    resize: none;
 }
 
 .chat-text-input :deep(.v-field__outline) {
@@ -1699,11 +1704,17 @@ watch(() => conversation.value?.id, (newId) => {
     
     .chat-text-input :deep(.v-field) {
         min-height: 38px;
+        max-height: 90px;
     }
     
     .chat-text-input :deep(.v-field__input) {
         padding: 8px 12px;
         font-size: 14px;
+        line-height: 1.3;
+    }
+    
+    .chat-text-input :deep(textarea) {
+        max-height: 70px;
     }
 }
 
@@ -1732,22 +1743,40 @@ watch(() => conversation.value?.id, (newId) => {
         padding-bottom: calc(env(safe-area-inset-bottom, 8px) + 8px);
     }
     
+    .chat-input-container {
+        align-items: flex-end;
+        gap: 6px;
+    }
+    
     .chat-icon-btn {
         width: 38px !important;
         height: 38px !important;
+        flex-shrink: 0;
     }
     
     .chat-icon-btn .v-icon {
         font-size: 19px !important;
     }
     
+    .chat-text-input {
+        flex: 1;
+        min-width: 0;
+    }
+    
     .chat-text-input :deep(.v-field) {
         min-height: 40px;
+        max-height: 100px;
     }
     
     .chat-text-input :deep(.v-field__input) {
         padding: 9px 14px;
         font-size: 15px;
+        line-height: 1.4;
+    }
+    
+    .chat-text-input :deep(textarea) {
+        max-height: 80px;
+        overflow-y: auto;
     }
 }
 

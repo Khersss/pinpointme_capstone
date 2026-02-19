@@ -287,7 +287,7 @@ const totalUnreadCount = computed(() => {
 
 @media (max-width: 1023px) {
     .messages-main {
-        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 120px) !important;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 100px) !important;
     }
 }
 

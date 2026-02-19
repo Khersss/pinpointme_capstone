@@ -357,14 +357,61 @@
                                             {{ request.firstName || 'User Name' }} {{ request.lastName || '' }}
                                         </h3>
                                         <p class="request-location">
-                                            Scanned at {{ getLocationDisplay(request) }} on ...
+                                            Scanned at {{ getLocationDisplay(request) }}
                                         </p>
+                                        <!-- Description / Situation details -->
+                                        <p v-if="request.description" class="request-description">
+                                            <v-icon size="12" class="mr-1">mdi-text-box-outline</v-icon>
+                                            {{ truncateText(request.description, 80) }}
+                                        </p>
+                                        <!-- Urgency + Mobility chips row -->
+                                        <div class="request-details-chips">
+                                            <v-chip 
+                                                v-if="request.urgency_level"
+                                                :color="getUrgencyColor(request.urgency_level)" 
+                                                variant="tonal" 
+                                                size="x-small"
+                                                class="mr-1"
+                                            >
+                                                <v-icon start size="10">mdi-alert-circle</v-icon>
+                                                {{ request.urgency_level }}
+                                            </v-chip>
+                                            <v-chip 
+                                                v-if="request.mobility_status"
+                                                color="info" 
+                                                variant="tonal" 
+                                                size="x-small"
+                                                class="mr-1"
+                                            >
+                                                <v-icon start size="10">mdi-wheelchair-accessibility</v-icon>
+                                                {{ request.mobility_status }}
+                                            </v-chip>
+                                            <v-chip 
+                                                v-if="request.injuries"
+                                                color="error" 
+                                                variant="tonal" 
+                                                size="x-small"
+                                            >
+                                                <v-icon start size="10">mdi-bandage</v-icon>
+                                                {{ truncateText(request.injuries, 20) }}
+                                            </v-chip>
+                                        </div>
                                     </div>
                                     <div class="request-status">
                                         <div :class="['timer-badge', getTimerColorClass(request.urgency_level)]">
                                             {{ formatElapsedTime(request.created_at) }}
                                         </div>
                                     </div>
+                                </div>
+                                <!-- Cancel in progress indicator -->
+                                <div v-if="request.cancel_in_progress_at" class="cancel-in-progress-indicator">
+                                    <v-icon size="14" color="orange" class="mr-1">mdi-clock-alert-outline</v-icon>
+                                    <span class="text-caption text-orange">User considering cancellation</span>
+                                </div>
+                                <!-- Marking safe in progress indicator -->
+                                <div v-if="request.marking_safe_in_progress_at" class="marking-safe-in-progress-indicator">
+                                    <v-icon size="14" color="info" class="mr-1">mdi-shield-check-outline</v-icon>
+                                    <span class="text-caption text-info">User considering marking self safe</span>
                                 </div>
                             </div>
                         </template>
@@ -653,9 +700,19 @@ const counts = computed(() => ({
     completed: rescuedRequests.value.length,
 }));
 
-// Filtered requests
+// Urgency priority mapping (higher number = higher priority)
+const urgencyPriority = { critical: 4, high: 3, medium: 2, low: 1 };
+
+// Filtered requests — sorted by urgency (high to low), then by time (oldest first)
 const pendingRequests = computed(() =>
-    rescueRequests.value.filter((r) => r.status === 'pending')
+    rescueRequests.value
+        .filter((r) => r.status === 'pending')
+        .sort((a, b) => {
+            const prioA = urgencyPriority[(a.urgency_level || 'medium').toLowerCase()] || 2;
+            const prioB = urgencyPriority[(b.urgency_level || 'medium').toLowerCase()] || 2;
+            if (prioB !== prioA) return prioB - prioA; // Higher priority first
+            return new Date(a.created_at) - new Date(b.created_at); // Oldest first within same priority
+        })
 );
 const inProgressRequests = computed(() =>
     rescueRequests.value.filter((r) => r.status === 'assigned' || r.status === 'in_progress')
@@ -1090,6 +1147,18 @@ const refreshData = async () => {
 };
 
 const acceptRescue = async (request) => {
+    // Check if user is currently processing a cancellation
+    if (request.cancel_in_progress_at) {
+        showNotification('This user is currently processing a cancellation. You cannot accept this request until they finish.', 'warning');
+        return;
+    }
+
+    // Check if user is currently considering marking themselves safe
+    if (request.marking_safe_in_progress_at) {
+        showNotification('This user is currently considering marking themselves safe. Please wait for them to finish.', 'warning');
+        return;
+    }
+
     // Check if rescuer status allows accepting requests
     if (rescuerStatus.value && ['off_duty', 'unavailable'].includes(rescuerStatus.value.toLowerCase())) {
         const statusText = rescuerStatus.value === 'off_duty' ? 'off duty' : 'unavailable';
@@ -1118,6 +1187,18 @@ const acceptRescue = async (request) => {
         
         // Handle API response errors
         if (response && !response.success) {
+            // ── Cancel in progress: user is processing cancellation ──
+            if (response.cancel_in_progress) {
+                showNotification('This user is currently processing a cancellation. Please wait.', 'warning');
+                await fetchRescueRequests();
+                return;
+            }
+            // ── Marking safe in progress: user is considering marking self safe ──
+            if (response.marking_safe_in_progress) {
+                showNotification('This user is currently considering marking themselves safe. Please wait.', 'warning');
+                await fetchRescueRequests();
+                return;
+            }
             // ── Race condition: another rescuer already accepted this request ──
             if (response.already_accepted) {
                 stopForceAlert();
@@ -1143,7 +1224,14 @@ const acceptRescue = async (request) => {
         if (error?.status === 409 || error?.data?.already_accepted) {
             stopForceAlert();
             popupAlert.value.show = false;
-            showNotification(error.data?.message || 'This rescue has already been accepted by another rescuer.', 'warning');
+            // Check if it's cancel-in-progress, marking-safe-in-progress, or already accepted
+            if (error?.data?.cancel_in_progress) {
+                showNotification('This user is currently processing a cancellation. Please wait.', 'warning');
+            } else if (error?.data?.marking_safe_in_progress) {
+                showNotification('This user is currently considering marking themselves safe. Please wait.', 'warning');
+            } else {
+                showNotification(error.data?.message || 'This rescue has already been accepted by another rescuer.', 'warning');
+            }
             await fetchRescueRequests();
             return;
         }
@@ -1255,6 +1343,11 @@ const getInjuryType = (description) => {
     }
     // Return first 15 chars of description
     return description.length > 15 ? description.substring(0, 15) + '...' : description;
+};
+
+const truncateText = (text, maxLength = 60) => {
+    if (!text) return '';
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
 };
 
 const formatElapsedTime = (timestamp) => {
@@ -1743,7 +1836,7 @@ const showNotification = (message, color = 'info') => {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: #3674B5;
+    background: var(--ppm-header-bg, #3674B5);
     padding: env(safe-area-inset-top, 0) 0 0 0;
     flex-shrink: 0;
 }
@@ -1929,6 +2022,29 @@ const showNotification = (message, color = 'info') => {
     padding: 20px;
 }
 
+.cancel-in-progress-indicator {
+    display: flex;
+    align-items: center;
+    padding: 4px 12px 8px;
+    background: rgba(255, 152, 0, 0.08);
+    border-top: 1px dashed rgba(255, 152, 0, 0.3);
+    animation: cancel-indicator-pulse 2s ease-in-out infinite;
+}
+
+.marking-safe-in-progress-indicator {
+    display: flex;
+    align-items: center;
+    padding: 4px 12px 8px;
+    background: rgba(33, 150, 243, 0.08);
+    border-top: 1px dashed rgba(33, 150, 243, 0.3);
+    animation: cancel-indicator-pulse 2s ease-in-out infinite;
+}
+
+@keyframes cancel-indicator-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
 .request-info {
     flex: 1;
     min-width: 0;
@@ -1956,6 +2072,24 @@ const showNotification = (message, color = 'info') => {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.request-description {
+    font-size: 0.7rem;
+    color: #888;
+    margin: 3px 0 0 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;
+}
+
+.request-details-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 5px;
 }
 
 .request-status {

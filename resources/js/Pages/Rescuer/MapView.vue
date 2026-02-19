@@ -34,8 +34,8 @@
                             <v-icon color="white" size="24">mdi-map-marker-alert</v-icon>
                         </div>
                         <div class="target-info">
-                            <span class="target-label">Target Location</span>
-                            <span class="target-name">You are here</span>
+                            <span class="target-label">Person in Need</span>
+                            <span class="target-name">{{ rescueRequest?.firstName || rescueRequest?.requester?.first_name || 'Victim' }} is here</span>
                         </div>
                     </div>
                 </div>
@@ -84,7 +84,7 @@
                                     :style="getRoomAnnotationStyle(targetRoomAnnotation)"
                                 >
                                     <div class="room-annotation-label">
-                                        You are here
+                                        {{ rescueRequest?.firstName || 'Victim' }} is here
                                     </div>
                                     <div class="target-indicator">
                                         <v-icon color="white" size="16">mdi-alert</v-icon>
@@ -1204,6 +1204,7 @@ onMounted(async () => {
     padding: 16px;
     border-radius: 12px;
     border-left: 4px solid #1976d2;
+    margin-bottom: 100px;
 }
 
 .directions-header {

@@ -59,6 +59,7 @@
             <v-list-item prepend-icon="mdi-lifebuoy" title="Rescuers" href="/admin/rescuers" :active="activePage === 'rescuers'" @click="closeDrawerOnMobile"></v-list-item>
             <v-list-item prepend-icon="mdi-office-building" title="Buildings" href="/admin/buildings" :active="activePage === 'buildings'" @click="closeDrawerOnMobile"></v-list-item>
             <v-list-item prepend-icon="mdi-file-chart" title="Reports" href="/admin/reports" :active="activePage === 'reports'" @click="closeDrawerOnMobile"></v-list-item>
+            <v-list-item prepend-icon="mdi-star-half-full" title="Feedbacks" href="/admin/feedbacks" :active="activePage === 'feedbacks'" @click="closeDrawerOnMobile"></v-list-item>
             <v-list-item prepend-icon="mdi-shield-alert" title="Preventive Measures" href="/admin/preventive-measures" :active="activePage === 'preventive-measures'" @click="closeDrawerOnMobile"></v-list-item>
         </v-list>
     </v-navigation-drawer>
@@ -93,32 +94,38 @@
         </div>
 
         <!-- ── Tabs ── -->
-        <div class="nc-tabs nc-tabs-four">
+        <div class="nc-tabs nc-tabs-five">
             <button class="nc-tab" :class="{ 'nc-tab-active': notifTab === 'urgent' }" @click="notifTab = 'urgent'">
-                <v-icon size="15">mdi-alarm-light</v-icon>
-                <span>{{ isMobile ? 'Urgent' : 'Force Alerts' }}</span>
+                <v-icon size="14">mdi-alarm-light</v-icon>
+                <span class="nc-tab-label">Urgent</span>
                 <span v-if="forceAlertNotifications.length > 0" class="nc-badge nc-badge-error">{{ forceAlertNotifications.length }}</span>
             </button>
             <button class="nc-tab" :class="{ 'nc-tab-active': notifTab === 'approvals' }" @click="notifTab = 'approvals'">
-                <v-icon size="15">mdi-account-clock</v-icon>
-                <span>Approvals</span>
+                <v-icon size="14">mdi-account-clock</v-icon>
+                <span class="nc-tab-label">Approve</span>
                 <span v-if="pendingRescuerApplications.length > 0" class="nc-badge nc-badge-orange">{{ pendingRescuerApplications.length }}</span>
             </button>
+            <button class="nc-tab" :class="{ 'nc-tab-active': notifTab === 'cancellations' }" @click="notifTab = 'cancellations'">
+                <v-icon size="14">mdi-cancel</v-icon>
+                <span class="nc-tab-label">Cancels</span>
+                <span v-if="unreadCancellationCount > 0" class="nc-badge nc-badge-error">{{ unreadCancellationCount }}</span>
+            </button>
             <button class="nc-tab" :class="{ 'nc-tab-active': notifTab === 'activity' }" @click="notifTab = 'activity'">
-                <v-icon size="15">mdi-pulse</v-icon>
-                <span>Activity</span>
+                <v-icon size="14">mdi-pulse</v-icon>
+                <span class="nc-tab-label">Activity</span>
                 <span v-if="unreadActivityCount > 0" class="nc-badge nc-badge-red">{{ unreadActivityCount }}</span>
             </button>
             <button class="nc-tab" :class="{ 'nc-tab-active': notifTab === 'messages' }" @click="notifTab = 'messages'">
-                <v-icon size="15">mdi-chat-processing-outline</v-icon>
-                <span>Messages</span>
+                <v-icon size="14">mdi-chat-processing-outline</v-icon>
+                <span class="nc-tab-label">Msgs</span>
                 <span v-if="unreadMessageBadge > 0" class="nc-badge nc-badge-blue">{{ unreadMessageBadge }}</span>
             </button>
-            <div class="nc-tab-slider nc-tab-slider-four" :class="{ 
+            <div class="nc-tab-slider nc-tab-slider-five" :class="{ 
                 'nc-tab-slider-0': notifTab === 'urgent',
                 'nc-tab-slider-1': notifTab === 'approvals',
-                'nc-tab-slider-2': notifTab === 'activity',
-                'nc-tab-slider-3': notifTab === 'messages'
+                'nc-tab-slider-2': notifTab === 'cancellations',
+                'nc-tab-slider-3': notifTab === 'activity',
+                'nc-tab-slider-4': notifTab === 'messages'
             }"></div>
         </div>
 
@@ -307,14 +314,15 @@
 
         <!-- ─── Activity Tab ─── -->
         <div v-if="notifTab === 'activity'" class="nc-body">
-            <div v-if="activityNotifications.length === 0" class="nc-empty">
+            <div v-if="activityNotifications.length === 0 && safeConfirmationNotifications.length === 0" class="nc-empty">
                 <div class="nc-empty-icon">
                     <v-icon size="32" color="#B0BEC5">mdi-bell-check-outline</v-icon>
                 </div>
                 <p class="nc-empty-title">No activity yet</p>
-                <p class="nc-empty-sub">Rescue request updates will appear here</p>
+                <p class="nc-empty-sub">Rescue request updates and safe confirmations will appear here</p>
             </div>
             <div v-else>
+                <!-- Regular Activity Notifications -->
                 <div
                     v-for="notif in paginatedNotifications"
                     :key="notif.id"
@@ -389,6 +397,134 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Critical Safe Approval Requests (Admin must approve/deny) -->
+                <div
+                    v-for="notif in criticalSafeApprovalNotifications"
+                    :key="`critical-safe-${notif.id}`"
+                    class="nc-item nc-item-urgent"
+                    :class="{ 'nc-item-unread': !notif.read_at }"
+                >
+                    <div class="nc-item-bar nc-bar-warning"></div>
+                    <div class="nc-item-icon nc-icon-warning">
+                        <v-icon size="16" color="white">mdi-shield-alert</v-icon>
+                    </div>
+                    <div class="nc-item-content">
+                        <div class="nc-item-top">
+                            <span class="nc-item-title">{{ notif.title || 'Critical Patient Safe Request' }}</span>
+                            <span v-if="!notif.read_at" class="nc-unread-dot"></span>
+                        </div>
+                        <div class="nc-item-msg">{{ notif.message }}</div>
+                        <div v-if="notif.data" class="nc-item-detail">
+                            <span v-if="notif.data.rescue_code" class="nc-detail-code">
+                                <v-icon size="10">mdi-identifier</v-icon>
+                                {{ notif.data.rescue_code }}
+                            </span>
+                            <span v-if="notif.data.user_name" class="nc-detail-name">
+                                <v-icon size="10">mdi-account</v-icon>
+                                {{ notif.data.user_name }}
+                            </span>
+                            <span class="nc-critical-chip">
+                                <v-icon size="10">mdi-alert-circle</v-icon> CRITICAL
+                            </span>
+                        </div>
+                        <div v-if="notif.data?.location" class="nc-safe-location">
+                            <v-icon size="12" color="warning" class="mr-1">mdi-map-marker</v-icon>
+                            <span>{{ notif.data.location }}</span>
+                        </div>
+                        <div v-if="notif.data?.reason" class="nc-approval-reason" style="border-left-color: #FFA726;">
+                            <v-icon size="12" color="warning" class="mr-1">mdi-comment-text</v-icon>
+                            <span>{{ notif.data.reason }}</span>
+                        </div>
+                        <div v-if="notif.data?.proof_photo" class="mt-1">
+                            <img :src="`/storage/${notif.data.proof_photo}`" alt="Proof photo" style="max-width: 100%; max-height: 120px; border-radius: 8px; cursor: pointer;" @click="openCriticalSafeProofPhoto(notif.data.proof_photo)" />
+                        </div>
+                        <div class="nc-item-footer">
+                            <span class="nc-item-time">
+                                <v-icon size="10">mdi-clock-outline</v-icon>
+                                {{ formatTimeAgo(notif.created_at || notif.data?.requested_at) }}
+                            </span>
+                            <span v-if="notif._status === 'approved'" class="nc-safe-chip">
+                                <v-icon size="10">mdi-check-circle</v-icon> Approved
+                            </span>
+                            <span v-else-if="notif._status === 'denied'" class="nc-alerted-chip" style="background: #FFEBEE; color: #C62828;">
+                                <v-icon size="10">mdi-close-circle</v-icon> Denied
+                            </span>
+                        </div>
+                        <!-- Approve / Deny buttons -->
+                        <div v-if="!notif._status" class="nc-approval-actions mt-2">
+                            <button 
+                                class="nc-approve-btn"
+                                :disabled="criticalSafeActionLoading === notif.id"
+                                @click.stop="handleApproveCriticalSafe(notif)"
+                            >
+                                <v-icon size="14">mdi-check</v-icon>
+                                <span>Approve Safe</span>
+                            </button>
+                            <button 
+                                class="nc-decline-btn"
+                                :disabled="criticalSafeActionLoading === notif.id"
+                                @click.stop="showDenyCriticalSafeDialog(notif)"
+                            >
+                                <v-icon size="14">mdi-close</v-icon>
+                                <span>Deny & Send Rescuer</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Safe Confirmation Notifications -->
+                <div
+                    v-for="notif in safeConfirmationNotifications"
+                    :key="`safe-${notif.id}`"
+                    class="nc-item nc-item-safe"
+                    :class="{ 'nc-item-unread': !notif.read_at }"
+                    @click="handleSafeConfirmationClick(notif)"
+                >
+                    <div class="nc-item-bar nc-bar-success"></div>
+                    <div class="nc-item-icon nc-icon-success">
+                        <v-icon size="16" color="white">{{ notif.type === 'rescue_safe_rescuer_approved' ? 'mdi-account-check' : 'mdi-shield-check' }}</v-icon>
+                    </div>
+                    <div class="nc-item-content">
+                        <div class="nc-item-top">
+                            <span class="nc-item-title">{{ notif.title }}</span>
+                            <span v-if="!notif.read_at" class="nc-unread-dot"></span>
+                        </div>
+                        <div class="nc-item-msg">{{ notif.message }}</div>
+                        <div v-if="notif.data" class="nc-item-detail">
+                            <span v-if="notif.data.rescue_code" class="nc-detail-code">
+                                <v-icon size="10">mdi-identifier</v-icon>
+                                {{ notif.data.rescue_code }}
+                            </span>
+                            <span v-if="notif.data.user_name" class="nc-detail-name">
+                                <v-icon size="10">mdi-account</v-icon>
+                                {{ notif.data.user_name }}
+                            </span>
+                            <span v-if="notif.data.rescuer_name && notif.type === 'rescue_safe_rescuer_approved'" class="nc-detail-name">
+                                <v-icon size="10">mdi-shield-account</v-icon>
+                                by {{ notif.data.rescuer_name }}
+                            </span>
+                        </div>
+                        <div v-if="notif.data?.location" class="nc-safe-location">
+                            <v-icon size="12" color="success" class="mr-1">mdi-map-marker</v-icon>
+                            <span>{{ notif.data.location }}</span>
+                        </div>
+                        <div v-if="notif.data?.approval_reason && notif.type === 'rescue_safe_rescuer_approved'" class="nc-approval-reason">
+                            <v-icon size="12" color="success" class="mr-1">mdi-comment-check</v-icon>
+                            <span>{{ notif.data.approval_reason }}</span>
+                        </div>
+                        <div class="nc-item-footer">
+                            <span class="nc-item-time">
+                                <v-icon size="10">mdi-clock-outline</v-icon>
+                                {{ formatTimeAgo(notif.created_at) }}
+                            </span>
+                            <span class="nc-safe-chip">
+                                <v-icon size="10">mdi-check-circle</v-icon> 
+                                {{ notif.type === 'rescue_safe_rescuer_approved' ? 'Rescuer Approved' : 'Self-Confirmed Safe' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- Pagination Controls -->
                 <div v-if="totalPages > 1" class="nc-pagination">
@@ -411,6 +547,59 @@
                     >
                         <v-icon size="14">mdi-chevron-right</v-icon>
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── Messages Tab ─── -->
+        <!-- ─── Cancellations Tab ─── -->
+        <div v-if="notifTab === 'cancellations'" class="nc-body">
+            <div v-if="cancellationNotifications.length === 0" class="nc-empty">
+                <div class="nc-empty-icon">
+                    <v-icon size="32" color="#B0BEC5">mdi-check-circle-outline</v-icon>
+                </div>
+                <p class="nc-empty-title">No cancellation reports</p>
+                <p class="nc-empty-sub">When users cancel rescue requests, their reasons will appear here</p>
+            </div>
+            <div v-else>
+                <div
+                    v-for="notif in cancellationNotifications"
+                    :key="notif.id"
+                    class="nc-item nc-item-cancel"
+                    :class="{ 'nc-item-unread': !notif.read_at }"
+                    @click="handleCancellationClick(notif)"
+                >
+                    <div class="nc-item-bar nc-bar-error"></div>
+                    <div class="nc-item-icon nc-icon-error">
+                        <v-icon size="16" color="white">mdi-cancel</v-icon>
+                    </div>
+                    <div class="nc-item-content">
+                        <div class="nc-item-top">
+                            <span class="nc-item-title">{{ notif.title }}</span>
+                            <span v-if="!notif.read_at" class="nc-unread-dot"></span>
+                        </div>
+                        <div class="nc-item-msg">{{ notif.message }}</div>
+                        <div v-if="notif.data" class="nc-item-detail">
+                            <span v-if="notif.data.rescue_code" class="nc-detail-code">
+                                <v-icon size="10">mdi-identifier</v-icon>
+                                {{ notif.data.rescue_code }}
+                            </span>
+                            <span v-if="notif.data.user_name" class="nc-detail-name">
+                                <v-icon size="10">mdi-account</v-icon>
+                                {{ notif.data.user_name }}
+                            </span>
+                        </div>
+                        <div v-if="notif.data?.cancellation_reason" class="nc-cancel-reason">
+                            <v-icon size="12" color="error" class="mr-1">mdi-format-quote-open</v-icon>
+                            <span>{{ notif.data.cancellation_reason }}</span>
+                        </div>
+                        <div class="nc-item-footer">
+                            <span class="nc-item-time">
+                                <v-icon size="10">mdi-clock-outline</v-icon>
+                                {{ formatTimeAgo(notif.created_at) }}
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -553,6 +742,59 @@
         </v-card>
     </v-dialog>
 
+    <!-- Deny Critical Safe Request Dialog -->
+    <v-dialog v-model="denyCriticalSafeDialogVisible" max-width="450" persistent>
+        <v-card rounded="lg">
+            <v-card-title class="d-flex align-center pa-4" style="color: #C62828;">
+                <v-icon start color="error">mdi-shield-alert</v-icon>
+                Deny Safe Request
+            </v-card-title>
+            <v-divider></v-divider>
+            <v-card-text class="pa-4">
+                <p class="mb-3">
+                    This will deny the safe request from
+                    <strong>{{ denyCriticalSafeTarget?.data?.user_name }}</strong>
+                    (Critical urgency level). A rescuer should be dispatched to verify the patient's safety.
+                </p>
+                <v-textarea
+                    v-model="denyCriticalSafeReason"
+                    label="Reason for denial *"
+                    variant="outlined"
+                    density="compact"
+                    rows="3"
+                    placeholder="e.g., Rescuer needs to verify patient safety first..."
+                    hide-details
+                />
+            </v-card-text>
+            <v-divider></v-divider>
+            <v-card-actions class="pa-4">
+                <v-spacer />
+                <v-btn variant="text" @click="denyCriticalSafeDialogVisible = false" :disabled="criticalSafeActionLoading">Cancel</v-btn>
+                <v-btn color="error" :loading="!!criticalSafeActionLoading" @click="handleDenyCriticalSafe">
+                    <v-icon start>mdi-close</v-icon>
+                    Deny & Alert Rescuer
+                </v-btn>
+            </v-card-actions>
+        </v-card>
+    </v-dialog>
+
+    <!-- Critical Safe Proof Photo Dialog -->
+    <v-dialog v-model="criticalSafeProofPhotoDialog" max-width="600">
+        <v-card rounded="lg">
+            <v-card-title class="d-flex align-center">
+                <v-icon start>mdi-image</v-icon>
+                Safety Proof Photo
+                <v-spacer />
+                <v-btn icon variant="text" @click="criticalSafeProofPhotoDialog = false">
+                    <v-icon>mdi-close</v-icon>
+                </v-btn>
+            </v-card-title>
+            <v-card-text class="pa-0">
+                <v-img :src="criticalSafeProofPhotoUrl" max-height="500" contain />
+            </v-card-text>
+        </v-card>
+    </v-dialog>
+
     <!-- Notification Popup -->
     <NotificationPopup
         :show="popupAlert.show"
@@ -603,7 +845,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import { useDisplay } from 'vuetify';
 import { useNotificationAlert } from '@/Composables/useNotificationAlert';
-import { getAllRescueRequests, triggerForceAlert, getAdminConversations, getConversationMessages } from '@/Composables/useApi';
+import { getAllRescueRequests, triggerForceAlert, getAdminConversations, getConversationMessages, getAdminNotifications, markAdminNotificationRead, markAllAdminNotificationsRead, approveSafeRequest, denySafeRequest } from '@/Composables/useApi';
 import { setUserActiveStatus } from '@/Utilities/firebase';
 import NotificationPopup from '@/Components/NotificationPopup.vue';
 
@@ -683,6 +925,8 @@ const logout = async () => {
     localStorage.removeItem('conversationId');
     localStorage.removeItem('chatId');
     localStorage.removeItem('activeRescue');
+    localStorage.removeItem('lastSeenCancelNotifTime');
+    localStorage.removeItem('lastSeenSafeNotifTime');
     sessionStorage.clear();
 
     // 2. Fire-and-forget: set user inactive in Firebase (don't block logout)
@@ -804,6 +1048,7 @@ const forceAlertLoading = ref(null);
 const notifiedThresholdIds = ref(new Set());
 let pollingInterval = null;
 const POLLING_INTERVAL = 8000;
+let isFirstLoad = true;  // Track first load to avoid marking everything as unread
 
 // Activity notifications — persistent with read/unread state
 const loadSavedNotifications = () => {
@@ -903,6 +1148,27 @@ const expandedConv = ref(null);
 const expandedMessages = ref([]);
 const loadingMessages = ref(false);
 
+// Cancellation Notifications
+const cancellationNotifications = ref([]);
+const unreadCancellationCount = computed(() =>
+    cancellationNotifications.value.filter(n => !n.read_at).length
+);
+
+// Safe Confirmation Notifications (for Activity tab)
+const safeConfirmationNotifications = ref([]);
+const unreadSafeConfirmationCount = computed(() =>
+    safeConfirmationNotifications.value.filter(n => !n.read_at).length
+);
+
+// Critical Safe Approval Requests (admin must approve/deny)
+const criticalSafeApprovalNotifications = ref([]);
+const criticalSafeActionLoading = ref(null); // holds notif.id while loading
+const denyCriticalSafeDialogVisible = ref(false);
+const denyCriticalSafeTarget = ref(null);
+const denyCriticalSafeReason = ref('');
+const criticalSafeProofPhotoDialog = ref(false);
+const criticalSafeProofPhotoUrl = ref('');
+
 // Popup alert
 const popupAlert = ref({
     show: false,
@@ -927,7 +1193,7 @@ const unreadMessageBadge = computed(() =>
 );
 
 const totalUnreadCount = computed(() =>
-    unreadActivityCount.value + unreadMessageBadge.value + forceAlertNotifications.value.length + pendingRescuerApplications.value.length
+    unreadActivityCount.value + unreadMessageBadge.value + forceAlertNotifications.value.length + pendingRescuerApplications.value.length + unreadCancellationCount.value + unreadSafeConfirmationCount.value
 );
 
 // ── Pending Rescuer Applications ──
@@ -1195,6 +1461,13 @@ const markAllRead = () => {
     });
     localStorage.setItem('adminReadNotifs', JSON.stringify([...readNotifIds.value]));
     saveNotifications();
+    
+    // Also mark cancellation notifications as read
+    markAllAdminNotificationsRead().then(() => {
+        cancellationNotifications.value.forEach(n => {
+            n.read_at = new Date().toISOString();
+        });
+    }).catch(err => console.error('Failed to mark all admin notifications read:', err));
 };
 
 // ── Conversation helpers ──
@@ -1263,6 +1536,77 @@ const fetchPendingRequests = async () => {
         const pending = all.filter(r => r.status === 'pending');
         const currentIds = pending.map(r => r.id);
         const newIds = currentIds.filter(id => !previousPendingIds.value.includes(id));
+
+        // On first load, just populate state without creating notifications or alerts
+        if (isFirstLoad) {
+            previousPendingIds.value = currentIds;
+            previousPendingCount.value = pending.length;
+            previousAllRequests.value = JSON.parse(JSON.stringify(all));
+            pendingRequests.value = pending;
+            
+            // Create notifications for current state but mark them as read
+            all.forEach(req => {
+                const name = `${req.firstName || ''} ${req.lastName || ''}`.trim() || 'Someone';
+                const location = getReqLocation(req);
+                const status = req.status;
+                const reqId = req.id;
+                
+                let notifId, title, message, icon, color, type;
+                if (status === 'pending') {
+                    notifId = `rescue-pending-${reqId}`;
+                    title = `${name} needs help!`;
+                    message = `📍 ${location}`;
+                    icon = 'mdi-alert-circle';
+                    color = 'warning';
+                    type = 'pending';
+                } else if (status === 'accepted' || status === 'in_progress' || status === 'en_route') {
+                    notifId = `rescue-progress-${reqId}`;
+                    title = 'Rescue in progress';
+                    message = `${name} — ${location}`;
+                    icon = 'mdi-run-fast';
+                    color = 'info';
+                    type = 'progress';
+                } else if (status === 'rescued' || status === 'completed' || status === 'safe') {
+                    notifId = `rescue-done-${reqId}`;
+                    title = 'Rescue completed';
+                    message = `${name} has been rescued at ${location}`;
+                    icon = 'mdi-check-circle';
+                    color = 'success';
+                    type = 'completed';
+                } else if (status === 'cancelled') {
+                    notifId = `rescue-cancelled-${reqId}`;
+                    title = 'Rescue cancelled';
+                    message = `Request for ${name} at ${location} was cancelled`;
+                    icon = 'mdi-close-circle';
+                    color = 'error';
+                    type = 'cancelled';
+                }
+                
+                if (notifId && !activityNotifications.value.find(n => n.id === notifId)) {
+                    let notificationTime = req.updated_at || req.created_at || new Date().toISOString();
+                    if (type === 'pending') notificationTime = req.created_at || notificationTime;
+                    
+                    activityNotifications.value.unshift({
+                        id: notifId, title, message, icon, color, type,
+                        time: notificationTime,
+                        read: true,  // Mark as read on first load
+                        request: req,
+                        requestId: req.id,
+                        canForceAlert: type === 'pending' && canForceAlertByUrgency(req),
+                        forceAlerted: req.force_alert || false,
+                    });
+                    readNotifIds.value.add(notifId);
+                }
+            });
+            
+            if (activityNotifications.value.length > 100) {
+                activityNotifications.value = activityNotifications.value.slice(0, 100);
+            }
+            saveNotifications();
+            localStorage.setItem('adminReadNotifs', JSON.stringify([...readNotifIds.value]));
+            isFirstLoad = false;
+            return;
+        }
 
         if (newIds.length > 0 && previousPendingIds.value.length > 0) {
             const newReq = pending.find(r => r.id === newIds[0]);
@@ -1492,7 +1836,228 @@ const startPolling = () => {
         fetchPendingRequests();
         fetchAdminConversations();
         fetchPendingRescuers();
+        fetchCancellationNotifications();
+        fetchSafeConfirmationNotifications();
+        fetchCriticalSafeApprovalNotifications();
     }, POLLING_INTERVAL);
+};
+
+// ── Fetch cancellation notifications ──
+const fetchCancellationNotifications = async () => {
+    try {
+        const result = await getAdminNotifications({ per_page: 50, type: 'rescue_cancelled' });
+        const data = result.data || result;
+        cancellationNotifications.value = Array.isArray(data) ? data : (data.data || []);
+
+        // Show popup for new unread notifications
+        const newUnread = cancellationNotifications.value.filter(n => !n.read_at);
+        if (newUnread.length > 0 && newUnread[0].created_at) {
+            const latestTime = new Date(newUnread[0].created_at).getTime();
+            const lastSeen = parseInt(localStorage.getItem('lastSeenCancelNotifTime') || '0');
+            if (latestTime > lastSeen) {
+                localStorage.setItem('lastSeenCancelNotifTime', latestTime.toString());
+                // Show popup notification for the latest cancellation
+                const latest = newUnread[0];
+                popupAlert.value = {
+                    show: true,
+                    title: latest.title || 'Rescue Cancelled',
+                    message: latest.data?.cancellation_reason
+                        ? `Reason: ${latest.data.cancellation_reason}`
+                        : latest.message,
+                    type: 'error',
+                    icon: 'mdi-cancel',
+                    callback: () => {
+                        showNotificationPanel.value = true;
+                        notifTab.value = 'cancellations';
+                    }
+                };
+                setTimeout(() => { popupAlert.value.show = false; }, 8000);
+            }
+        }
+    } catch (error) {
+        console.error('Failed to fetch cancellation notifications:', error);
+    }
+};
+
+// ── Fetch safe confirmation notifications ──
+const fetchSafeConfirmationNotifications = async () => {
+    try {
+        // Fetch both self-confirmed and rescuer-approved safe notifications
+        const [selfConfirmed, rescuerApproved] = await Promise.all([
+            getAdminNotifications({ per_page: 25, type: 'rescue_safe_self_confirmed' }),
+            getAdminNotifications({ per_page: 25, type: 'rescue_safe_rescuer_approved' })
+        ]);
+
+        const selfConfirmedData = Array.isArray(selfConfirmed.data) ? selfConfirmed.data : (selfConfirmed.data?.data || []);
+        const rescuerApprovedData = Array.isArray(rescuerApproved.data) ? rescuerApproved.data : (rescuerApproved.data?.data || []);
+        
+        // Combine both types and sort by creation date (newest first)
+        const allSafeNotifications = [...selfConfirmedData, ...rescuerApprovedData]
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        
+        safeConfirmationNotifications.value = allSafeNotifications;
+
+        // Show popup for new unread safe confirmations
+        const newUnread = safeConfirmationNotifications.value.filter(n => !n.read_at);
+        if (newUnread.length > 0 && newUnread[0].created_at) {
+            const latestTime = new Date(newUnread[0].created_at).getTime();
+            const lastSeen = parseInt(localStorage.getItem('lastSeenSafeNotifTime') || '0');
+            if (latestTime > lastSeen) {
+                localStorage.setItem('lastSeenSafeNotifTime', latestTime.toString());
+                // Show popup notification for the latest safe confirmation
+                const latest = newUnread[0];
+                const isRescuerApproved = latest.type === 'rescue_safe_rescuer_approved';
+                popupAlert.value = {
+                    show: true,
+                    title: latest.title || (isRescuerApproved ? 'Rescuer Approved User as Safe' : 'User Marked Safe'),
+                    message: latest.message || 'A user has been confirmed safe',
+                    type: 'success',
+                    icon: isRescuerApproved ? 'mdi-account-check' : 'mdi-shield-check',
+                    callback: () => {
+                        showNotificationPanel.value = true;
+                        notifTab.value = 'activity';
+                    }
+                };
+                setTimeout(() => { popupAlert.value.show = false; }, 6000);
+            }
+        }
+    } catch (error) {
+        console.error('Failed to fetch safe confirmation notifications:', error);
+    }
+};
+
+// ── Handle cancellation notification click ──
+const handleCancellationClick = async (notif) => {
+    if (!notif.read_at) {
+        try {
+            await markAdminNotificationRead(notif.id);
+            notif.read_at = new Date().toISOString();
+        } catch (err) {
+            console.error('Failed to mark notification as read:', err);
+        }
+    }
+};
+
+// ── Handle safe confirmation notification click ──
+const handleSafeConfirmationClick = async (notif) => {
+    if (!notif.read_at) {
+        try {
+            await markAdminNotificationRead(notif.id);
+            notif.read_at = new Date().toISOString();
+        } catch (err) {
+            console.error('Failed to mark notification as read:', err);
+        }
+    }
+};
+
+// ── Critical Safe Approval Functions ──
+const fetchCriticalSafeApprovalNotifications = async () => {
+    try {
+        const resp = await getAdminNotifications({ per_page: 30, type: 'critical_safe_approval_request' });
+        const data = Array.isArray(resp.data) ? resp.data : (resp.data?.data || []);
+        
+        // Preserve _status for already processed notifications
+        const existing = criticalSafeApprovalNotifications.value;
+        criticalSafeApprovalNotifications.value = data.map(n => {
+            const prev = existing.find(e => e.id === n.id);
+            return { ...n, _status: prev?._status };
+        });
+
+        // Show popup for new unread critical safe approvals
+        const newUnread = data.filter(n => !n.read_at && !existing.find(e => e.id === n.id));
+        if (newUnread.length > 0) {
+            popupAlert.value = {
+                show: true,
+                title: '🛡️ Critical Patient Safe Request',
+                message: `${newUnread[0].data?.user_name || 'A critical patient'} is requesting to be marked safe. Admin approval required.`,
+                type: 'warning',
+                icon: 'mdi-shield-alert',
+                callback: () => {
+                    showNotificationPanel.value = true;
+                    notifTab.value = 'activity';
+                }
+            };
+            setTimeout(() => { popupAlert.value.show = false; }, 8000);
+        }
+    } catch (error) {
+        console.error('Failed to fetch critical safe approval notifications:', error);
+    }
+};
+
+const handleApproveCriticalSafe = async (notif) => {
+    if (!notif.data?.rescue_id) {
+        showToast('Error', 'Missing rescue request ID', { color: 'error', icon: 'mdi-alert' });
+        return;
+    }
+    criticalSafeActionLoading.value = notif.id;
+    try {
+        const resp = await approveSafeRequest(notif.data.rescue_id, 'Approved by administrator after verifying safety');
+        if (resp && resp.success !== false) {
+            notif._status = 'approved';
+            // Mark notification as read
+            if (!notif.read_at) {
+                await markAdminNotificationRead(notif.id);
+                notif.read_at = new Date().toISOString();
+            }
+            showToast('✅ Safe Request Approved', `${notif.data?.user_name || 'User'} has been marked as safe.`, { color: 'success', icon: 'mdi-check-circle' });
+            // Refresh notifications
+            fetchCriticalSafeApprovalNotifications();
+            fetchSafeConfirmationNotifications();
+        } else {
+            showToast('Error', resp?.message || 'Failed to approve safe request', { color: 'error', icon: 'mdi-alert' });
+        }
+    } catch (err) {
+        console.error('Error approving critical safe:', err);
+        showToast('Error', err.message || 'Failed to approve safe request', { color: 'error', icon: 'mdi-alert' });
+    } finally {
+        criticalSafeActionLoading.value = null;
+    }
+};
+
+const showDenyCriticalSafeDialog = (notif) => {
+    denyCriticalSafeTarget.value = notif;
+    denyCriticalSafeReason.value = '';
+    denyCriticalSafeDialogVisible.value = true;
+};
+
+const handleDenyCriticalSafe = async () => {
+    const notif = denyCriticalSafeTarget.value;
+    if (!notif?.data?.rescue_id) {
+        showToast('Error', 'Missing rescue request ID', { color: 'error', icon: 'mdi-alert' });
+        return;
+    }
+    if (!denyCriticalSafeReason.value.trim()) {
+        showToast('Error', 'Please provide a reason for denial', { color: 'error', icon: 'mdi-alert' });
+        return;
+    }
+    criticalSafeActionLoading.value = notif.id;
+    try {
+        const resp = await denySafeRequest(notif.data.rescue_id, denyCriticalSafeReason.value.trim());
+        if (resp && resp.success !== false) {
+            notif._status = 'denied';
+            // Mark notification as read
+            if (!notif.read_at) {
+                await markAdminNotificationRead(notif.id);
+                notif.read_at = new Date().toISOString();
+            }
+            denyCriticalSafeDialogVisible.value = false;
+            showToast('Safe Request Denied', `A rescuer should verify ${notif.data?.user_name || 'the patient'}'s safety.`, { color: 'warning', icon: 'mdi-shield-alert' });
+            // Refresh notifications
+            fetchCriticalSafeApprovalNotifications();
+        } else {
+            showToast('Error', resp?.message || 'Failed to deny safe request', { color: 'error', icon: 'mdi-alert' });
+        }
+    } catch (err) {
+        console.error('Error denying critical safe:', err);
+        showToast('Error', err.message || 'Failed to deny safe request', { color: 'error', icon: 'mdi-alert' });
+    } finally {
+        criticalSafeActionLoading.value = null;
+    }
+};
+
+const openCriticalSafeProofPhoto = (photoPath) => {
+    criticalSafeProofPhotoUrl.value = `/storage/${photoPath}`;
+    criticalSafeProofPhotoDialog.value = true;
 };
 
 const stopPolling = () => {
@@ -1509,6 +2074,9 @@ onMounted(() => {
     fetchPendingRequests();
     fetchAdminConversations();
     fetchPendingRescuers();
+    fetchCancellationNotifications();
+    fetchSafeConfirmationNotifications();
+    fetchCriticalSafeApprovalNotifications();
     startPolling();
 });
 
@@ -1623,28 +2191,43 @@ defineExpose({ showToast, showNotificationPanel, notifTab });
 .nc-tabs {
     display: flex;
     gap: 0;
-    padding: 12px 16px 0;
+    padding: 8px 8px 0;
     background: #ffffff;
     border-bottom: 1px solid #e8ecf0;
     position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
 }
+.nc-tabs::-webkit-scrollbar { display: none; }
 
 .nc-tab {
     flex: 1;
+    min-width: 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 10px 12px 12px;
+    gap: 2px;
+    padding: 8px 4px 10px;
     border: none;
     background: transparent;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     color: #90A4AE;
     cursor: pointer;
     transition: color 0.2s ease;
     position: relative;
     z-index: 1;
+    white-space: nowrap;
+}
+
+.nc-tab-label {
+    font-size: 10px;
+    line-height: 1.2;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
 }
 
 .nc-tab-active { color: #3674B5; }
@@ -1653,39 +2236,66 @@ defineExpose({ showToast, showNotificationPanel, notifTab });
 .nc-tab-slider {
     position: absolute;
     bottom: 0;
-    left: 16px;
-    width: calc(50% - 16px);
+    left: 8px;
+    width: calc(50% - 8px);
     height: 2.5px;
     background: #3674B5;
     border-radius: 2px 2px 0 0;
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.nc-tabs-three .nc-tab-slider { width: calc(33.33% - 16px); }
+.nc-tabs-three .nc-tab-slider { width: calc(33.33% - 8px); }
 .nc-tabs-three .nc-tab-slider-0 { transform: translateX(0); }
 .nc-tabs-three .nc-tab-slider-1 { transform: translateX(100%); }
 .nc-tabs-three .nc-tab-slider-2 { transform: translateX(200%); }
 
 /* 4-tab layout */
-.nc-tabs-four .nc-tab-slider { width: calc(25% - 8px); }
-.nc-tabs-four .nc-tab { font-size: 11.5px; gap: 4px; padding: 10px 6px 12px; }
+.nc-tabs-four .nc-tab-slider { width: calc(25% - 4px); }
+.nc-tabs-four .nc-tab { gap: 2px; padding: 8px 4px 10px; }
 .nc-tab-slider-four.nc-tab-slider-0 { transform: translateX(0); }
 .nc-tab-slider-four.nc-tab-slider-1 { transform: translateX(100%); }
 .nc-tab-slider-four.nc-tab-slider-2 { transform: translateX(200%); }
 .nc-tab-slider-four.nc-tab-slider-3 { transform: translateX(300%); }
 
+/* 5-tab layout */
+.nc-tabs-five .nc-tab-slider { width: calc(20% - 3px); }
+.nc-tabs-five .nc-tab { gap: 2px; padding: 8px 2px 10px; }
+.nc-tabs-five .nc-tab-label { font-size: 9px; }
+.nc-tab-slider-five.nc-tab-slider-0 { transform: translateX(0); }
+.nc-tab-slider-five.nc-tab-slider-1 { transform: translateX(100%); }
+.nc-tab-slider-five.nc-tab-slider-2 { transform: translateX(200%); }
+.nc-tab-slider-five.nc-tab-slider-3 { transform: translateX(300%); }
+.nc-tab-slider-five.nc-tab-slider-4 { transform: translateX(400%); }
+
+/* Cancellation reason styling */
+.nc-cancel-reason {
+    display: flex;
+    align-items: flex-start;
+    gap: 2px;
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: #FFF3F3;
+    border-left: 3px solid #EF5350;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #C62828;
+    line-height: 1.4;
+    font-style: italic;
+}
+
 .nc-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 18px;
-    height: 18px;
-    border-radius: 9px;
-    font-size: 10px;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    font-size: 9px;
     font-weight: 700;
-    padding: 0 5px;
+    padding: 0 4px;
     color: #ffffff;
     line-height: 1;
+    flex-shrink: 0;
 }
 
 .nc-badge-error { background: #b71c1c; }
@@ -1817,6 +2427,7 @@ defineExpose({ showToast, showNotificationPanel, notifTab });
 .nc-safe-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 6px; background: rgba(76, 175, 80, 0.1); color: #2E7D32; font-size: 10.5px; font-weight: 600; }
 .nc-cancelled-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 6px; background: rgba(183, 28, 28, 0.08); color: #B71C1C; font-size: 10.5px; font-weight: 600; }
 .nc-countdown-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 6px; background: rgba(255, 152, 0, 0.1); color: #E65100; font-size: 10.5px; font-weight: 600; }
+.nc-critical-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 6px; background: rgba(198, 40, 40, 0.12); color: #C62828; font-size: 10.5px; font-weight: 700; text-transform: uppercase; }
 
 /* ── Approval Item Styles ── */
 .nc-item-approval { background: linear-gradient(135deg, rgba(255, 152, 0, 0.03), rgba(230, 81, 0, 0.03)); border-color: rgba(255, 152, 0, 0.15); }
@@ -1948,5 +2559,49 @@ defineExpose({ showToast, showNotificationPanel, notifTab });
     padding: 0 8px;
     min-width: 60px;
     text-align: center;
+}
+
+/* ── Safe Confirmation Notification Styles ── */
+.nc-item-safe {
+    background: #f8fcf9 !important;
+    border-color: rgba(24, 93, 51, 0.15) !important;
+}
+
+.nc-item-safe:hover {
+    background: #f0f8f2 !important;
+    border-color: rgba(24, 93, 51, 0.2) !important;
+}
+
+.nc-safe-location {
+    display: flex;
+    align-items: center;
+    margin-top: 6px;
+    padding: 4px 8px;
+    background: rgba(102, 187, 106, 0.08);
+    border-radius: 6px;
+    border-left: 2px solid #66BB6A;
+}
+
+.nc-safe-location span {
+    font-size: 11px;
+    color: #2E7D32;
+    font-weight: 500;
+}
+
+.nc-approval-reason {
+    display: flex;
+    align-items: center;
+    margin-top: 6px;
+    padding: 4px 8px;
+    background: rgba(76, 175, 80, 0.08);
+    border-radius: 6px;
+    border-left: 2px solid #4CAF50;
+}
+
+.nc-approval-reason span {
+    font-size: 11px;
+    color: #2E7D32;
+    font-weight: 500;
+    font-style: italic;
 }
 </style>

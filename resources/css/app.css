@@ -14,6 +14,9 @@
    Global CSS Variables - PinPointMe Color Palette
    ================================================================= */
 :root {
+    /* Global Font */
+    --ppm-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
     /* Primary gradient colors */
     --ppm-color-1: #A1E3F9;  /* Light cyan/sky blue */
     --ppm-color-2: #D1F8EF;  /* Mint/aqua */
@@ -26,6 +29,16 @@
     --ppm-primary: #1976D2;
     --ppm-primary-light: #42A5F5;
     --ppm-primary-dark: #1565C0;
+    --ppm-primary-deeper: #0D47A1;
+    
+    /* Header/AppBar brand color */
+    --ppm-header-bg: #3674B5;
+    --ppm-header-bg-light: #4a8fd4;
+    --ppm-header-gradient: linear-gradient(135deg, #3674B5, #2196F3);
+    
+    /* Secondary/Accent brand colors */
+    --ppm-secondary: #DFA92C;
+    --ppm-secondary-dark: #C89424;
     
     /* Status colors */
     --ppm-success: #4CAF50;
@@ -47,6 +60,21 @@
     /* Glass effect */
     --ppm-glass-bg: rgba(255, 255, 255, 0.95);
     --ppm-glass-border: rgba(161, 227, 249, 0.3);
+}
+
+/* =================================================================
+   Global Font Application
+   ================================================================= */
+html, body, #app,
+.v-application,
+.v-application .v-main,
+.v-btn, .v-card, .v-toolbar,
+.v-list, .v-dialog, .v-menu,
+.v-text-field, .v-select, .v-textarea,
+.v-chip, .v-tab, .v-alert,
+h1, h2, h3, h4, h5, h6,
+p, span, div, label, a {
+    font-family: var(--ppm-font-family) !important;
 }
 
 /* =================================================================

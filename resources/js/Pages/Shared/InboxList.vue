@@ -269,6 +269,7 @@ const formatTime = (timestamp) => {
 /* Chat List Container */
 .chat-list-container {
     padding: 1rem;
+    padding-bottom: calc(1rem + 100px);
     max-width: 800px;
     margin: 0 auto;
     width: 100%;
@@ -482,6 +483,7 @@ const formatTime = (timestamp) => {
 @media (min-width: 1024px) {
     .chat-list-container {
         padding: 1.5rem;
+        padding-bottom: 1.5rem;
     }
     
     .chat-item {
