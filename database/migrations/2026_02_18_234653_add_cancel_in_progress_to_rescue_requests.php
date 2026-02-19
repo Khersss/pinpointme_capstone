@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('rescue_requests', function (Blueprint $table) {
-            $table->timestamp('cancel_in_progress_at')->nullable()->after('cancel_proof_photo');
+            $table->timestamp('cancel_in_progress_at')->nullable();
         });
     }
 

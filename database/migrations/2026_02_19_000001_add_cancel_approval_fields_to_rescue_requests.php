@@ -18,7 +18,8 @@ return new class extends Migration
             $table->timestamp('cancel_approval_responded_at')->nullable()->after('cancel_approval_status');
             $table->string('cancel_approval_reason', 500)->nullable()->after('cancel_approval_responded_at');
             $table->string('cancel_proof_details', 1000)->nullable()->after('cancel_approval_reason');
-            $table->integer('cancel_attempt_count')->default(0)->after('cancel_proof_details');
+            $table->string('cancel_proof_photo', 255)->nullable()->after('cancel_proof_details');
+            $table->integer('cancel_attempt_count')->default(0)->after('cancel_proof_photo');
             $table->timestamp('last_cancel_attempt_at')->nullable()->after('cancel_attempt_count');
         });
     }
@@ -36,6 +37,7 @@ return new class extends Migration
                 'cancel_approval_responded_at',
                 'cancel_approval_reason',
                 'cancel_proof_details',
+                'cancel_proof_photo',
                 'cancel_attempt_count',
                 'last_cancel_attempt_at',
             ]);
