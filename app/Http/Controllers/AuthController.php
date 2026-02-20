@@ -2006,10 +2006,15 @@ class AuthController extends Controller
             $email = $request->input('email');
 
             if (!$token || !$email) {
-                \Log::error('Native Google: Missing token or email');
-                return redirect('/login')->withErrors([
-                    'google' => 'Invalid request. Missing token or email.'
+                \Log::error('Native Google: Missing token or email', [
+                    'has_token' => !empty($token),
+                    'has_email' => !empty($email),
+                    'all_input' => array_keys($request->all())
                 ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid request. Missing token or email.'
+                ], 400);
             }
 
             // Verify ID token with Google's tokeninfo endpoint
@@ -2022,9 +2027,10 @@ class AuthController extends Controller
                     'status' => $response->status(),
                     'body' => $response->body()
                 ]);
-                return redirect('/login')->withErrors([
-                    'google' => 'Google token verification failed. Please try again.'
-                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Google token verification failed. Please try again.'
+                ], 401);
             }
 
             $tokenData = $response->json();
@@ -2035,9 +2041,10 @@ class AuthController extends Controller
                     'token_email' => $tokenData['email'] ?? 'none',
                     'submitted_email' => $email
                 ]);
-                return redirect('/login')->withErrors([
-                    'google' => 'Email verification failed.'
-                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email verification failed.'
+                ], 400);
             }
 
             // Extract user data from the verified token
@@ -2051,9 +2058,10 @@ class AuthController extends Controller
             $domain = substr($email, strpos($email, '@') + 1);
             
             if ($domain !== 'sdca.edu.ph') {
-                return redirect('/login')->withErrors([
-                    'google' => 'Only SDCA email addresses (@sdca.edu.ph) are allowed.'
-                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only SDCA email addresses (@sdca.edu.ph) are allowed.'
+                ], 403);
             }
 
             // Check if user already exists
@@ -2109,7 +2117,11 @@ class AuthController extends Controller
                         'profile_picture' => $user->profile_picture,
                     ]);
 
-                    return redirect('/auth/google/complete');
+                    return response()->json([
+                        'success' => false,
+                        'needs_verification' => true,
+                        'message' => 'Please verify your SDCA email first. A verification link has been sent to your inbox.'
+                    ]);
                 }
 
                 // Existing verified user - update and login
@@ -2124,16 +2136,28 @@ class AuthController extends Controller
                 
                 // Check if user needs to complete profile
                 if ($user->must_update_profile) {
-                    return redirect('/user/profile');
+                    return response()->json([
+                        'success' => true,
+                        'redirect' => url('/user/profile')
+                    ]);
                 }
                 
                 // Redirect based on role
                 if ($user->isAdmin == 1 || $user->isAdmin === true || $user->role === 'admin') {
-                    return redirect('/admin/dashboard');
+                    return response()->json([
+                        'success' => true,
+                        'redirect' => url('/admin/dashboard')
+                    ]);
                 } elseif ($user->role === 'rescuer') {
-                    return redirect('/rescuer/dashboard');
+                    return response()->json([
+                        'success' => true,
+                        'redirect' => url('/rescuer/dashboard')
+                    ]);
                 } else {
-                    return redirect('/user/scanner');
+                    return response()->json([
+                        'success' => true,
+                        'redirect' => url('/user/scanner')
+                    ]);
                 }
             } else {
                 // New user - create account (pending verification, not logged in)
@@ -2193,17 +2217,22 @@ class AuthController extends Controller
                     'profile_picture' => $newUser->profile_picture,
                 ]);
 
-                // Redirect to verification page (user is NOT logged in)
-                return redirect('/auth/google/complete');
+                // Return verification needed response
+                return response()->json([
+                    'success' => false,
+                    'needs_verification' => true,
+                    'message' => 'Please verify your SDCA email first. A verification link has been sent to your inbox.'
+                ]);
             }
             
         } catch (\Exception $e) {
             \Log::error('Native Google OAuth error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
-            return redirect('/login')->withErrors([
-                'google' => 'Authentication failed. Please try again.'
-            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication failed. Please try again.'
+            ], 500);
         }
     }
 

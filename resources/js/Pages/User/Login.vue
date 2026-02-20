@@ -1018,7 +1018,8 @@ const handleGoogleLogin = async () => {
         try {
             // 1. Trigger the Native Android Google Picker
             const result = await GoogleAuth.signIn();
-            // 2. Send the ID token to our Laravel backend via fetch
+            console.log('Google Sign-In result:', JSON.stringify(result));
+            // 2. Send the ID token and email to our Laravel backend via fetch
             const apiUrl = 'https://pinpointme.app/auth/google/callback/native';
             const response = await fetch(apiUrl, {
                 method: 'POST',
@@ -1027,21 +1028,21 @@ const handleGoogleLogin = async () => {
                     'Accept': 'application/json',
                 },
                 credentials: 'include',
-                body: JSON.stringify({ idToken: result.authentication.idToken })
+                body: JSON.stringify({
+                    token: result.authentication.idToken,
+                    email: result.email
+                })
             });
-            if (response.redirected) {
-                window.location.href = response.url;
-            } else if (response.ok) {
-                const data = await response.json();
-                if (data.verified) {
-                    window.location.href = 'https://pinpointme.app/user/scanner';
-                } else {
-                    isGoogleLoading.value = false;
-                    googleError.value = 'Please verify your SDCA email first. Check your inbox for the verification link.';
-                }
+            const data = await response.json();
+            console.log('Native Google response:', JSON.stringify(data));
+            if (data.success) {
+                window.location.href = data.redirect || 'https://pinpointme.app/user/scanner';
+            } else if (data.needs_verification) {
+                isGoogleLoading.value = false;
+                googleError.value = data.message || 'Please verify your SDCA email first. Check your inbox for the verification link.';
             } else {
                 isGoogleLoading.value = false;
-                googleError.value = 'Google sign-in failed. Please try again.';
+                googleError.value = data.message || 'Google sign-in failed. Please try again.';
             }
         } catch (error) {
             console.error('Google Auth Error:', error);

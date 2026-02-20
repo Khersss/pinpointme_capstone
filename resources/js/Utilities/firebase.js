@@ -10,16 +10,16 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 // Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyC29IDagVxBaw91vOVwgx0u78BSOOwG-w8",
-    authDomain: "ppm-fcm.firebaseapp.com",
-    projectId: "ppm-fcm",
-    storageBucket: "ppm-fcm.firebasestorage.app",
-    messagingSenderId: "792412354648",
-    appId: "1:792412354648:web:686e84c46bfb35d49af22d"
+    apiKey: "AIzaSyDkmwtQXOeidJIJSLqA8YgQ3ZF5_ebok4Y",
+    authDomain: "pinpointme-app.firebaseapp.com",
+    projectId: "pinpointme-app",
+    storageBucket: "pinpointme-app.firebasestorage.app",
+    messagingSenderId: "912018324129",
+    appId: "1:912018324129:web:398c19531a722433818ee0"
 };
 
 // VAPID key for FCM web push (generated in Firebase Console)
-const VAPID_KEY = 'BHp1SB_4ynWNV2cv7nKcI2UEvO61LcYfltRiBkT60ZD_0iU738iFn-ylPy9ETIcd8u4LvyeLckMQ_Reacmz0C5o';
+const VAPID_KEY = 'BPFTyOhSVxTPOuVJG6bBCqq5ppxD3fniog4ghrpAgVhS0i8Qv45W6owqYXgVnlRFlcbHhNbvxqHp1PzPP6ZQB4c';
 
 // Initialize Firebase
 let app = null;

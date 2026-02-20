@@ -7,12 +7,12 @@ importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-comp
 
 // Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyC29IDagVxBaw91vOVwgx0u78BSOOwG-w8",
-    authDomain: "ppm-fcm.firebaseapp.com",
-    projectId: "ppm-fcm",
-    storageBucket: "ppm-fcm.firebasestorage.app",
-    messagingSenderId: "792412354648",
-    appId: "1:792412354648:web:686e84c46bfb35d49af22d"
+    apiKey: "AIzaSyDkmwtQXOeidJIJSLqA8YgQ3ZF5_ebok4Y",
+    authDomain: "pinpointme-app.firebaseapp.com",
+    projectId: "pinpointme-app",
+    storageBucket: "pinpointme-app.firebasestorage.app",
+    messagingSenderId: "912018324129",
+    appId: "1:912018324129:web:398c19531a722433818ee0"
 };
 
 // Initialize Firebase in the service worker
