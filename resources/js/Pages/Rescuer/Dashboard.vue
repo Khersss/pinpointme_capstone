@@ -455,14 +455,14 @@
                                     Message
                                 </v-btn>
                                 <v-btn
-                                    color="success"
+                                    color="#3674B5"
                                     variant="flat"
                                     size="small"
                                     rounded="pill"
-                                    @click.stop="markAsSafe(request)"
-                                    :loading="updatingId === request.id"
+                                    @click.stop="viewInProgressRequest(request)"
                                 >
-                                    Mark Safe
+                                    <v-icon start size="16">mdi-eye</v-icon>
+                                    View
                                 </v-btn>
                             </div>
                         </div>

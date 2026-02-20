@@ -584,6 +584,18 @@ class RescueRequestController extends Controller
      */
     public function rescuerFeed($rescuerId)
     {
+        // Auto-expire stale "considering" states (older than 30 seconds)
+        // This handles cases where the frontend fails to clear the state (e.g., APK WebView touch issues)
+        $staleThreshold = now()->subSeconds(30);
+        RescueRequest::where(function($q) use ($staleThreshold) {
+            $q->where('cancel_in_progress_at', '<', $staleThreshold)
+              ->orWhere('marking_safe_in_progress_at', '<', $staleThreshold);
+        })->whereIn('status', ['pending', 'assigned', 'in_progress'])
+          ->update([
+              'cancel_in_progress_at' => \DB::raw("CASE WHEN cancel_in_progress_at < '{$staleThreshold}' THEN NULL ELSE cancel_in_progress_at END"),
+              'marking_safe_in_progress_at' => \DB::raw("CASE WHEN marking_safe_in_progress_at < '{$staleThreshold}' THEN NULL ELSE marking_safe_in_progress_at END"),
+          ]);
+
         $rescueRequests = RescueRequest::with(['building', 'floor', 'room', 'requester', 'rescuer'])
             ->where(function($query) use ($rescuerId) {
                 $query->where('assigned_rescuer', $rescuerId)

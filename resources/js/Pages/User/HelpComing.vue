@@ -2208,6 +2208,13 @@ onUnmounted(() => {
     document.removeEventListener('mouseup', endSlide);
     document.removeEventListener('touchmove', handleSlide);
     document.removeEventListener('touchend', endSlide);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+    // Clear any stuck considering states on unmount
+    if (rescue.value?.id) {
+        clearCancelInProgress(rescue.value.id).catch(() => {});
+        clearMarkingSafeInProgress(rescue.value.id).catch(() => {});
+    }
 });
 
 // Watch hold-active to set/clear cancel-in-progress status for rescuer awareness
@@ -2217,12 +2224,30 @@ watch(cancelHoldActive, async (newValue) => {
         if (newValue) {
             await setCancelInProgress(rescue.value.id);
             console.log('Cancel-in-progress status set (hold started)');
+        } else {
+            // Clear cancel-in-progress immediately when user releases the hold button
+            await clearCancelInProgress(rescue.value.id);
+            console.log('Cancel-in-progress status cleared (hold released)');
         }
-        // We clear cancel-in-progress when the flow is fully reset (closeSlideCancelOverlay / closeSafetyCheck)
     } catch (err) {
         console.warn('Failed to update cancel-in-progress status:', err);
     }
 });
+
+// Safety net: clear considering states when page visibility changes or app goes to background
+const handleVisibilityChange = () => {
+    if (document.hidden && rescue.value?.id) {
+        // Page hidden (app backgrounded, tab switched, etc.) — clear any active considering states
+        if (cancelHoldActive.value) {
+            endCancelHold();
+        }
+        if (isSliding.value) {
+            resetSlide();
+            clearMarkingSafeInProgress(rescue.value.id).catch(() => {});
+        }
+    }
+};
+document.addEventListener('visibilitychange', handleVisibilityChange);
 
 const fetchRescueData = async (silent = false) => {
     if (!silent) loading.value = true;
