@@ -83,15 +83,37 @@ class PushNotificationService
         $subscriptions = PushSubscription::whereIn('user_id', $userIds)->get();
         
         Log::info('Found subscriptions', ['count' => $subscriptions->count()]);
-        
+
+        // Separate web push subscriptions from native FCM subscriptions
+        $webSubscriptions = $subscriptions->filter(function ($sub) {
+            return $sub->content_encoding !== 'fcm-native';
+        });
+        $nativeSubscriptions = $subscriptions->filter(function ($sub) {
+            return $sub->content_encoding === 'fcm-native';
+        });
+
+        Log::info('Subscription breakdown', [
+            'web' => $webSubscriptions->count(),
+            'native_fcm' => $nativeSubscriptions->count(),
+        ]);
+
+        // Native FCM tokens are handled by Firebase Cloud Functions (functions/index.js)
+        // They read from Firestore directly, so we only handle web push here
+        if ($nativeSubscriptions->isNotEmpty()) {
+            Log::info('Native FCM subscriptions will be handled by Firebase Cloud Functions', [
+                'count' => $nativeSubscriptions->count(),
+            ]);
+        }
+
         $results = [
             'success' => 0,
             'failed' => 0,
             'total' => $subscriptions->count(),
+            'native_skipped' => $nativeSubscriptions->count(),
         ];
 
-        if ($subscriptions->isEmpty()) {
-            Log::warning('No push subscriptions found for users', ['user_ids' => $userIds]);
+        if ($webSubscriptions->isEmpty()) {
+            Log::info('No web push subscriptions to send via VAPID', ['user_ids' => $userIds]);
             return $results;
         }
 
@@ -104,7 +126,7 @@ class PushNotificationService
         $payloadJson = json_encode($payload);
         Log::info('Payload JSON', ['payload' => $payloadJson, 'length' => strlen($payloadJson)]);
 
-        foreach ($subscriptions as $subscription) {
+        foreach ($webSubscriptions as $subscription) {
             try {
                 Log::info('Processing subscription', [
                     'id' => $subscription->id,

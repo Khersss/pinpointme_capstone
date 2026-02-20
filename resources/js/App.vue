@@ -5,15 +5,29 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, watch } from 'vue';
 import { useFirebaseFCM } from '@/Composables/useFirebaseFCM';
 
 // Initialize Firebase FCM for authenticated users
 const { initializeFCM, userId } = useFirebaseFCM();
 
-// Prevent page scrolling/dragging - only allow scroll inside v-main
+// Watch for user authentication changes (e.g., after login redirect)
+watch(userId, (newUserId) => {
+    if (newUserId) {
+        console.log('[App.vue] User authenticated via watch, initializing FCM...');
+        initializeFCM();
+    }
+}, { immediate: true });
+
+// Setup everything on mount
 onMounted(() => {
-    // Prevent wheel scroll on body
+    // Initialize FCM for already authenticated users
+    if (userId.value) {
+        console.log('[App.vue] User authenticated on mount, initializing FCM...');
+        initializeFCM();
+    }
+    
+    // Prevent page scrolling/dragging - only allow scroll inside v-main
     const preventBodyScroll = (e) => {
         // Allow scroll if target is inside v-main or scrollable container
         let target = e.target;

@@ -6,7 +6,7 @@
 
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
-import { initializeFCMForUser } from '@/Utilities/firebase';
+import { initializeFCMForUser, storeUserFCMToken } from '@/Utilities/firebase';
 
 // ============================================================
 // NATIVE (Capacitor) Push Notifications
@@ -33,7 +33,7 @@ async function initializeNativePush() {
         PushNotifications.addListener('registration', async (token) => {
             console.log('[Push] Native FCM token received:', token.value);
 
-            // Send FCM token to your server
+            // Send FCM token to your Laravel server (MySQL backup)
             try {
                 const csrfMeta = document.querySelector('meta[name="csrf-token"]');
                 const csrfToken = csrfMeta ? csrfMeta.content : '';
@@ -51,9 +51,32 @@ async function initializeNativePush() {
                         platform: 'android',
                     }),
                 });
-                console.log('[Push] Native FCM token sent to server');
+                console.log('[Push] Native FCM token sent to Laravel server');
             } catch (error) {
                 console.error('[Push] Error sending native FCM token to server:', error);
+            }
+
+            // CRITICAL: Also store FCM token in Firestore so Cloud Functions can find it
+            // This is what actually enables push notifications when app is closed/killed
+            try {
+                const userDataStr = localStorage.getItem('userData');
+                if (userDataStr) {
+                    const userData = JSON.parse(userDataStr);
+                    if (userData && userData.id) {
+                        const stored = await storeUserFCMToken(userData.id, token.value);
+                        if (stored) {
+                            console.log('[Push] Native FCM token stored in Firestore for user:', userData.id);
+                        } else {
+                            console.warn('[Push] Failed to store native FCM token in Firestore');
+                        }
+                    } else {
+                        console.warn('[Push] No user ID found in localStorage for Firestore token storage');
+                    }
+                } else {
+                    console.warn('[Push] No userData in localStorage for Firestore token storage');
+                }
+            } catch (firestoreError) {
+                console.error('[Push] Error storing native FCM token in Firestore:', firestoreError);
             }
         });
 

@@ -1,8 +1,11 @@
 package com.pinpointme.app;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -43,6 +46,9 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Create notification channels for Android 8+ (required for notifications to display)
+        createNotificationChannels();
 
         // Register file chooser result handler
         fileChooserLauncher = registerForActivityResult(
@@ -187,6 +193,49 @@ public class MainActivity extends BridgeActivity {
         String imageFileName = "JPEG_" + timeStamp + "_";
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         return File.createTempFile(imageFileName, ".jpg", storageDir);
+    }
+
+    /**
+     * Create notification channels required for Android 8+ (API 26).
+     * Without these channels, FCM notifications will NOT display when the app is closed/killed.
+     * The channelId must match what's used in the FCM message payload (functions/index.js).
+     */
+    private void createNotificationChannels() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+
+            // Primary channel for rescue/emergency alerts (matches channelId in functions/index.js)
+            NotificationChannel rescueChannel = new NotificationChannel(
+                "rescue_alerts",
+                "Rescue Alerts",
+                NotificationManager.IMPORTANCE_HIGH
+            );
+            rescueChannel.setDescription("Emergency rescue and alert notifications");
+            rescueChannel.enableVibration(true);
+            rescueChannel.setVibrationPattern(new long[]{0, 500, 200, 500});
+            rescueChannel.enableLights(true);
+            rescueChannel.setShowBadge(true);
+            rescueChannel.setLockscreenVisibility(android.app.Notification.VISIBILITY_PUBLIC);
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .build();
+            rescueChannel.setSound(android.provider.Settings.System.DEFAULT_NOTIFICATION_URI, audioAttributes);
+            notificationManager.createNotificationChannel(rescueChannel);
+
+            // Default channel for general notifications
+            NotificationChannel defaultChannel = new NotificationChannel(
+                "default",
+                "General Notifications",
+                NotificationManager.IMPORTANCE_DEFAULT
+            );
+            defaultChannel.setDescription("General app notifications");
+            defaultChannel.enableVibration(true);
+            defaultChannel.setShowBadge(true);
+            notificationManager.createNotificationChannel(defaultChannel);
+
+            Log.d(TAG, "Notification channels created: rescue_alerts, default");
+        }
     }
 
     private void requestAppPermissions() {

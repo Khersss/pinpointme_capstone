@@ -1036,6 +1036,13 @@ const handleGoogleLogin = async () => {
             const data = await response.json();
             console.log('Native Google response:', JSON.stringify(data));
             if (data.success) {
+                // Initialize push notifications before redirecting (native Google login)
+                try {
+                    const pushResult = await initializePushNotifications();
+                    console.log('[Login/Google] Push notifications:', pushResult.success ? 'enabled' : pushResult.reason);
+                } catch (pushError) {
+                    console.warn('[Login/Google] Push init error:', pushError);
+                }
                 window.location.href = data.redirect || 'https://pinpointme.app/user/scanner';
             } else if (data.needs_verification) {
                 isGoogleLoading.value = false;
@@ -1231,14 +1238,17 @@ const handleLogin = async () => {
                     }
                 });
 
-                // Initialize Firebase FCM and set user as active
-                initializeFCMForUser(user.id).then(result => {
-                    if (result.success) {
-                        console.log('[Login] Firebase FCM initialized, user marked as active');
-                    } else {
-                        console.log('[Login] Firebase FCM not initialized:', result.error);
-                    }
-                });
+                // Initialize Firebase FCM for web users only
+                // On native, FCM token is already stored in Firestore by initializeNativePush()
+                if (!Capacitor.isNativePlatform()) {
+                    initializeFCMForUser(user.id).then(result => {
+                        if (result.success) {
+                            console.log('[Login] Firebase FCM initialized, user marked as active');
+                        } else {
+                            console.log('[Login] Firebase FCM not initialized:', result.error);
+                        }
+                    });
+                }
 
                 toastMessage.value = 'Login successful!';
                 toastColor.value = 'success';

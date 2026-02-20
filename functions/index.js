@@ -265,7 +265,7 @@ exports.sendNotificationsByRole = onCall({
 
         logger.info(`Found ${tokens.length} FCM tokens, sending notifications...`);
 
-        // Build the message payload (data-only for web push control)
+        // Build the message payload (with android notification for background/killed state)
         const message = {
             data: {
                 ...data,
@@ -274,6 +274,31 @@ exports.sendNotificationsByRole = onCall({
                 role: role,
                 timestamp: String(Date.now()),
             },
+            android: {
+                notification: {
+                    title: title,
+                    body: body,
+                    icon: 'ic_notification',
+                    color: '#1976D2',
+                    sound: 'default',
+                    priority: 'high',
+                    channelId: 'rescue_alerts',
+                },
+                priority: 'high',
+            },
+            apns: {
+                payload: {
+                    aps: {
+                        alert: {
+                            title: title,
+                            body: body,
+                        },
+                        sound: 'default',
+                        badge: 1,
+                        'content-available': 1,
+                    },
+                },
+            },
             webpush: {
                 headers: {
                     Urgency: 'high',
@@ -281,6 +306,9 @@ exports.sendNotificationsByRole = onCall({
                 data: {
                     title: title,
                     body: body,
+                },
+                fcmOptions: {
+                    link: data.click_action || '/',
                 },
             },
         };
