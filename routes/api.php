@@ -124,6 +124,7 @@ Route::post('/rescue-requests/{rescueRequest}/force-alert', [RescueRequestContro
 // Push Notification Routes
 Route::get('/push/vapid-public-key', [PushNotificationController::class, 'vapidPublicKey']);
 Route::post('/push/subscribe', [PushNotificationController::class, 'subscribe'])->middleware('web');
+Route::post('/push/subscribe-native', [PushNotificationController::class, 'subscribeNative'])->middleware('web');
 Route::post('/push/unsubscribe', [PushNotificationController::class, 'unsubscribe'])->middleware('web');
 Route::get('/push/test', [PushNotificationController::class, 'testNotification'])->middleware('web');
 Route::get('/push/status', [PushNotificationController::class, 'status'])->middleware('web');

@@ -209,4 +209,70 @@ class PushNotificationController extends Controller
             })
         ]);
     }
+
+    /**
+     * Store a native FCM token for push notifications (Android APK)
+     */
+    public function subscribeNative(Request $request)
+    {
+        Log::info('Native push subscription request received', [
+            'has_token' => !empty($request->token),
+            'platform' => $request->platform,
+        ]);
+
+        $request->validate([
+            'token' => 'required|string',
+            'platform' => 'required|string|in:android,ios',
+        ]);
+
+        $user = Auth::user();
+
+        if (!$user) {
+            Log::warning('Native push subscribe failed: no authenticated user');
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+
+        try {
+            // Store native FCM token as a push subscription
+            // Use a special endpoint format to distinguish from web push
+            $endpoint = 'fcm://' . $request->platform . '/' . $request->token;
+
+            $subscription = PushSubscription::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'endpoint' => $endpoint,
+                ],
+                [
+                    'p256dh_key' => 'native-fcm-token',
+                    'auth_key' => $request->token,
+                    'content_encoding' => 'fcm-native',
+                ]
+            );
+
+            Log::info('Native FCM token saved', [
+                'user_id' => $user->id,
+                'platform' => $request->platform,
+                'subscription_id' => $subscription->id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Native push subscription saved successfully',
+                'subscription_id' => $subscription->id,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to save native FCM token', [
+                'error' => $e->getMessage(),
+                'user_id' => $user->id,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save native push subscription',
+            ], 500);
+        }
+    }
 }

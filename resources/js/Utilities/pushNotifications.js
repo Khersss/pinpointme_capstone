@@ -1,7 +1,87 @@
 /**
  * Push Notification Utility for PinPointMe
  * Handles service worker registration, notification permissions, and push subscriptions
+ * Supports both Web Push (browser) and Capacitor Push Notifications (native APK)
  */
+
+import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
+import { initializeFCMForUser } from '@/Utilities/firebase';
+
+// ============================================================
+// NATIVE (Capacitor) Push Notifications
+// ============================================================
+
+async function initializeNativePush() {
+    console.log('[Push] Initializing native push notifications...');
+
+    try {
+        // Request permission
+        const permResult = await PushNotifications.requestPermissions();
+        console.log('[Push] Native permission result:', permResult.receive);
+
+        if (permResult.receive !== 'granted') {
+            console.warn('[Push] Native notification permission not granted');
+            return { success: false, reason: 'permission_denied' };
+        }
+
+        // Register for push notifications
+        await PushNotifications.register();
+        console.log('[Push] Native push registration initiated');
+
+        // Listen for registration success
+        PushNotifications.addListener('registration', async (token) => {
+            console.log('[Push] Native FCM token received:', token.value);
+
+            // Send FCM token to your server
+            try {
+                const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                const csrfToken = csrfMeta ? csrfMeta.content : '';
+
+                await fetch('/api/push/subscribe-native', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        token: token.value,
+                        platform: 'android',
+                    }),
+                });
+                console.log('[Push] Native FCM token sent to server');
+            } catch (error) {
+                console.error('[Push] Error sending native FCM token to server:', error);
+            }
+        });
+
+        // Listen for registration errors
+        PushNotifications.addListener('registrationError', (error) => {
+            console.error('[Push] Native registration error:', error);
+        });
+
+        // Listen for push notifications received while app is in foreground
+        PushNotifications.addListener('pushNotificationReceived', (notification) => {
+            console.log('[Push] Native notification received in foreground:', notification);
+        });
+
+        // Listen for push notification action (user tapped notification)
+        PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
+            console.log('[Push] Native notification tapped:', notification);
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error('[Push] Native push initialization error:', error);
+        return { success: false, reason: 'native_init_failed', error: error.message };
+    }
+}
+
+// ============================================================
+// WEB Push Notifications (original code)
+// ============================================================
 
 // Register the service worker
 export async function registerServiceWorker() {
@@ -247,6 +327,12 @@ export async function unsubscribeFromPush() {
 export async function initializePushNotifications() {
     console.log('[Push] Initializing push notifications...');
 
+    // Use native Capacitor Push Notifications for APK
+    if (Capacitor.isNativePlatform()) {
+        return await initializeNativePush();
+    }
+
+    // Web push for browser users
     if (!isPushSupported()) {
         console.warn('[Push] Push notifications are not supported in this browser');
         return { success: false, reason: 'unsupported' };
