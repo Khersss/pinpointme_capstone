@@ -786,9 +786,19 @@ const sendTextMessage = async () => {
     const content = messageInput.value.trim();
     if (!content || isSending.value) return;
 
+    console.log('[Chat] sendTextMessage called', { content: content.substring(0, 20), conversationId: conversation.value?.id, userId: currentUserId.value });
+
     isSending.value = true;
     const tempContent = content;
     messageInput.value = '';
+
+    // Safety timeout - reset isSending after 15 seconds no matter what
+    const safetyTimeout = setTimeout(() => {
+        if (isSending.value) {
+            console.warn('[Chat] Safety timeout: resetting isSending after 15s');
+            isSending.value = false;
+        }
+    }, 15000);
 
     // Optimistic update
     const tempMessage = {
@@ -803,11 +813,13 @@ const sendTextMessage = async () => {
     scrollToBottom();
 
     try {
+        console.log('[Chat] Calling sendMessage API...', { conversationId: conversation.value?.id });
         const response = await sendMessage(
             conversation.value.id,
             tempContent,
             currentUserId.value
         );
+        console.log('[Chat] sendMessage API response received', response);
 
         const data = response.data || response;
         
@@ -820,16 +832,20 @@ const sendTextMessage = async () => {
         // Immediately refresh messages for responsiveness
         setTimeout(() => fetchMessages(), 100);
 
-        // Notify the recipient if they're inactive
-        await notifyRecipientIfNeeded(tempContent, 'text');
+        // Notify the recipient if they're inactive (don't await - fire and forget)
+        notifyRecipientIfNeeded(tempContent, 'text').catch(err => {
+            console.warn('[Chat] notifyRecipientIfNeeded error (non-blocking):', err);
+        });
     } catch (error) {
-        console.error('Error sending message:', error);
+        console.error('[Chat] Error sending message:', error);
         // Remove temp message on error
         messages.value = messages.value.filter(m => m.id !== tempMessage.id);
         messageInput.value = tempContent; // Restore the message
         showSnackbar('Failed to send message', 'error');
     } finally {
+        clearTimeout(safetyTimeout);
         isSending.value = false;
+        console.log('[Chat] sendTextMessage completed, isSending reset to false');
     }
 };
 
@@ -905,6 +921,9 @@ const updateRecordingDuration = () => {
 
 const sendAudioMessage = async (audioBlob) => {
     isSending.value = true;
+    const safetyTimeout = setTimeout(() => {
+        if (isSending.value) { console.warn('[Chat] Safety timeout: resetting isSending'); isSending.value = false; }
+    }, 15000);
     
     try {
         const response = await sendMessageWithFile(
@@ -919,15 +938,14 @@ const sendAudioMessage = async (audioBlob) => {
         await nextTick();
         scrollToBottom();
 
-        // Immediately refresh messages to get latest state (improved responsiveness)
         setTimeout(() => fetchMessages(), 100);
 
-        // Notify the recipient if they're inactive
-        await notifyRecipientIfNeeded('🎤 Voice message', 'audio');
+        notifyRecipientIfNeeded('🎤 Voice message', 'audio').catch(err => console.warn('[Chat] notify error:', err));
     } catch (error) {
         console.error('Error sending audio:', error);
         showSnackbar('Failed to send voice message', 'error');
     } finally {
+        clearTimeout(safetyTimeout);
         isSending.value = false;
     }
 };
@@ -1040,6 +1058,9 @@ const handleFileUpload = async (event) => {
 
 const uploadFile = async (file) => {
     isSending.value = true;
+    const safetyTimeout = setTimeout(() => {
+        if (isSending.value) { console.warn('[Chat] Safety timeout: resetting isSending'); isSending.value = false; }
+    }, 15000);
     
     try {
         const response = await sendMessageWithFile(
@@ -1054,17 +1075,16 @@ const uploadFile = async (file) => {
         await nextTick();
         scrollToBottom();
 
-        // Immediately refresh messages for responsiveness
         setTimeout(() => fetchMessages(), 100);
 
-        // Notify the recipient if they're inactive
         const fileType = file.type?.startsWith('image/') ? 'image' : 'file';
         const notifyContent = fileType === 'image' ? '📷 Image' : `📎 ${file.name || 'File'}`;
-        await notifyRecipientIfNeeded(notifyContent, fileType);
+        notifyRecipientIfNeeded(notifyContent, fileType).catch(err => console.warn('[Chat] notify error:', err));
     } catch (error) {
         console.error('Error uploading file:', error);
         showSnackbar('Failed to send file', 'error');
     } finally {
+        clearTimeout(safetyTimeout);
         isSending.value = false;
     }
 };
