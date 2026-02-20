@@ -9,7 +9,7 @@
                 <!-- Page Header -->
                 <div class="page-header mb-4 mb-md-6">
                     <div class="page-header-content">
-                        <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold">Admin Profile</h1>
+                        <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold gradient-text">Admin Profile</h1>
                         <p class="text-grey mt-1 text-body-2">Manage your account settings</p>
                     </div>
                 </div>
@@ -17,7 +17,7 @@
                 <v-row>
                     <!-- Profile Card -->
                     <v-col cols="12" md="4">
-                        <v-card rounded="xl" elevation="2">
+                        <v-card rounded="lg" elevation="2">
                             <div class="profile-header-bg pa-6 text-center">
                                 <!-- Avatar with Edit Button -->
                                 <div class="position-relative d-inline-block">
@@ -55,7 +55,7 @@
                     <!-- Edit Profile Form -->
                     <v-col cols="12" md="8">
                         <!-- Personal Information -->
-                        <v-card rounded="xl" elevation="2" class="mb-4">
+                        <v-card rounded="lg" elevation="2" class="mb-4">
                             <v-card-title class="d-flex align-center pa-4">
                                 <v-avatar color="primary" size="40" class="mr-3">
                                     <v-icon color="white">mdi-account</v-icon>
@@ -156,7 +156,7 @@
 
         <!-- Profile Photo Dialog -->
         <v-dialog v-model="photoDialog" max-width="500">
-            <v-card rounded="xl">
+            <v-card rounded="lg">
                 <v-card-title class="pa-4">
                     <span class="font-weight-bold">Change Profile Photo</span>
                 </v-card-title>
@@ -557,6 +557,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Gradient Text */
+.gradient-text {
+    background: linear-gradient(135deg, #1976D2, #0D47A1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
 .page-header {
     display: flex;
     flex-wrap: wrap;
@@ -571,12 +579,12 @@ onMounted(() => {
 }
 
 .profile-header-bg {
-    background: linear-gradient(135deg, #3674B5 0%, #2196F3 100%);
+    background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
 }
 
 .avatar-ring {
     border: 3px solid white;
-    background: linear-gradient(135deg, #3674B5 0%, #2196F3 100%);
+    background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
 }
 
 .edit-avatar-btn {

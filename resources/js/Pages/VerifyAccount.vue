@@ -106,7 +106,7 @@
 
                             <!-- Password Step -->
                             <template v-else-if="step === 'password'">
-                                <v-card-text class="pa-6 pa-sm-8 text-center">
+                                <v-card-text class="pa-6 pa-sm-8">
                                     <!-- Back Button -->
                                     <div class="text-left mb-2">
                                         <v-btn icon variant="text" @click="step = 'otp'" class="back-btn" size="small">
@@ -114,118 +114,88 @@
                                         </v-btn>
                                     </div>
 
-                                    <!-- Lock Icon -->
-                                    <div class="lock-icon mb-5">
-                                        <div class="lock-circle">
-                                            <v-icon size="48" color="#1976D2">mdi-lock</v-icon>
-                                        </div>
-                                    </div>
-
-                                    <!-- Title -->
-                                    <h1 class="text-h5 text-sm-h4 font-weight-bold mb-2 title-text">Create Your Password</h1>
-                                    <p class="text-body-2 subtitle-text mb-6">
-                                        Set a secure password for your account
+                                    <p class="text-body-2 text-grey mb-4 text-center">
+                                        Create a new password for your account.
                                     </p>
 
                                     <!-- Password Form -->
                                     <v-form ref="passwordForm" @submit.prevent="changePassword">
                                         <v-text-field
                                             v-model="newPassword"
+                                            label="New Password"
                                             :type="showPassword ? 'text' : 'password'"
-                                            placeholder="Enter new password"
                                             variant="outlined"
-                                            :rules="passwordRules"
-                                            :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                                            density="comfortable"
+                                            prepend-inner-icon="mdi-lock"
+                                            :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
                                             @click:append-inner="showPassword = !showPassword"
-                                            class="mb-3 password-field"
-                                            hide-details="auto"
-                                            rounded="lg"
+                                            :rules="passwordRules"
+                                            class="mb-1"
                                         />
+
+                                        <!-- Password Requirements Checklist -->
+                                        <div class="password-requirements mb-4 px-2">
+                                            <p class="text-caption text-grey-darken-1 mb-2">Password must contain:</p>
+                                            <div class="requirements-grid">
+                                                <div class="requirement-item" :class="{ 'met': hasMinLength }">
+                                                    <v-icon size="14" :color="hasMinLength ? 'success' : 'grey-lighten-1'">
+                                                        {{ hasMinLength ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                                                    </v-icon>
+                                                    <span>At least 8 characters</span>
+                                                </div>
+                                                <div class="requirement-item" :class="{ 'met': hasUppercase }">
+                                                    <v-icon size="14" :color="hasUppercase ? 'success' : 'grey-lighten-1'">
+                                                        {{ hasUppercase ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                                                    </v-icon>
+                                                    <span>One uppercase letter (A-Z)</span>
+                                                </div>
+                                                <div class="requirement-item" :class="{ 'met': hasLowercase }">
+                                                    <v-icon size="14" :color="hasLowercase ? 'success' : 'grey-lighten-1'">
+                                                        {{ hasLowercase ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                                                    </v-icon>
+                                                    <span>One lowercase letter (a-z)</span>
+                                                </div>
+                                                <div class="requirement-item" :class="{ 'met': hasNumber }">
+                                                    <v-icon size="14" :color="hasNumber ? 'success' : 'grey-lighten-1'">
+                                                        {{ hasNumber ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                                                    </v-icon>
+                                                    <span>One number (0-9)</span>
+                                                </div>
+                                                <div class="requirement-item" :class="{ 'met': hasSpecial }">
+                                                    <v-icon size="14" :color="hasSpecial ? 'success' : 'grey-lighten-1'">
+                                                        {{ hasSpecial ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                                                    </v-icon>
+                                                    <span>One special character (!@#$%...)</span>
+                                                </div>
+                                            </div>
+                                        </div>
 
                                         <v-text-field
                                             v-model="confirmPassword"
+                                            label="Confirm New Password"
                                             :type="showConfirmPassword ? 'text' : 'password'"
-                                            placeholder="Confirm new password"
                                             variant="outlined"
-                                            :rules="confirmPasswordRules"
-                                            :append-inner-icon="showConfirmPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                                            density="comfortable"
+                                            prepend-inner-icon="mdi-lock-check"
+                                            :append-inner-icon="showConfirmPassword ? 'mdi-eye-off' : 'mdi-eye'"
                                             @click:append-inner="showConfirmPassword = !showConfirmPassword"
-                                            class="mb-4 password-field"
-                                            hide-details="auto"
-                                            rounded="lg"
+                                            :rules="confirmPasswordRules"
+                                            :error="!!confirmPassword && confirmPassword !== newPassword"
                                         />
-
-                                        <!-- Password Strength Indicator -->
-                                        <div class="password-requirements mb-5">
-                                            <p class="text-body-2 text-grey-darken-1 mb-2 text-left">Password Requirements:</p>
-                                            <div class="d-flex flex-wrap gap-2">
-                                                <v-chip 
-                                                    :color="hasMinLength ? 'success' : 'grey'" 
-                                                    :variant="hasMinLength ? 'flat' : 'outlined'"
-                                                    size="small"
-                                                >
-                                                    <v-icon start size="14">{{ hasMinLength ? 'mdi-check' : 'mdi-circle-outline' }}</v-icon>
-                                                    8+ characters
-                                                </v-chip>
-                                                <v-chip 
-                                                    :color="hasUppercase ? 'success' : 'grey'" 
-                                                    :variant="hasUppercase ? 'flat' : 'outlined'"
-                                                    size="small"
-                                                >
-                                                    <v-icon start size="14">{{ hasUppercase ? 'mdi-check' : 'mdi-circle-outline' }}</v-icon>
-                                                    Uppercase
-                                                </v-chip>
-                                                <v-chip 
-                                                    :color="hasLowercase ? 'success' : 'grey'" 
-                                                    :variant="hasLowercase ? 'flat' : 'outlined'"
-                                                    size="small"
-                                                >
-                                                    <v-icon start size="14">{{ hasLowercase ? 'mdi-check' : 'mdi-circle-outline' }}</v-icon>
-                                                    Lowercase
-                                                </v-chip>
-                                                <v-chip 
-                                                    :color="hasNumber ? 'success' : 'grey'" 
-                                                    :variant="hasNumber ? 'flat' : 'outlined'"
-                                                    size="small"
-                                                >
-                                                    <v-icon start size="14">{{ hasNumber ? 'mdi-check' : 'mdi-circle-outline' }}</v-icon>
-                                                    Number
-                                                </v-chip>
-                                                <v-chip 
-                                                    :color="passwordsMatch ? 'success' : 'grey'" 
-                                                    :variant="passwordsMatch ? 'flat' : 'outlined'"
-                                                    size="small"
-                                                >
-                                                    <v-icon start size="14">{{ passwordsMatch ? 'mdi-check' : 'mdi-circle-outline' }}</v-icon>
-                                                    Passwords match
-                                                </v-chip>
-                                            </div>
-                                        </div>
-
-                                        <!-- Password Strength Bar -->
-                                        <div class="mb-5">
-                                            <div class="d-flex justify-space-between mb-1">
-                                                <span class="text-caption text-grey">Password Strength</span>
-                                                <span class="text-caption" :class="`text-${passwordStrengthColor}`">{{ passwordStrengthText }}</span>
-                                            </div>
-                                            <v-progress-linear
-                                                :model-value="passwordStrength"
-                                                :color="passwordStrengthColor"
-                                                height="6"
-                                                rounded
-                                            />
-                                        </div>
+                                        <p v-if="confirmPassword && confirmPassword === newPassword" class="text-caption text-success mt-1 px-2">
+                                            <v-icon size="14" color="success">mdi-check-circle</v-icon>
+                                            Passwords match
+                                        </p>
 
                                         <!-- Activate Account Button -->
                                         <v-btn
                                             block
                                             type="submit"
-                                            size="x-large"
-                                            color="#1976D2"
+                                            size="large"
+                                            color="primary"
                                             :loading="loading"
                                             :disabled="!isPasswordValid || loading"
-                                            class="activate-btn rounded-pill text-white"
-                                            elevation="2"
+                                            class="mt-4"
                                         >
                                             <v-icon start>mdi-account-check</v-icon>
                                             Activate Account
@@ -380,6 +350,7 @@ const hasMinLength = computed(() => newPassword.value.length >= 8);
 const hasUppercase = computed(() => /[A-Z]/.test(newPassword.value));
 const hasLowercase = computed(() => /[a-z]/.test(newPassword.value));
 const hasNumber = computed(() => /[0-9]/.test(newPassword.value));
+const hasSpecial = computed(() => /[!@#$%^&*(),.?":{}|<>\-_=+\[\];'\\`~]/.test(newPassword.value));
 const passwordsMatch = computed(() => newPassword.value && newPassword.value === confirmPassword.value);
 
 const isPasswordValid = computed(() => 
@@ -387,15 +358,17 @@ const isPasswordValid = computed(() =>
     hasUppercase.value && 
     hasLowercase.value && 
     hasNumber.value && 
+    hasSpecial.value &&
     passwordsMatch.value
 );
 
 const passwordStrength = computed(() => {
     let strength = 0;
-    if (hasMinLength.value) strength += 25;
-    if (hasUppercase.value) strength += 25;
-    if (hasLowercase.value) strength += 25;
-    if (hasNumber.value) strength += 25;
+    if (hasMinLength.value) strength += 20;
+    if (hasUppercase.value) strength += 20;
+    if (hasLowercase.value) strength += 20;
+    if (hasNumber.value) strength += 20;
+    if (hasSpecial.value) strength += 20;
     return strength;
 });
 
@@ -419,6 +392,7 @@ const passwordRules = [
     v => /[A-Z]/.test(v) || 'Password must contain an uppercase letter',
     v => /[a-z]/.test(v) || 'Password must contain a lowercase letter',
     v => /[0-9]/.test(v) || 'Password must contain a number',
+    v => /[!@#$%^&*(),.?":{}|<>\-_=+\[\];'\\`~]/.test(v) || 'Password must contain a special character',
 ];
 
 const confirmPasswordRules = [
@@ -820,7 +794,32 @@ onUnmounted(() => {
 
 /* Password Requirements */
 .password-requirements {
-    text-align: left;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.requirements-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.requirement-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: #9e9e9e;
+    transition: color 0.2s ease;
+}
+
+.requirement-item.met {
+    color: #4caf50;
+}
+
+.requirement-item span {
+    line-height: 1.2;
 }
 
 .gap-2 {

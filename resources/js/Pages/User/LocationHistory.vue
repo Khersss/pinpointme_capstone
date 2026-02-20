@@ -189,6 +189,8 @@
         
         <!-- Bottom Navigation for Mobile -->
         <UserBottomNav :notification-count="0" :message-count="unreadCount" />
+
+
     </v-app>
 </template>
 
@@ -200,6 +202,7 @@ import { useUnreadMessages } from '@/Composables/useUnreadMessages';
 import UserMenu from '@/Components/Pages/User/Menu/UserMenu.vue';
 import UserAppBar from '@/Components/Pages/User/Menu/UserAppBar.vue';
 import UserBottomNav from '@/Components/Pages/User/Menu/UserBottomNav.vue';
+
 
 // State
 const drawer = ref(false);
@@ -465,8 +468,6 @@ const viewLocation = (location) => {
 <style scoped>
 /* Main Content */
 .main-content {
-    height: 100%;
-    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -962,7 +963,7 @@ const viewLocation = (location) => {
     .main-content :deep(.v-container) {
         max-width: 1200px;
         margin: 0 auto;
-        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 180px) !important;
+        padding-bottom: 130px !important;
     }
     
     .history-cards-container {

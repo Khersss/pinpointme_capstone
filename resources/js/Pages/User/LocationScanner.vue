@@ -812,6 +812,8 @@
 
         <!-- Guided Wizard for New Users -->
         <UserGuideWizard ref="guideWizardRef" />
+
+
     </v-app>
 </template>
 
@@ -837,6 +839,7 @@ import UserAppBar from '@/Components/Pages/User/Menu/UserAppBar.vue';
 import UserBottomNav from '@/Components/Pages/User/Menu/UserBottomNav.vue';
 import NotificationPopup from '@/Components/NotificationPopup.vue';
 import UserGuideWizard from '@/Components/UserGuideWizard.vue';
+
 
 // Get Inertia page for auth
 const page = usePage();

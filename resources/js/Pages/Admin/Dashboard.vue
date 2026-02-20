@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <v-app class="bg-grey-lighten-4">
         <AdminAppBar activePage="dashboard" />
 
@@ -18,7 +18,7 @@
                         item-value="value"
                         variant="outlined"
                         density="compact"
-                        rounded="xl"
+                        rounded="lg"
                         class="time-filter-select"
                         hide-details
                         @update:model-value="refreshData"
@@ -28,7 +28,7 @@
                 <!-- Stats Cards with Gradient Backgrounds -->
                 <v-row>
                     <v-col cols="12" sm="6" lg="3">
-                        <v-card class="stat-card stat-card-primary stat-card-clickable" rounded="xl" elevation="4" @click="openStatDialog('total')">
+                        <v-card class="stat-card stat-card-primary stat-card-clickable" rounded="lg" elevation="4" @click="openStatDialog('total')">
                             <div class="stat-card-overlay"></div>
                             <v-card-text class="position-relative">
                                 <div class="d-flex align-center justify-space-between">
@@ -48,7 +48,7 @@
                         </v-card>
                     </v-col>
                     <v-col cols="12" sm="6" lg="3">
-                        <v-card class="stat-card stat-card-warning stat-card-clickable" rounded="xl" elevation="4" @click="openStatDialog('pending')">
+                        <v-card class="stat-card stat-card-warning stat-card-clickable" rounded="lg" elevation="4" @click="openStatDialog('pending')">
                             <div class="stat-card-overlay"></div>
                             <v-card-text class="position-relative">
                                 <div class="d-flex align-center justify-space-between">
@@ -68,7 +68,7 @@
                         </v-card>
                     </v-col>
                     <v-col cols="12" sm="6" lg="3">
-                        <v-card class="stat-card stat-card-info stat-card-clickable" rounded="xl" elevation="4" @click="openStatDialog('in_progress')">
+                        <v-card class="stat-card stat-card-info stat-card-clickable" rounded="lg" elevation="4" @click="openStatDialog('in_progress')">
                             <div class="stat-card-overlay"></div>
                             <v-card-text class="position-relative">
                                 <div class="d-flex align-center justify-space-between">
@@ -88,7 +88,7 @@
                         </v-card>
                     </v-col>
                     <v-col cols="12" sm="6" lg="3">
-                        <v-card class="stat-card stat-card-success stat-card-clickable" rounded="xl" elevation="4" @click="openStatDialog('completed')">
+                        <v-card class="stat-card stat-card-success stat-card-clickable" rounded="lg" elevation="4" @click="openStatDialog('completed')">
                             <div class="stat-card-overlay"></div>
                             <v-card-text class="position-relative">
                                 <div class="d-flex align-center justify-space-between">
@@ -108,7 +108,7 @@
                         </v-card>
                     </v-col>
                     <v-col cols="12" sm="6" lg="3">
-                        <v-card class="stat-card stat-card-error stat-card-clickable" rounded="xl" elevation="4" @click="openStatDialog('cancelled')">
+                        <v-card class="stat-card stat-card-error stat-card-clickable" rounded="lg" elevation="4" @click="openStatDialog('cancelled')">
                             <div class="stat-card-overlay"></div>
                             <v-card-text class="position-relative">
                                 <div class="d-flex align-center justify-space-between">
@@ -132,7 +132,7 @@
                 <!-- Rescuer Status Cards -->
                 <v-row class="mt-4">
                     <v-col cols="12">
-                        <v-card rounded="xl" elevation="2">
+                        <v-card rounded="lg" elevation="2">
                             <v-card-title class="d-flex align-center pa-4">
                                 <v-avatar color="primary" size="40" class="mr-3">
                                     <v-icon color="white">mdi-lifebuoy</v-icon>
@@ -187,7 +187,7 @@
                 <v-row class="mt-4">
                     <!-- Rescues by Building -->
                     <v-col cols="12" md="6">
-                        <v-card rounded="xl" height="100%" elevation="2">
+                        <v-card rounded="lg" height="100%" elevation="2">
                             <v-card-title class="d-flex align-center pa-4">
                                 <v-avatar color="info" size="40" class="mr-3">
                                     <v-icon color="white">mdi-office-building</v-icon>
@@ -224,7 +224,7 @@
                                         </template>
                                     </v-list-item>
                                 </v-list>
-                                <v-alert v-else type="info" variant="tonal" rounded="xl">
+                                <v-alert v-else type="info" variant="tonal" rounded="lg">
                                     <v-icon start>mdi-information</v-icon>
                                     No rescue data available for this period.
                                 </v-alert>
@@ -234,7 +234,7 @@
 
                     <!-- User Statistics -->
                     <v-col cols="12" md="6">
-                        <v-card rounded="xl" height="100%" elevation="2">
+                        <v-card rounded="lg" height="100%" elevation="2">
                             <v-card-title class="d-flex align-center pa-4">
                                 <v-avatar color="purple" size="40" class="mr-3">
                                     <v-icon color="white">mdi-account-multiple</v-icon>
@@ -253,7 +253,7 @@
                                 </div>
                                 <v-row class="text-center">
                                     <v-col cols="4">
-                                        <v-card class="pa-3 bg-blue-lighten-5" rounded="xl" flat>
+                                        <v-card class="pa-3 bg-blue-lighten-5" rounded="lg" flat>
                                             <v-avatar color="blue" size="36" class="mb-2">
                                                 <v-icon color="white" size="20">mdi-school</v-icon>
                                             </v-avatar>
@@ -262,7 +262,7 @@
                                         </v-card>
                                     </v-col>
                                     <v-col cols="4">
-                                        <v-card class="pa-3 bg-purple-lighten-5" rounded="xl" flat>
+                                        <v-card class="pa-3 bg-purple-lighten-5" rounded="lg" flat>
                                             <v-avatar color="purple" size="36" class="mb-2">
                                                 <v-icon color="white" size="20">mdi-human-male-board</v-icon>
                                             </v-avatar>
@@ -271,7 +271,7 @@
                                         </v-card>
                                     </v-col>
                                     <v-col cols="4">
-                                        <v-card class="pa-3 bg-teal-lighten-5" rounded="xl" flat>
+                                        <v-card class="pa-3 bg-teal-lighten-5" rounded="lg" flat>
                                             <v-avatar color="teal" size="36" class="mb-2">
                                                 <v-icon color="white" size="20">mdi-briefcase</v-icon>
                                             </v-avatar>
@@ -288,14 +288,14 @@
                 <!-- Recent Alerts -->
                 <v-row class="mt-4">
                     <v-col cols="12">
-                        <v-card rounded="xl" elevation="2">
+                        <v-card rounded="lg" elevation="2">
                             <v-card-title class="d-flex align-center pa-4">
                                 <v-avatar color="error" size="40" class="mr-3">
                                     <v-icon color="white">mdi-bell-alert</v-icon>
                                 </v-avatar>
                                 <span class="font-weight-bold">Recent Rescue Alerts</span>
                                 <v-spacer />
-                                <v-btn variant="tonal" color="primary" href="/admin/reports" rounded="xl" size="small">
+                                <v-btn variant="tonal" color="primary" href="/admin/reports" rounded="lg" size="small">
                                     <v-icon start size="18">mdi-arrow-right</v-icon>
                                     View All
                                 </v-btn>
@@ -315,7 +315,7 @@
                                     </template>
                                     <template v-slot:item.urgency_level="{ item }">
                                         <v-chip :color="getUrgencyColor(item.urgency_level)" size="small" variant="outlined">
-                                            {{ item.urgency_level || 'Medium' }}
+                                            {{ item.urgency_level || 'Low' }}
                                         </v-chip>
                                     </template>
                                     <template v-slot:item.created_at="{ item }">
@@ -331,7 +331,7 @@
 
         <!-- Stat Detail Dialog -->
         <v-dialog v-model="statDialog.show" :max-width="isMobile ? '100%' : 640" scrollable>
-            <v-card rounded="xl" class="stat-dialog-card">
+            <v-card rounded="lg" class="stat-dialog-card">
                 <!-- Dialog Header -->
                 <div class="stat-dialog-header" :class="`stat-dialog-header-${statDialog.type}`">
                     <div class="d-flex align-center">
@@ -370,7 +370,7 @@
                         <div class="d-flex align-center justify-space-between mb-2">
                             <div class="d-flex align-center">
                                 <v-chip :color="getUrgencyColor(item.urgency_level)" size="x-small" variant="flat" class="mr-2 font-weight-bold">
-                                    {{ item.urgency_level || 'Medium' }}
+                                    {{ item.urgency_level || 'Low' }}
                                 </v-chip>
                                 <span class="text-body-2 font-weight-bold text-grey-darken-3">{{ item.rescue_code }}</span>
                             </div>
@@ -410,16 +410,18 @@
                 <!-- Footer -->
                 <v-divider></v-divider>
                 <v-card-actions class="pa-3 justify-end">
-                    <v-btn variant="tonal" color="primary" size="small" rounded="xl" href="/admin/reports">
+                    <v-btn variant="tonal" color="primary" size="small" rounded="lg" href="/admin/reports">
                         <v-icon start size="16">mdi-file-chart</v-icon>
                         View Full Report
                     </v-btn>
-                    <v-btn variant="text" size="small" rounded="xl" @click="statDialog.show = false">
+                    <v-btn variant="text" size="small" rounded="lg" @click="statDialog.show = false">
                         Close
                     </v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
+        
+
     </v-app>
 </template>
 
@@ -427,6 +429,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useDisplay } from 'vuetify';
 import AdminAppBar from '@/Components/AdminAppBar.vue';
+
 import { getAllRescueRequests } from '@/Composables/useApi';
 
 const { mobile } = useDisplay();
@@ -503,7 +506,7 @@ const refreshData = async () => {
     }
 };
 
-// ── Stat Card Detail Dialog ──
+// -- Stat Card Detail Dialog --
 const statDialog = ref({
     show: false,
     type: 'total',
@@ -561,11 +564,11 @@ const openStatDialog = async (type) => {
             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
             .map(r => ({
                 id: r.id,
-                rescue_code: r.rescue_code || '—',
+                rescue_code: r.rescue_code || '�',
                 status: r.status,
                 urgency_level: r.urgency_level,
                 requester_name: r.firstName ? `${r.firstName} ${r.lastName || ''}`.trim() : 'Anonymous',
-                location: [r.building?.name, r.floor?.floor_name, r.room?.room_name].filter(Boolean).join(' › ') || 'Unknown',
+                location: [r.building?.name, r.floor?.floor_name, r.room?.room_name].filter(Boolean).join(' � ') || 'Unknown',
                 rescuer_name: r.rescuer ? `${r.rescuer.first_name || ''} ${r.rescuer.last_name || ''}`.trim() : null,
                 created_at: r.created_at,
                 cancellation_reason: r.cancellation_reason || null,
@@ -603,7 +606,7 @@ const getUrgencyColor = (urgency) => {
         'Medium': 'warning',
         'Low': 'success'
     };
-    return colors[urgency] || 'grey';
+    return colors[urgency] || 'success';
 };
 
 const getBuildingColor = (index) => {
@@ -681,7 +684,7 @@ const formatDate = (dateString) => {
     transform: translateY(-2px) !important;
 }
 
-/* ── Stat Dialog ── */
+/* -- Stat Dialog -- */
 .stat-dialog-card {
     overflow: hidden;
 }

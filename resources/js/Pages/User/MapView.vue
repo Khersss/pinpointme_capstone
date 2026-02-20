@@ -255,6 +255,8 @@
         
         <!-- Bottom Navigation (Mobile/Tablet only) -->
         <UserBottomNav :notification-count="1" :message-count="unreadCount" />
+
+
     </v-app>
 </template>
 
@@ -266,6 +268,7 @@ import { useUnreadMessages } from '@/Composables/useUnreadMessages';
 import UserMenu from '@/Components/Pages/User/Menu/UserMenu.vue';
 import UserAppBar from '@/Components/Pages/User/Menu/UserAppBar.vue';
 import UserBottomNav from '@/Components/Pages/User/Menu/UserBottomNav.vue';
+
 
 const props = defineProps({
     code: {
@@ -712,7 +715,7 @@ onMounted(async () => {
 
 /* Main Content */
 .map-main {
-    min-height: 100vh;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
 }
 
 .loading-container {
@@ -1474,7 +1477,7 @@ onMounted(async () => {
     }
     
     .map-main {
-        padding-bottom: 40px;
+        padding-bottom: 0;
     }
     
     .map-container {

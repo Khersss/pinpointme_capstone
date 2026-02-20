@@ -164,7 +164,7 @@ class AdminController extends Controller
         // Get recent audit trail for users
         $auditTrail = AuditTrail::where('entity_type', 'user')
             ->orderBy('created_at', 'desc')
-            ->take(20)
+            ->take(50)
             ->get();
 
         if ($request->expectsJson() || $request->is('api/*')) {
@@ -229,7 +229,7 @@ class AdminController extends Controller
         // Get recent audit trail for rescuers
         $auditTrail = AuditTrail::where('entity_type', 'rescuer')
             ->orderBy('created_at', 'desc')
-            ->take(20)
+            ->take(50)
             ->get();
 
         if ($request->expectsJson() || $request->is('api/*')) {
@@ -391,8 +391,8 @@ class AdminController extends Controller
     public function storeUser(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'first_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-ZñÑ\s\-\.\,\']+$/'],
+            'last_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-ZñÑ\s\-\.\,\']+$/'],
             'email' => 'required|email|unique:users,email',
             'role' => 'required|in:student,faculty,staff',
             'phone' => 'nullable|string|regex:/^09[0-9]{9}$/|size:11',
@@ -529,11 +529,11 @@ class AdminController extends Controller
         $user = User::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'first_name' => 'sometimes|string|max:255',
-            'last_name' => 'sometimes|string|max:255',
+            'first_name' => ['sometimes', 'string', 'max:255', 'regex:/^[a-zA-ZñÑ\s\-\.\,\']+$/'],
+            'last_name' => ['sometimes', 'string', 'max:255', 'regex:/^[a-zA-ZñÑ\s\-\.\,\']+$/'],
             'email' => 'sometimes|email|unique:users,email,' . $id,
             'role' => 'sometimes|in:student,faculty,staff,rescuer',
-            'status' => 'sometimes|string|in:available,on_rescue,off_duty,unavailable,pending,active',
+            'status' => 'sometimes|string|in:available,on_rescue,off_duty,unavailable,pending,active,inactive',
             'phone' => 'nullable|string|regex:/^09[0-9]{9}$/|size:11',
             'phone_number' => 'nullable|string|regex:/^09[0-9]{9}$/|size:11',
             'contact_number' => 'nullable|string|regex:/^09[0-9]{9}$/|size:11',
@@ -545,6 +545,14 @@ class AdminController extends Controller
 
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        // Block setting status to on_rescue manually (auto-set only)
+        if ($request->status === 'on_rescue' && $user->status !== 'on_rescue') {
+            return response()->json([
+                'success' => false,
+                'errors' => ['status' => ['Cannot manually set status to "On Rescue". This status is set automatically when user accepts a rescue.']]
+            ], 422);
         }
 
         // Handle phone field from different sources (phone, phone_number, contact_number)
@@ -583,7 +591,23 @@ class AdminController extends Controller
             $updateData['phone'] = $phoneValue;
         }
         
+        // Track what fields actually changed for audit trail
+        $changedFields = [];
+        $oldValues = [];
+        $newValues = [];
+        
+        foreach ($updateData as $field => $value) {
+            if ($user->$field != $value) {
+                $changedFields[] = $field;
+                $oldValues[$field] = $user->$field;
+                $newValues[$field] = $value;
+            }
+        }
+        
         $user->update($updateData);
+
+        // Build detailed description based on what changed
+        $description = $this->buildUpdateDescription($user, $changedFields);
 
         // Record audit trail
         AuditTrail::create([
@@ -591,10 +615,54 @@ class AdminController extends Controller
             'action' => 'update',
             'entity_type' => $user->role === 'rescuer' ? 'rescuer' : 'user',
             'entity_id' => $user->id,
-            'description' => "Updated user: {$user->first_name} {$user->last_name}",
+            'description' => $description,
+            'old_values' => !empty($oldValues) ? $oldValues : null,
+            'new_values' => !empty($newValues) ? $newValues : null,
+            'ip_address' => $request->ip(),
         ]);
 
         return response()->json(['success' => true, 'data' => $user]);
+    }
+
+    /**
+     * Build a detailed description for user update audit trail
+     */
+    private function buildUpdateDescription($user, array $changedFields): string
+    {
+        $name = "{$user->first_name} {$user->last_name}";
+        
+        if (empty($changedFields)) {
+            return "No changes made to {$name}";
+        }
+
+        // Group fields into categories for readable descriptions
+        $contactFields = ['phone', 'email'];
+        $personalFields = ['first_name', 'last_name'];
+        $idFields = ['student_id', 'faculty_id', 'staff_id', 'rescuer_id'];
+        
+        $categories = [];
+        
+        if (!empty(array_intersect($changedFields, $personalFields))) {
+            $categories[] = 'name';
+        }
+        if (!empty(array_intersect($changedFields, $contactFields))) {
+            $categories[] = 'contact info';
+        }
+        if (in_array('status', $changedFields)) {
+            $categories[] = 'status';
+        }
+        if (in_array('role', $changedFields)) {
+            $categories[] = 'role';
+        }
+        if (!empty(array_intersect($changedFields, $idFields))) {
+            $categories[] = 'ID number';
+        }
+        
+        if (empty($categories)) {
+            $categories = $changedFields; // fallback to raw field names
+        }
+        
+        return "Updated " . implode(', ', $categories) . " for {$name}";
     }
 
     /**
@@ -626,8 +694,8 @@ class AdminController extends Controller
     public function storeRescuer(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'first_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Zñ\u00d1\s\-\.\,\']+$/'],
+            'last_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Zñ\u00d1\s\-\.\,\']+$/'],
             'email' => 'required|email|unique:users,email',
             'phone' => 'nullable|string|regex:/^09[0-9]{9}$/|size:11',
             'rescuer_id' => 'required|string|size:9|regex:/^[0-9]{9}$/',

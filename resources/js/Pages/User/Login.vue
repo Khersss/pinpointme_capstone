@@ -64,7 +64,6 @@
                                     closable
                                     @click:close="error = ''"
                                 >
-                                    <v-icon left color="error" class="mr-2">mdi-alert-circle</v-icon>
                                     <span>{{ error }}</span>
                                 </v-alert>
 
@@ -116,6 +115,7 @@
                                     prepend-inner-icon="mdi-email"
                                     :rules="[rules.required, rules.email]"
                                     :disabled="isLoading"
+                                    @input="filterLoginEmailInput"
                                     class="mb-1"
                                 />
 
@@ -130,6 +130,7 @@
                                     @click:append-inner="showPassword = !showPassword"
                                     :rules="[rules.required]"
                                     :disabled="isLoading"
+                                    @input="filterLoginPasswordInput"
                                 />
                                 <div class="d-flex justify-end mb-2">
                                     <v-btn variant="text" color="primary" size="small" @click="showForgotPassword = true" class="pa-0">
@@ -226,6 +227,7 @@
                                     prepend-inner-icon="mdi-email"
                                     :rules="[rules.required, rules.email]"
                                     :disabled="forgotPasswordLoading"
+                                    @input="filterForgotEmailInput"
                                     autofocus
                                 />
                             </v-form>
@@ -481,6 +483,7 @@
                                     prepend-inner-icon="mdi-email"
                                     :rules="[rules.required, rules.email, rules.sdcaEmail]"
                                     :disabled="registerLoading"
+                                    @input="filterRegisterEmailInput"
                                 />
                             </v-form>
                         </div>
@@ -744,6 +747,7 @@
                                     prepend-inner-icon="mdi-email"
                                     :rules="[rules.required, rules.email]"
                                     :disabled="rescuerLoading"
+                                    @input="filterRescuerEmailInput"
                                     hint="Any valid email address is accepted"
                                     persistent-hint
                                     class="mb-1"
@@ -765,12 +769,12 @@
                                 />
                                 <v-text-field
                                     v-model="rescuerForm.organization"
-                                    label="Organization / Affiliation"
+                                    label="Organization / Affiliation (Optional)"
                                     variant="outlined"
                                     density="comfortable"
                                     prepend-inner-icon="mdi-domain"
-                                    :rules="[rules.required]"
                                     :disabled="rescuerLoading"
+                                    @input="filterRescuerOrgInput"
                                     hint="e.g. BFP, Red Cross, MDRRMO, LGU"
                                     persistent-hint
                                 />
@@ -825,7 +829,6 @@
 
                         <!-- Step 3: Success -->
                         <div v-else-if="rescuerStep === 3" class="text-center py-4 success-state">
-                            <v-icon size="64" color="success" class="mb-4">mdi-check-circle</v-icon>
                             <h3 class="text-h6 font-weight-bold mb-2">Registration Submitted!</h3>
                             <p class="text-body-2 text-grey mb-4">
                                 Your email has been verified. We've sent a <strong>temporary password</strong> to your email.
@@ -854,7 +857,6 @@
                                 density="compact"
                             >
                                 <div class="text-caption">
-                                    <v-icon size="16" class="mr-1">mdi-clock-outline</v-icon>
                                     Your account requires <strong>admin approval</strong> before you can log in. You will receive an email notification once approved.
                                 </div>
                             </v-alert>
@@ -1614,9 +1616,58 @@ const handleRescuerRegister = () => {
 };
 
 // Input filter: strip numbers from name fields in real-time
+// Strip emoji and extended pictographic characters from a string
+const stripEmojis = (str) => {
+    if (!str) return str;
+    return str.replace(/\p{Extended_Pictographic}|\p{Emoji_Presentation}/gu, '');
+};
+
 const filterNameInput = (field) => {
     if (rescuerForm.value[field]) {
-        rescuerForm.value[field] = rescuerForm.value[field].replace(/[0-9]/g, '');
+        // Strip anything that is NOT a letter, space, period, comma, apostrophe, hyphen, or ñ/Ñ
+        // This removes numbers, special characters, and emojis in real-time
+        rescuerForm.value[field] = rescuerForm.value[field].replace(/[^a-zA-Z\s.,'\-ñÑ]/g, '');
+    }
+};
+
+// Filter email: allow only printable ASCII (blocks emojis and non-ASCII)
+// Strips characters that are not valid in an email address (allows a-z, 0-9, . _ % + - @)
+const stripInvalidEmailChars = (val) => val.replace(/[^a-zA-Z0-9._%+\-@]/g, '');
+
+const filterLoginEmailInput = () => {
+    if (form.value.email) {
+        form.value.email = stripInvalidEmailChars(form.value.email);
+    }
+};
+
+const filterLoginPasswordInput = () => {
+    if (form.value.password) {
+        form.value.password = stripEmojis(form.value.password);
+    }
+};
+
+const filterRescuerEmailInput = () => {
+    if (rescuerForm.value.email) {
+        rescuerForm.value.email = stripInvalidEmailChars(rescuerForm.value.email);
+    }
+};
+
+// Org field: allow only letters, numbers, spaces, and basic punctuation (. , - / ( ) ' &)
+const filterRescuerOrgInput = () => {
+    if (rescuerForm.value.organization) {
+        rescuerForm.value.organization = rescuerForm.value.organization.replace(/[^a-zA-Z0-9\s.,\-/()'&ñÑ]/g, '');
+    }
+};
+
+const filterRegisterEmailInput = () => {
+    if (registerEmail.value) {
+        registerEmail.value = stripInvalidEmailChars(registerEmail.value);
+    }
+};
+
+const filterForgotEmailInput = () => {
+    if (forgotPasswordEmail.value) {
+        forgotPasswordEmail.value = stripInvalidEmailChars(forgotPasswordEmail.value);
     }
 };
 
@@ -1650,7 +1701,7 @@ const sendRescuerOtp = async () => {
                 last_name: rescuerForm.value.last_name.trim(),
                 email: rescuerForm.value.email.trim(),
                 phone: rescuerForm.value.phone.replace(/[^0-9]/g, ''),
-                organization: rescuerForm.value.organization.trim(),
+                organization: (rescuerForm.value.organization || '').trim() || null,
             }),
         });
 

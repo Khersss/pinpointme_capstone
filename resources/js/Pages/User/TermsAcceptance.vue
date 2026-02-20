@@ -271,12 +271,15 @@
                 <v-btn variant="text" @click="snackbar.show = false">Close</v-btn>
             </template>
         </v-snackbar>
+        
+
     </v-app>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
+
 import axios from 'axios';
 
 const page = usePage();

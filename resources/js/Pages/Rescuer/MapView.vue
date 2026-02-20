@@ -246,6 +246,8 @@
         
         <!-- Bottom Navigation (Mobile/Tablet only) -->
         <RescuerBottomNav :notification-count="0" :message-count="unreadMessageCount" />
+
+
     </v-app>
 </template>
 
@@ -254,6 +256,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { getUnreadMessageCount } from '@/Composables/useApi';
 import RescuerBottomNav from '@/Components/Pages/Rescuer/Menu/RescuerBottomNav.vue';
+
 
 const props = defineProps({
     rescueId: {
@@ -1471,7 +1474,7 @@ onMounted(async () => {
     }
     
     .map-main {
-        padding-bottom: 40px;
+        padding-bottom: 0;
     }
     
     .map-container {

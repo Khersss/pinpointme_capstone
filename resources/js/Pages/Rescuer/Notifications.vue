@@ -169,6 +169,8 @@
                 <v-btn variant="text" @click="showToast = false">Close</v-btn>
             </template>
         </v-snackbar>
+
+
     </v-app>
 </template>
 
@@ -181,6 +183,7 @@ import { useUnreadMessages } from '@/Composables/useUnreadMessages';
 import { useDarkMode } from '@/Composables/useDarkMode';
 import RescuerMenu from '@/Components/Pages/Rescuer/Menu/RescuerMenu.vue';
 import RescuerBottomNav from '@/Components/Pages/Rescuer/Menu/RescuerBottomNav.vue';
+
 
 const { isDark } = useDarkMode();
 
@@ -538,6 +541,12 @@ onUnmounted(() => {
     padding-top: 16px;
     padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
     min-height: 100vh;
+}
+
+@media (min-width: 1024px) {
+    .notifications-main {
+        padding-bottom: 0 !important;
+    }
 }
 
 /* Loading State */

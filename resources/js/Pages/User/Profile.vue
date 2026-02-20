@@ -517,10 +517,7 @@
                     <span style="color: white !important;">Logout</span>
                 </v-btn>
 
-                <!-- App Version -->
-                <p class="text-center text-caption text-grey mt-4 mb-8">
-                    PinPointMe v1.0.0
-                </p>
+               
             </v-container>
 
         </v-main>
@@ -1070,6 +1067,8 @@
         >
             {{ snackbar.message }}
         </v-snackbar>
+
+
     </v-app>
 </template>
 
@@ -1082,6 +1081,7 @@ import { useDarkMode } from '@/Composables/useDarkMode';
 import { setUserActiveStatus } from '@/Utilities/firebase';
 import UserAppBar from '@/Components/Pages/User/Menu/UserAppBar.vue';
 import UserBottomNav from '@/Components/Pages/User/Menu/UserBottomNav.vue';
+
 
 const { isDark, set: setDarkMode } = useDarkMode();
 
@@ -2747,6 +2747,12 @@ onMounted(async () => {
     
     .v-main :deep(.v-container) {
         padding-bottom: 40px !important;
+    }
+}
+
+@media (min-width: 1025px) {
+    .pb-20 {
+        padding-bottom: 0 !important;
     }
 }
 

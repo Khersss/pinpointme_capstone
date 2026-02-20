@@ -8,206 +8,117 @@
         <v-main>
             <v-container fluid :class="isMobile ? 'pa-3' : 'pa-6'">
                 <!-- Page Header -->
-                <div class="page-header mb-4 mb-md-6">
-                    <div class="page-header-content">
+                <div class="d-flex align-center mb-4">
+                    <div>
                         <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold gradient-text">User Management</h1>
                         <p class="text-grey mt-1 text-body-2">Manage students, faculty, and staff accounts</p>
-                    </div>
-                    <div class="page-header-actions">
-                        <v-menu>
-                            <template v-slot:activator="{ props }">
-                                <v-btn 
-                                    color="info" 
-                                    v-bind="props"
-                                    :size="isMobile ? 'small' : 'default'"
-                                    class="mr-2"
-                                >
-                                    <v-icon :start="!isMobile">mdi-export-variant</v-icon>
-                                    <span v-if="!isMobile">Export</span>
-                                    <v-icon end size="small">mdi-chevron-down</v-icon>
-                                </v-btn>
-                            </template>
-                            <v-list density="compact">
-                                <v-list-item @click="handleExport('csv')" prepend-icon="mdi-file-delimited">
-                                    <v-list-item-title>Export as CSV</v-list-item-title>
-                                </v-list-item>
-                                <v-list-item @click="handleExport('xlsx')" prepend-icon="mdi-file-excel">
-                                    <v-list-item-title>Export as XLSX</v-list-item-title>
-                                </v-list-item>
-                                <v-list-item @click="handleExport('pdf')" prepend-icon="mdi-file-pdf-box">
-                                    <v-list-item-title>Export as PDF</v-list-item-title>
-                                </v-list-item>
-                            </v-list>
-                        </v-menu>
-                        <!-- Add User Button with Dropdown -->
-                        <v-menu>
-                            <template v-slot:activator="{ props }">
-                                <v-btn 
-                                    color="primary" 
-                                    v-bind="props" 
-                                    rounded="lg"
-                                    :size="isMobile ? 'small' : 'default'"
-                                >
-                                    <v-icon :start="!isMobile">mdi-plus</v-icon>
-                                    <span v-if="!isMobile">Add User</span>
-                                    <span v-else>Add</span>
-                                    <v-icon end size="small">mdi-chevron-down</v-icon>
-                                </v-btn>
-                            </template>
-                            <v-list density="compact">
-                                <v-list-item @click="openAddDialog" prepend-icon="mdi-account-plus">
-                                    <v-list-item-title>Add Single User</v-list-item-title>
-                                </v-list-item>
-                                <v-list-item @click="openBulkDialog" prepend-icon="mdi-account-multiple-plus">
-                                    <v-list-item-title>Bulk Add Users</v-list-item-title>
-                                </v-list-item>
-                            </v-list>
-                        </v-menu>
                     </div>
                 </div>
 
 
-                <!-- Stats Cards -->
-                <v-row class="mb-6">
-                    <v-col cols="6" md="3">
-                        <v-card class="stat-card-white" rounded="lg" elevation="2">
-                            <v-card-text class="text-center py-4">
-                                <v-avatar color="primary" size="48" class="mb-2">
-                                    <v-icon color="white">mdi-account-group</v-icon>
-                                </v-avatar>
-                                <p class="text-grey text-caption mb-0">Total Users</p>
-                                <h2 class="text-h4 font-weight-bold">{{ stats.total }}</h2>
-                            </v-card-text>
-                        </v-card>
-                    </v-col>
-                    <v-col cols="6" md="3">
-                        <v-card class="stat-card-white" rounded="lg" elevation="2">
-                            <v-card-text class="text-center py-4">
-                                <v-avatar color="blue" size="48" class="mb-2">
-                                    <v-icon color="white">mdi-school</v-icon>
-                                </v-avatar>
-                                <p class="text-grey text-caption mb-0">Students</p>
-                                <h2 class="text-h4 font-weight-bold text-blue">{{ stats.by_role?.student || 0 }}</h2>
-                            </v-card-text>
-                        </v-card>
-                    </v-col>
-                    <v-col cols="6" md="3">
-                        <v-card class="stat-card-white" rounded="lg" elevation="2">
-                            <v-card-text class="text-center py-4">
-                                <v-avatar color="purple" size="48" class="mb-2">
-                                    <v-icon color="white">mdi-human-male-board</v-icon>
-                                </v-avatar>
-                                <p class="text-grey text-caption mb-0">Faculty</p>
-                                <h2 class="text-h4 font-weight-bold text-purple">{{ stats.by_role?.faculty || 0 }}</h2>
-                            </v-card-text>
-                        </v-card>
-                    </v-col>
-                    <v-col cols="6" md="3">
-                        <v-card class="stat-card-white" rounded="lg" elevation="2">
-                            <v-card-text class="text-center py-4">
-                                <v-avatar color="teal" size="48" class="mb-2">
-                                    <v-icon color="white">mdi-briefcase</v-icon>
-                                </v-avatar>
-                                <p class="text-grey text-caption mb-0">Staff</p>
-                                <h2 class="text-h4 font-weight-bold text-teal">{{ stats.by_role?.staff || 0 }}</h2>
-                            </v-card-text>
-                        </v-card>
-                    </v-col>
-                </v-row>
+                <!-- Stats Banner -->
+                <v-card rounded="lg" class="users-stats-banner mb-3" elevation="0">
+                    <div class="stats-banner-grid">
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon">mdi-account-group</v-icon>
+                            <div class="stat-inline-value">{{ stats.total || 0 }}</div>
+                            <div class="stat-inline-label">Total Users</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon blue-icon">mdi-school</v-icon>
+                            <div class="stat-inline-value">{{ stats.by_role?.student || 0 }}</div>
+                            <div class="stat-inline-label">Students</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon purple-icon">mdi-human-male-board</v-icon>
+                            <div class="stat-inline-value">{{ stats.by_role?.faculty || 0 }}</div>
+                            <div class="stat-inline-label">Faculty</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon teal-icon">mdi-briefcase</v-icon>
+                            <div class="stat-inline-value">{{ stats.by_role?.staff || 0 }}</div>
+                            <div class="stat-inline-label">Staff</div>
+                        </div>
+                    </div>
+                </v-card>
+
+                <!-- Filters -->
+                <v-card rounded="lg" elevation="0" class="mb-3">
+                    <v-card-text class="pa-3 pb-2">
+                        <v-row dense align="center">
+                            <v-col cols="12" sm="4" md="3">
+                                <v-text-field
+                                    v-model="search"
+                                    label="Search users..."
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    prepend-inner-icon="mdi-magnify"
+                                    clearable
+                                    @input="debouncedSearch"
+                                />
+                            </v-col>
+                            <v-col cols="6" sm="3" md="2">
+                                <v-select
+                                    v-model="roleFilter"
+                                    :items="roleOptions"
+                                    item-title="label"
+                                    item-value="value"
+                                    label="Role"
+                                    variant="outlined"
+                                    density="compact"
+                                    clearable
+                                    hide-details
+                                    @update:model-value="fetchUsers"
+                                />
+                            </v-col>
+                            <v-col cols="auto" class="d-flex gap-2">
+                                <v-btn variant="outlined" size="small" @click="roleFilter = 'all'; search = ''; fetchUsers()" title="Reset">
+                                    <v-icon size="small">mdi-filter-off</v-icon>
+                                </v-btn>
+                                <v-menu>
+                                    <template v-slot:activator="{ props }">
+                                        <v-btn variant="outlined" size="small" v-bind="props" title="Export">
+                                            <v-icon size="small">mdi-export-variant</v-icon>
+                                        </v-btn>
+                                    </template>
+                                    <v-list density="compact">
+                                        <v-list-item @click="handleExport('csv')" prepend-icon="mdi-file-delimited">
+                                            <v-list-item-title>Export CSV</v-list-item-title>
+                                        </v-list-item>
+                                        <v-list-item @click="handleExport('xlsx')" prepend-icon="mdi-file-excel">
+                                            <v-list-item-title>Export XLSX</v-list-item-title>
+                                        </v-list-item>
+                                        <v-list-item @click="handleExport('pdf')" prepend-icon="mdi-file-pdf-box">
+                                            <v-list-item-title>Export PDF</v-list-item-title>
+                                        </v-list-item>
+                                    </v-list>
+                                </v-menu>
+                                <v-btn color="primary" size="small" @click="openAddDialog">
+                                    <v-icon size="small">mdi-plus</v-icon>
+                                </v-btn>
+                            </v-col>
+                        </v-row>
+                    </v-card-text>
+                </v-card>
+
+                <!-- Bulk Actions Bar -->
+                <v-card v-if="selectedUsers.length > 0" rounded="lg" elevation="0" class="mb-3 pa-2">
+                    <div class="d-flex align-center gap-2 pa-1">
+                        <v-chip size="small" color="primary" variant="flat">{{ selectedUsers.length }} selected</v-chip>
+                        <v-btn variant="outlined" color="error" size="small" @click="bulkDeleteConfirm">
+                            <v-icon start size="small">mdi-delete</v-icon>
+                            Delete
+                        </v-btn>
+                        <v-btn variant="outlined" size="small" @click="openBulkUpdateDialog">
+                            <v-icon start size="small">mdi-pencil</v-icon>
+                            Update
+                        </v-btn>
+                    </div>
+                </v-card>
 
                 <!-- Main Table Card -->
-                <v-card rounded="lg" elevation="2">
-                    <!-- Table Header -->
-                    <v-card-text class="pa-4">
-                        <div class="d-flex flex-wrap align-center justify-space-between gap-3">
-                            <div class="d-flex align-center">
-                                <span class="font-weight-medium text-subtitle-1">Users</span>
-                                <v-chip size="small" color="grey-lighten-2" class="ml-2">
-                                    Showing users from all roles
-                                </v-chip>
-                            </div>
-                            <div class="d-flex flex-wrap align-center gap-2">
-                                <!-- Bulk Actions -->
-                                <v-btn 
-                                    v-if="selectedUsers.length > 0"
-                                    variant="outlined" 
-                                    color="error" 
-                                    size="small"
-                                    @click="bulkDeleteConfirm"
-                                >
-                                    <v-icon start size="small">mdi-delete</v-icon>
-                                    Bulk delete ({{ selectedUsers.length }})
-                                </v-btn>
-                                <v-btn 
-                                    v-if="selectedUsers.length > 0"
-                                    variant="outlined" 
-                                    size="small"
-                                    @click="openBulkUpdateDialog"
-                                >
-                                    <v-icon start size="small">mdi-pencil</v-icon>
-                                    Bulk update
-                                </v-btn>
-                                <v-menu>
-                                    <template v-slot:activator="{ props }">
-                                        <v-btn variant="outlined" size="small" v-bind="props">
-                                            <v-icon start size="small">mdi-filter</v-icon>
-                                            Filter
-                                        </v-btn>
-                                    </template>
-                                    <v-list density="compact" min-width="200">
-                                        <v-list-subheader>Filter by Role</v-list-subheader>
-                                        <v-list-item 
-                                            v-for="option in roleOptions" 
-                                            :key="option.value"
-                                            :active="roleFilter === option.value"
-                                            @click="roleFilter = option.value; fetchUsers()"
-                                        >
-                                            <v-list-item-title>{{ option.label }}</v-list-item-title>
-                                        </v-list-item>
-                                    </v-list>
-                                </v-menu>
-                                <v-menu>
-                                    <template v-slot:activator="{ props }">
-                                        <v-btn variant="outlined" size="small" v-bind="props">
-                                            <v-icon start size="small">mdi-sort</v-icon>
-                                            Sort
-                                        </v-btn>
-                                    </template>
-                                    <v-list density="compact" min-width="200">
-                                        <v-list-item @click="sortBy = 'name'; sortOrder = 'asc'; sortUsers()">
-                                            <v-list-item-title>Name (A-Z)</v-list-item-title>
-                                        </v-list-item>
-                                        <v-list-item @click="sortBy = 'name'; sortOrder = 'desc'; sortUsers()">
-                                            <v-list-item-title>Name (Z-A)</v-list-item-title>
-                                        </v-list-item>
-                                        <v-list-item @click="sortBy = 'created_at'; sortOrder = 'desc'; sortUsers()">
-                                            <v-list-item-title>Newest First</v-list-item-title>
-                                        </v-list-item>
-                                        <v-list-item @click="sortBy = 'created_at'; sortOrder = 'asc'; sortUsers()">
-                                            <v-list-item-title>Oldest First</v-list-item-title>
-                                        </v-list-item>
-                                    </v-list>
-                                </v-menu>
-                            </div>
-                        </div>
-                    </v-card-text>
-                    
-                    <v-divider></v-divider>
-
-                    <!-- Search Bar -->
-                    <v-card-text class="pa-4">
-                        <v-text-field
-                            v-model="search"
-                            prepend-inner-icon="mdi-magnify"
-                            placeholder="Search users by name, email, or ID..."
-                            variant="outlined"
-                            density="compact"
-                            hide-details
-                            clearable
-                            rounded="lg"
-                            @input="debouncedSearch"
-                        />
-                    </v-card-text>
+                <v-card rounded="lg" elevation="0">
 
                     <!-- Data Table -->
                     <v-data-table
@@ -215,7 +126,8 @@
                         :headers="headers"
                         :items="usersList"
                         :loading="loading"
-                        :items-per-page="itemsPerPage"
+                        v-model:items-per-page="itemsPerPage"
+                        v-model:page="page"
                         item-value="id"
                         show-select
                         class="elevation-0"
@@ -297,39 +209,18 @@
                                 <p class="text-grey mt-4">No users found. Click "Add User" to create one.</p>
                             </div>
                         </template>
-
-                        <!-- Bottom Row -->
-                        <template v-slot:bottom>
-                            <div class="d-flex align-center justify-space-between px-4 py-2">
-                                <div class="d-flex align-center">
-                                    <span class="text-body-2 text-grey mr-2">Rows per page:</span>
-                                    <v-select
-                                        v-model="itemsPerPage"
-                                        :items="[10, 25, 50, 100]"
-                                        variant="outlined"
-                                        density="compact"
-                                        hide-details
-                                        style="width: 80px;"
-                                    />
-                                </div>
-                                <v-pagination
-                                    v-model="page"
-                                    :length="Math.ceil(usersList.length / itemsPerPage)"
-                                    :total-visible="5"
-                                    density="compact"
-                                    rounded
-                                />
-                            </div>
-                        </template>
                     </v-data-table>
                 </v-card>
 
                 <!-- Recent Activity -->
-                <v-card rounded="lg" class="mt-6" elevation="2">
-                    <v-card-title class="d-flex align-center pa-4">
-                        <v-icon start color="primary">mdi-history</v-icon>
-                        <span class="font-weight-bold">Recent Activity</span>
-                        <v-chip size="x-small" color="primary" class="ml-2">{{ auditTrail.length }}</v-chip>
+                <v-card rounded="lg" class="mt-4" elevation="0">
+                    <v-card-title class="d-flex align-center justify-space-between pa-4">
+                        <div class="d-flex align-center">
+                            <v-icon start color="primary">mdi-history</v-icon>
+                            <span class="font-weight-bold">Recent Activity</span>
+                            <v-chip size="x-small" color="primary" class="ml-2">{{ auditTrail.length }}</v-chip>
+                        </div>
+
                     </v-card-title>
                     <v-divider></v-divider>
                     <v-card-text class="pa-4">
@@ -406,7 +297,8 @@
                                     variant="outlined"
                                     density="compact"
                                     :rules="[rules.nameOnly]"
-                                    @keypress="preventNumbers"
+                                    @keypress="preventInvalidNameChars"
+                                    @input="sanitizeName('first_name')"
                                 />
                             </v-col>
                             <v-col cols="6">
@@ -416,7 +308,8 @@
                                     variant="outlined"
                                     density="compact"
                                     :rules="[rules.nameOnly]"
-                                    @keypress="preventNumbers"
+                                    @keypress="preventInvalidNameChars"
+                                    @input="sanitizeName('last_name')"
                                 />
                             </v-col>
                         </v-row>
@@ -434,6 +327,8 @@
                             class="mb-3"
                             hint="Must be an SDCA email address"
                             persistent-hint
+                            @keypress="preventInvalidEmailChars"
+                            @input="sanitizeEmail"
                         />
                         <v-select
                             v-model="formData.role"
@@ -475,6 +370,11 @@
                             persistent-hint
                             placeholder="09171234567"
                             class="mb-3"
+                            type="tel"
+                            inputmode="numeric"
+                            maxlength="11"
+                            @keypress="preventNonDigits"
+                            @input="sanitizePhone"
                         />
                         
                         <!-- OTP Activation Notice for new users -->
@@ -485,7 +385,6 @@
                             class="mb-3"
                             density="compact"
                         >
-                            <v-icon start size="small">mdi-information</v-icon>
                             <span class="text-body-2">
                                 An email with OTP verification will be sent to the user. 
                                 Account will be <strong>pending</strong> until email is verified and password is changed.
@@ -512,191 +411,6 @@
                     <v-btn variant="text" @click="dialog = false">Cancel</v-btn>
                     <v-btn color="primary" :loading="saving" :disabled="!isFormValid" @click="saveUser">
                         {{ isEditing ? 'Update' : 'Create & Send OTP' }}
-                    </v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
-
-        <!-- Bulk Add Dialog -->
-        <v-dialog v-model="bulkDialog" max-width="800">
-            <v-card rounded="lg">
-                <v-card-title class="d-flex align-center pa-4">
-                    <v-icon color="primary" class="mr-2">mdi-account-multiple-plus</v-icon>
-                    Bulk Add Users
-                </v-card-title>
-                <v-divider></v-divider>
-                <v-card-text class="pa-4">
-                    <v-tabs v-model="bulkTab" color="primary">
-                        <v-tab value="upload">Upload File</v-tab>
-                        <v-tab value="manual">Manual Entry</v-tab>
-                    </v-tabs>
-
-                    <v-tabs-window v-model="bulkTab" class="mt-4">
-                        <!-- Upload File Tab -->
-                        <v-tabs-window-item value="upload">
-                            <v-alert type="info" variant="tonal" class="mb-4" density="compact">
-                                <strong>File Format:</strong> Upload an Excel (.xlsx, .xls) or CSV file with the following columns: 
-                                <code>first_name, last_name, email, role, id_number, phone</code>
-                                <br>
-                                <small>Role options: student, faculty, staff</small>
-                            </v-alert>
-                            
-                            <div class="d-flex gap-2 mb-4">
-                                <v-btn variant="outlined" color="success" size="small" @click="downloadTemplate('excel')">
-                                    <v-icon start>mdi-microsoft-excel</v-icon>
-                                    Download Excel Template
-                                </v-btn>
-                                <v-btn variant="outlined" color="info" size="small" @click="downloadTemplate('csv')">
-                                    <v-icon start>mdi-file-delimited</v-icon>
-                                    Download CSV Template
-                                </v-btn>
-                                <v-btn variant="outlined" color="purple" size="small" @click="downloadTemplate('sql')">
-                                    <v-icon start>mdi-database</v-icon>
-                                    Download SQL Template
-                                </v-btn>
-                            </div>
-
-                            <v-file-input
-                                v-model="bulkFile"
-                                label="Select file (Excel, CSV, or SQL)"
-                                variant="outlined"
-                                density="compact"
-                                accept=".xlsx,.xls,.csv,.sql"
-                                prepend-icon="mdi-file-upload"
-                                :rules="[v => !v || v.size < 10000000 || 'File size should be less than 10 MB']"
-                                show-size
-                                @update:model-value="previewBulkFile"
-                            />
-
-                            <!-- Preview Table -->
-                            <v-card v-if="bulkPreviewData.length > 0" variant="outlined" class="mt-4">
-                                <v-card-title class="text-subtitle-1 d-flex align-center">
-                                    <span>Preview ({{ bulkPreviewData.length }} records)</span>
-                                    <v-spacer />
-                                    <v-chip :color="bulkValidationErrors.length > 0 ? 'error' : 'success'" size="small">
-                                        {{ bulkValidationErrors.length > 0 ? `${bulkValidationErrors.length} errors` : 'All valid' }}
-                                    </v-chip>
-                                </v-card-title>
-                                <v-data-table
-                                    :headers="bulkPreviewHeaders"
-                                    :items="bulkPreviewData.slice(0, 10)"
-                                    :items-per-page="10"
-                                    density="compact"
-                                    class="elevation-0"
-                                >
-                                    <template v-slot:item.email="{ item }">
-                                        <span :class="{ 'text-error': !item.email.endsWith('@sdca.edu.ph') }">
-                                            {{ item.email }}
-                                            <v-icon v-if="!item.email.endsWith('@sdca.edu.ph')" size="x-small" color="error">mdi-alert</v-icon>
-                                        </span>
-                                    </template>
-                                    <template v-slot:item.role="{ item }">
-                                        <v-chip 
-                                            :color="['student', 'faculty', 'staff'].includes(item.role?.toLowerCase()) ? getRoleColor(item.role) : 'error'" 
-                                            size="x-small"
-                                        >
-                                            {{ item.role || 'Missing' }}
-                                        </v-chip>
-                                    </template>
-                                </v-data-table>
-                                <v-card-text v-if="bulkPreviewData.length > 10" class="text-caption text-grey">
-                                    ... and {{ bulkPreviewData.length - 10 }} more records
-                                </v-card-text>
-                                
-                                <!-- Validation Errors -->
-                                <v-alert v-if="bulkValidationErrors.length > 0" type="warning" variant="tonal" class="ma-4" density="compact">
-                                    <strong>Validation Warnings:</strong>
-                                    <ul class="mb-0 mt-2">
-                                        <li v-for="(error, idx) in bulkValidationErrors.slice(0, 5)" :key="idx">{{ error }}</li>
-                                        <li v-if="bulkValidationErrors.length > 5">... and {{ bulkValidationErrors.length - 5 }} more</li>
-                                    </ul>
-                                </v-alert>
-                            </v-card>
-                        </v-tabs-window-item>
-
-                        <!-- Manual Entry Tab -->
-                        <v-tabs-window-item value="manual">
-                            <v-alert type="info" variant="tonal" class="mb-4" density="compact">
-                                Enter user details below. Click "Add Row" to add more users.
-                            </v-alert>
-
-                            <div v-for="(row, index) in manualBulkData" :key="index" class="mb-3">
-                                <v-row align="center" dense>
-                                    <v-col cols="2">
-                                        <v-text-field
-                                            v-model="row.first_name"
-                                            label="First Name"
-                                            variant="outlined"
-                                            density="compact"
-                                            hide-details
-                                        />
-                                    </v-col>
-                                    <v-col cols="2">
-                                        <v-text-field
-                                            v-model="row.last_name"
-                                            label="Last Name"
-                                            variant="outlined"
-                                            density="compact"
-                                            hide-details
-                                        />
-                                    </v-col>
-                                    <v-col cols="3">
-                                        <v-text-field
-                                            v-model="row.email"
-                                            label="Email"
-                                            variant="outlined"
-                                            density="compact"
-                                            hide-details
-                                        />
-                                    </v-col>
-                                    <v-col cols="2">
-                                        <v-select
-                                            v-model="row.role"
-                                            :items="['student', 'faculty', 'staff']"
-                                            label="Role"
-                                            variant="outlined"
-                                            density="compact"
-                                            hide-details
-                                        />
-                                    </v-col>
-                                    <v-col cols="2">
-                                        <v-text-field
-                                            v-model="row.id_number"
-                                            label="ID Number"
-                                            variant="outlined"
-                                            density="compact"
-                                            hide-details
-                                        />
-                                    </v-col>
-                                    <v-col cols="1">
-                                        <v-btn 
-                                            icon 
-                                            size="small" 
-                                            color="error" 
-                                            variant="text"
-                                            @click="removeManualRow(index)"
-                                            :disabled="manualBulkData.length === 1"
-                                        >
-                                            <v-icon>mdi-close</v-icon>
-                                        </v-btn>
-                                    </v-col>
-                                </v-row>
-                            </div>
-
-                            <v-btn variant="outlined" size="small" @click="addManualRow">
-                                <v-icon start>mdi-plus</v-icon>
-                                Add Row
-                            </v-btn>
-                        </v-tabs-window-item>
-                    </v-tabs-window>
-                </v-card-text>
-                <v-divider></v-divider>
-                <v-card-actions class="pa-4">
-                    <v-spacer />
-                    <v-btn variant="text" @click="bulkDialog = false">Cancel</v-btn>
-                    <v-btn color="primary" :loading="bulkSaving" @click="processBulkAdd">
-                        <v-icon start>mdi-upload</v-icon>
-                        Import Users
                     </v-btn>
                 </v-card-actions>
             </v-card>
@@ -838,12 +552,15 @@
                 <v-btn variant="text" @click="snackbar = false">Close</v-btn>
             </template>
         </v-snackbar>
+        
+
     </v-app>
 </template>
 
 <script setup>
 import { useDisplay } from 'vuetify';
 import AdminAppBar from '@/Components/AdminAppBar.vue';
+
 const { mobile } = useDisplay();
 const isMobile = computed(() => mobile.value);
 
@@ -919,14 +636,12 @@ const loading = ref(false);
 const dialog = ref(false);
 const form = ref(null);
 const formValid = ref(false);
-const bulkDialog = ref(false);
 const bulkUpdateDialog = ref(false);
 const deleteDialog = ref(false);
 const bulkDeleteDialog = ref(false);
 const profileDialog = ref(false);
 const isEditing = ref(false);
 const saving = ref(false);
-const bulkSaving = ref(false);
 const bulkUpdating = ref(false);
 const deleting = ref(false);
 const bulkDeleting = ref(false);
@@ -938,18 +653,13 @@ const snackbar = ref(false);
 const snackbarText = ref('');
 const snackbarColor = ref('success');
 const page = ref(1);
-const itemsPerPage = ref(50);
+const itemsPerPage = ref(10);
 const sortBy = ref('name');
 const sortOrder = ref('asc');
 const selectedUsers = ref([]);
 
-// Bulk upload
-const bulkTab = ref('upload');
-const bulkFile = ref(null);
-const bulkPreviewData = ref([]);
-const bulkValidationErrors = ref([]);
+// Bulk update
 const bulkUpdateStatus = ref('active');
-const manualBulkData = ref([{ first_name: '', last_name: '', email: '', role: 'student', id_number: '', phone: '' }]);
 
 // Data
 const usersList = ref(props.users?.data || []);
@@ -959,7 +669,7 @@ const auditTrail = ref(props.auditTrail || []);
 // Activity pagination
 const activityPage = ref(1);
 const activityPerPage = ref(5);
-const activityExpanded = ref(false);
+
 
 const formData = ref({
     first_name: '',
@@ -974,11 +684,15 @@ const formData = ref({
 // Validation rules
 const rules = {
     required: (v) => !!v || 'Required',
-    // Name validation - no numbers allowed
+    // Name validation - only letters, spaces, hyphens, periods, commas, apostrophes
     nameOnly: (v) => {
         if (!v) return 'Required';
         if (/[0-9]/.test(v)) {
             return 'Names cannot contain numbers';
+        }
+        // Block emoji and special characters
+        if (/[^a-zA-Z\s\-\.\'\,ñÑ]/.test(v)) {
+            return 'Names can only contain letters, spaces, hyphens, and apostrophes';
         }
         return true;
     },
@@ -1066,14 +780,6 @@ const headers = [
     { title: 'Status', key: 'status', sortable: true },
     { title: 'Created', key: 'created_at', sortable: true },
     { title: '', key: 'actions', sortable: false, align: 'end', width: '50px' }
-];
-
-const bulkPreviewHeaders = [
-    { title: 'First Name', key: 'first_name' },
-    { title: 'Last Name', key: 'last_name' },
-    { title: 'Email', key: 'email' },
-    { title: 'Role', key: 'role' },
-    { title: 'ID Number', key: 'id_number' }
 ];
 
 const roleOptions = [
@@ -1168,15 +874,6 @@ const openEditDialog = (user) => {
     // Store original to compare later
     originalFormData.value = { ...editFormData };
     dialog.value = true;
-};
-
-const openBulkDialog = () => {
-    bulkTab.value = 'upload';
-    bulkFile.value = null;
-    bulkPreviewData.value = [];
-    bulkValidationErrors.value = [];
-    manualBulkData.value = [{ first_name: '', last_name: '', email: '', role: 'student', id_number: '', phone: '' }];
-    bulkDialog.value = true;
 };
 
 const openBulkUpdateDialog = () => {
@@ -1404,203 +1101,56 @@ const processBulkUpdate = async () => {
     }
 };
 
-const previewBulkFile = async (file) => {
-    if (!file) {
-        bulkPreviewData.value = [];
-        bulkValidationErrors.value = [];
-        return;
-    }
-    
-    try {
-        const fileName = file.name.toLowerCase();
-        
-        if (fileName.endsWith('.sql')) {
-            // Parse SQL file
-            const text = await file.text();
-            const data = parseSqlInsert(text);
-            bulkPreviewData.value = data;
-        } else {
-            // Parse Excel/CSV
-            const data = await file.arrayBuffer();
-            const workbook = XLSX.read(data);
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet);
-            
-            bulkPreviewData.value = jsonData.map(row => ({
-                first_name: row.first_name || row['First Name'] || '',
-                last_name: row.last_name || row['Last Name'] || '',
-                email: row.email || row['Email'] || '',
-                role: (row.role || row['Role'] || 'student').toLowerCase(),
-                id_number: row.id_number || row['ID Number'] || row.student_id || '',
-                phone: row.phone || row['Phone'] || ''
-            }));
-        }
-        
-        // Validate data
-        validateBulkData();
-    } catch (error) {
-        console.error('Error parsing file:', error);
-        showSnackbar('Error parsing file. Please check the format.', 'error');
-    }
-};
-
-const parseSqlInsert = (sqlText) => {
-    const data = [];
-    // Match INSERT INTO ... VALUES patterns
-    const insertRegex = /INSERT\s+INTO\s+\w+\s*\([^)]+\)\s*VALUES\s*\(([^)]+)\)/gi;
-    const matches = sqlText.matchAll(insertRegex);
-    
-    for (const match of matches) {
-        const values = match[1].split(',').map(v => v.trim().replace(/^['"]|['"]$/g, ''));
-        if (values.length >= 4) {
-            data.push({
-                first_name: values[0] || '',
-                last_name: values[1] || '',
-                email: values[2] || '',
-                role: (values[3] || 'student').toLowerCase(),
-                id_number: values[4] || '',
-                phone: values[5] || ''
-            });
-        }
-    }
-    
-    return data;
-};
-
-const validateBulkData = () => {
-    bulkValidationErrors.value = [];
-    
-    bulkPreviewData.value.forEach((row, idx) => {
-        if (!row.first_name || !row.last_name) {
-            bulkValidationErrors.value.push(`Row ${idx + 1}: Missing first or last name`);
-        }
-        if (!row.email || !row.email.endsWith('@sdca.edu.ph')) {
-            bulkValidationErrors.value.push(`Row ${idx + 1}: Invalid or non-SDCA email`);
-        }
-        if (!['student', 'faculty', 'staff'].includes(row.role?.toLowerCase())) {
-            bulkValidationErrors.value.push(`Row ${idx + 1}: Invalid role "${row.role}"`);
-        }
-    });
-};
-
-const processBulkAdd = async () => {
-    bulkSaving.value = true;
-    
-    let dataToProcess = [];
-    if (bulkTab.value === 'upload') {
-        dataToProcess = bulkPreviewData.value;
-    } else {
-        dataToProcess = manualBulkData.value.filter(row => row.first_name && row.last_name && row.email);
-    }
-    
-    if (dataToProcess.length === 0) {
-        showSnackbar('No valid data to import', 'warning');
-        bulkSaving.value = false;
-        return;
-    }
-    
-    try {
-        let successCount = 0;
-        let errorCount = 0;
-        const errors = [];
-        
-        for (const row of dataToProcess) {
-            try {
-                const role = (row.role || 'student').toLowerCase();
-                const response = await fetch('/admin/users', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
-                    },
-                    body: JSON.stringify({
-                        first_name: row.first_name,
-                        last_name: row.last_name,
-                        email: row.email,
-                        role: role,
-                        phone: row.phone || '',
-                        student_id: role === 'student' ? row.id_number : null,
-                        faculty_id: role === 'faculty' ? row.id_number : null,
-                        staff_id: role === 'staff' ? row.id_number : null,
-                        send_otp: true
-                    })
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    successCount++;
-                } else {
-                    errorCount++;
-                    errors.push(`${row.email}: ${data.errors ? Object.values(data.errors).flat().join(', ') : 'Unknown error'}`);
-                }
-            } catch {
-                errorCount++;
-                errors.push(`${row.email}: Request failed`);
-            }
-        }
-        
-        if (errors.length > 0) {
-            console.log('Bulk import errors:', errors);
-        }
-        
-        showSnackbar(`Imported ${successCount} user(s). ${errorCount > 0 ? `${errorCount} failed.` : ''}`, successCount > 0 ? 'success' : 'error');
-        bulkDialog.value = false;
-        fetchUsers();
-    } catch (error) {
-        console.error('Error bulk adding:', error);
-        showSnackbar('Error importing users', 'error');
-    } finally {
-        bulkSaving.value = false;
-    }
-};
-
-const downloadTemplate = (format) => {
-    const templateData = [
-        { first_name: 'Juan', last_name: 'Dela Cruz', email: 'juan.delacruz@sdca.edu.ph', role: 'student', id_number: '2024-00001', phone: '09171234567' },
-        { first_name: 'Maria', last_name: 'Santos', email: 'maria.santos@sdca.edu.ph', role: 'faculty', id_number: 'FAC-2024-001', phone: '09181234567' },
-        { first_name: 'Pedro', last_name: 'Reyes', email: 'pedro.reyes@sdca.edu.ph', role: 'staff', id_number: 'STF-2024-001', phone: '09191234567' }
-    ];
-    
-    if (format === 'sql') {
-        // Generate SQL INSERT statements
-        const sqlStatements = templateData.map(row => 
-            `INSERT INTO users (first_name, last_name, email, role, id_number, phone) VALUES ('${row.first_name}', '${row.last_name}', '${row.email}', '${row.role}', '${row.id_number}', '${row.phone}');`
-        ).join('\n');
-        
-        const blob = new Blob([sqlStatements], { type: 'text/sql' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'users_template.sql';
-        a.click();
-        URL.revokeObjectURL(url);
-    } else {
-        const worksheet = XLSX.utils.json_to_sheet(templateData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Users');
-        
-        if (format === 'csv') {
-            XLSX.writeFile(workbook, 'users_template.csv');
-        } else {
-            XLSX.writeFile(workbook, 'users_template.xlsx');
-        }
-    }
-};
-
-const addManualRow = () => {
-    manualBulkData.value.push({ first_name: '', last_name: '', email: '', role: 'student', id_number: '', phone: '' });
-};
-
-const removeManualRow = (index) => {
-    manualBulkData.value.splice(index, 1);
-};
-
 const showSnackbar = (text, color) => {
     snackbarText.value = text;
     snackbarColor.value = color;
     snackbar.value = true;
+};
+
+// Prevent invalid characters in name fields (only allow letters, spaces, hyphens, apostrophes, ñ)
+const preventInvalidNameChars = (event) => {
+    const char = String.fromCharCode(event.keyCode || event.which);
+    if (!/[a-zA-ZñÑ\s\-\.\,\']/.test(char)) {
+        event.preventDefault();
+    }
+};
+
+// Sanitize name input - strip emoji and invalid characters on paste/input
+const sanitizeName = (field) => {
+    if (formData.value[field]) {
+        formData.value[field] = formData.value[field].replace(/[^a-zA-ZñÑ\s\-\.\,\']/g, '');
+    }
+};
+
+// Prevent non-digit characters in numeric fields (phone, ID)
+const preventNonDigits = (event) => {
+    const char = String.fromCharCode(event.keyCode || event.which);
+    if (!/[0-9]/.test(char)) {
+        event.preventDefault();
+    }
+};
+
+// Sanitize phone input - strip anything that isn't a digit (including emoji)
+const sanitizePhone = () => {
+    if (formData.value.phone) {
+        formData.value.phone = formData.value.phone.replace(/\D/g, '').slice(0, 11);
+    }
+};
+
+// Prevent invalid characters in email field
+const preventInvalidEmailChars = (event) => {
+    const char = String.fromCharCode(event.keyCode || event.which);
+    // Allow only valid email characters: letters, digits, @, ., _, -, +
+    if (!/[a-zA-Z0-9@._\-+]/.test(char)) {
+        event.preventDefault();
+    }
+};
+
+// Sanitize email input - strip emoji and invalid characters
+const sanitizeEmail = () => {
+    if (formData.value.email) {
+        formData.value.email = formData.value.email.replace(/[^a-zA-Z0-9@._\-+]/g, '');
+    }
 };
 
 // Helpers
@@ -1681,16 +1231,6 @@ const formatAction = (action) => {
 </script>
 
 <style scoped>
-/* Gradient App Bar */
-.gradient-app-bar {
-    background: linear-gradient(135deg, #1976D2 0%, #1565C0 50%, #0D47A1 100%) !important;
-}
-
-/* Gradient Drawer Header */
-.gradient-drawer-header {
-    background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
-}
-
 /* Gradient Text */
 .gradient-text {
     background: linear-gradient(135deg, #1976D2, #0D47A1);
@@ -1699,61 +1239,49 @@ const formatAction = (action) => {
     background-clip: text;
 }
 
-/* Stat Card White */
-.stat-card-white {
-    background: white;
-    border: 1px solid #e0e0e0;
+/* ===== Stats Banner ===== */
+.users-stats-banner {
+    background: linear-gradient(135deg, #1976D2 0%, #1565C0 50%, #0D47A1 100%) !important;
 }
-
-/* Text colors */
-.text-white-50 {
-    color: rgba(255, 255, 255, 0.7) !important;
+.stats-banner-grid {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    gap: 8px;
+}
+.stat-inline {
+    text-align: center;
+    min-width: 70px;
+    padding: 4px 8px;
+}
+.stat-inline-icon {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 2px;
+}
+.stat-inline-icon.blue-icon { color: #90CAF9; }
+.stat-inline-icon.purple-icon { color: #CE93D8; }
+.stat-inline-icon.teal-icon { color: #80CBC4; }
+.stat-inline-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: white;
+    line-height: 1.2;
+}
+.stat-inline-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Gap utility */
 .gap-2 {
     gap: 8px;
 }
-
 .gap-3 {
     gap: 12px;
-}
-
-/* Page Header Responsive Styles */
-.page-header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.page-header-content {
-    flex: 1;
-    min-width: 200px;
-}
-
-.page-header-actions {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-/* Mobile Specific Styles */
-@media (max-width: 600px) {
-    .page-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .page-header-content {
-        width: 100%;
-    }
-    
-    .page-header-actions {
-        width: 100%;
-        justify-content: flex-end;
-    }
 }
 </style>

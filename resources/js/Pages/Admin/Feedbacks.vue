@@ -5,100 +5,176 @@
         <v-main>
             <v-container fluid :class="isMobile ? 'pa-3' : 'pa-6'">
                 <!-- Page Header -->
-                <div class="page-header mb-4 mb-md-6">
-                    <div class="page-header-content">
-                        <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold">Feedback & Ratings</h1>
-                        <p class="text-grey mt-1 text-body-2">View and analyze rescue feedback from users</p>
+                <div class="d-flex align-center mb-4">
+                    <div>
+                        <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold gradient-text">Feedback & Ratings</h1>
+                        <p class="text-grey mt-1 text-body-2">View and analyze feedback data</p>
                     </div>
                 </div>
 
-                <!-- Tab Switcher -->
-                <v-tabs v-model="activeTab" color="#3674B5" class="mb-4" grow>
-                    <v-tab value="rescue">
-                        <v-icon start>mdi-lifebuoy</v-icon>
-                        Rescue Feedback
-                    </v-tab>
-                    <v-tab value="system">
-                        <v-icon start>mdi-bug-outline</v-icon>
-                        Bug Reports & Suggestions
-                    </v-tab>
-                </v-tabs>
-
-                <!-- ===================== RESCUE FEEDBACK TAB ===================== -->
-                <div v-show="activeTab === 'rescue'">
-
-                <!-- Stats Overview Cards -->
-                <v-row class="mb-4 mb-md-6">
-                    <v-col cols="6" sm="4" md="2">
-                        <v-card rounded="lg" class="stat-card text-center pa-3 pa-md-4" elevation="0">
-                            <div class="stat-icon-wrap mb-2">
-                                <v-icon size="28" color="primary">mdi-message-star</v-icon>
+                <!-- Section Navigation Cards -->
+                <v-row class="mb-4" dense>
+                    <v-col cols="6">
+                        <v-card
+                            class="tab-card cursor-pointer"
+                            :class="activeTab === 'rescue' ? 'tab-active-rescue' : 'tab-inactive'"
+                            @click="activeTab = 'rescue'"
+                            rounded="lg"
+                            :elevation="activeTab === 'rescue' ? 3 : 0"
+                        >
+                            <div class="d-flex align-center pa-3">
+                                <v-avatar :color="activeTab === 'rescue' ? 'rgba(255,255,255,0.2)' : '#E3F2FD'" size="38" rounded="lg" class="mr-3">
+                                    <v-icon :color="activeTab === 'rescue' ? 'white' : '#1976D2'" size="20">mdi-lifebuoy</v-icon>
+                                </v-avatar>
+                                <div class="flex-grow-1">
+                                    <div :class="activeTab === 'rescue' ? 'text-white' : ''" class="font-weight-bold text-body-2">Rescue Feedback</div>
+                                    <div :class="activeTab === 'rescue' ? 'text-blue-lighten-4' : 'text-grey'" class="text-caption">Ratings & reviews</div>
+                                </div>
+                                <v-chip :color="activeTab === 'rescue' ? 'white' : 'primary'" :variant="activeTab === 'rescue' ? 'flat' : 'tonal'" size="x-small" class="font-weight-bold">
+                                    <span :class="activeTab === 'rescue' ? 'text-primary' : ''">{{ stats.total_feedbacks || 0 }}</span>
+                                </v-chip>
                             </div>
-                            <div class="text-h5 font-weight-bold" style="color: #3674B5;">{{ stats.total_feedbacks || 0 }}</div>
-                            <div class="text-caption text-grey">Total Reviews</div>
                         </v-card>
                     </v-col>
-                    <v-col cols="6" sm="4" md="2">
-                        <v-card rounded="lg" class="stat-card text-center pa-3 pa-md-4" elevation="0">
-                            <div class="stat-icon-wrap mb-2">
-                                <v-icon size="28" color="amber-darken-2">mdi-star</v-icon>
+                    <v-col cols="6">
+                        <v-card
+                            class="tab-card cursor-pointer"
+                            :class="activeTab === 'system' ? 'tab-active-system' : 'tab-inactive'"
+                            @click="activeTab = 'system'"
+                            rounded="lg"
+                            :elevation="activeTab === 'system' ? 3 : 0"
+                        >
+                            <div class="d-flex align-center pa-3">
+                                <v-avatar :color="activeTab === 'system' ? 'rgba(255,255,255,0.2)' : '#FFF3E0'" size="38" rounded="lg" class="mr-3">
+                                    <v-icon :color="activeTab === 'system' ? 'white' : '#EF6C00'" size="20">mdi-bug-outline</v-icon>
+                                </v-avatar>
+                                <div class="flex-grow-1">
+                                    <div :class="activeTab === 'system' ? 'text-white' : ''" class="font-weight-bold text-body-2">Bug Reports & Suggestions</div>
+                                    <div :class="activeTab === 'system' ? 'text-orange-lighten-4' : 'text-grey'" class="text-caption">Issues & improvements</div>
+                                </div>
+                                <v-chip :color="activeTab === 'system' ? 'white' : 'orange'" :variant="activeTab === 'system' ? 'flat' : 'tonal'" size="x-small" class="font-weight-bold">
+                                    <span :class="activeTab === 'system' ? 'text-orange-darken-3' : ''">{{ sysStats.total || 0 }}</span>
+                                </v-chip>
                             </div>
-                            <div class="text-h5 font-weight-bold" style="color: #F9A825;">{{ stats.average_overall || '—' }}</div>
-                            <div class="text-caption text-grey">Avg Rating</div>
-                        </v-card>
-                    </v-col>
-                    <v-col cols="6" sm="4" md="2">
-                        <v-card rounded="lg" class="stat-card text-center pa-3 pa-md-4" elevation="0">
-                            <div class="stat-icon-wrap mb-2">
-                                <v-icon size="28" color="success">mdi-thumb-up</v-icon>
-                            </div>
-                            <div class="text-h5 font-weight-bold" style="color: #388E3C;">{{ stats.would_recommend_percent || 0 }}%</div>
-                            <div class="text-caption text-grey">Recommend</div>
-                        </v-card>
-                    </v-col>
-                    <v-col cols="6" sm="4" md="2">
-                        <v-card rounded="lg" class="stat-card text-center pa-3 pa-md-4" elevation="0">
-                            <div class="stat-icon-wrap mb-2">
-                                <v-icon size="28" color="teal">mdi-shield-check</v-icon>
-                            </div>
-                            <div class="text-h5 font-weight-bold" style="color: #00796B;">{{ stats.feeling_safe_percent || 0 }}%</div>
-                            <div class="text-caption text-grey">Feel Safe</div>
-                        </v-card>
-                    </v-col>
-                    <v-col cols="6" sm="4" md="2">
-                        <v-card rounded="lg" class="stat-card text-center pa-3 pa-md-4" elevation="0">
-                            <div class="stat-icon-wrap mb-2">
-                                <v-icon size="28" color="green">mdi-timer-check</v-icon>
-                            </div>
-                            <div class="text-h5 font-weight-bold" style="color: #2E7D32;">{{ stats.average_response_time || '—' }}</div>
-                            <div class="text-caption text-grey">Avg Response</div>
-                        </v-card>
-                    </v-col>
-                    <v-col cols="6" sm="4" md="2">
-                        <v-card rounded="lg" class="stat-card text-center pa-3 pa-md-4" elevation="0">
-                            <div class="stat-icon-wrap mb-2">
-                                <v-icon size="28" color="purple">mdi-chat-processing</v-icon>
-                            </div>
-                            <div class="text-h5 font-weight-bold" style="color: #7B1FA2;">{{ stats.average_communication || '—' }}</div>
-                            <div class="text-caption text-grey">Avg Comm.</div>
                         </v-card>
                     </v-col>
                 </v-row>
 
-                <!-- Rating Distribution + Tag Distribution + Filters -->
-                <v-row class="mb-6">
-                    <!-- Rating Distribution -->
-                    <v-col cols="12" md="4">
-                        <v-card rounded="lg" elevation="0">
-                            <v-card-title class="text-subtitle-1 font-weight-bold pb-0">
-                                <v-icon start color="amber-darken-2">mdi-chart-bar</v-icon>
-                                Rating Distribution
-                            </v-card-title>
-                            <v-card-text>
-                                <div v-for="star in [5, 4, 3, 2, 1]" :key="star" class="rating-row mb-2">
+                <!-- ===================== RESCUE FEEDBACK TAB ===================== -->
+                <div v-show="activeTab === 'rescue'">
+
+                <!-- Stats Banner -->
+                <v-card rounded="lg" class="rescue-stats-banner mb-3" elevation="0">
+                    <div class="stats-banner-grid">
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon">mdi-message-star</v-icon>
+                            <div class="stat-inline-value">{{ stats.total_feedbacks || 0 }}</div>
+                            <div class="stat-inline-label">Total Reviews</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon amber-icon">mdi-star</v-icon>
+                            <div class="stat-inline-value">{{ stats.average_overall || '—' }}</div>
+                            <div class="stat-inline-label">Avg Rating</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon green-icon">mdi-thumb-up</v-icon>
+                            <div class="stat-inline-value">{{ stats.would_recommend_percent || 0 }}%</div>
+                            <div class="stat-inline-label">Recommend</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon teal-icon">mdi-shield-check</v-icon>
+                            <div class="stat-inline-value">{{ stats.feeling_safe_percent || 0 }}%</div>
+                            <div class="stat-inline-label">Feel Safe</div>
+                        </div>
+                    </div>
+                </v-card>
+
+                <!-- Filters -->
+                <v-card rounded="lg" elevation="0" class="mb-3">
+                    <v-card-text class="pa-3 pb-2">
+                        <v-row dense align="center">
+                            <v-col cols="12" sm="4" md="3">
+                                <v-text-field
+                                    v-model="searchQuery"
+                                    label="Search feedbacks..."
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    prepend-inner-icon="mdi-magnify"
+                                    clearable
+                                />
+                            </v-col>
+                            <v-col cols="6" sm="3" md="2">
+                                <v-select
+                                    v-model="selectedRescuer"
+                                    :items="rescuerOptions"
+                                    item-title="label"
+                                    item-value="value"
+                                    label="Rescuer"
+                                    variant="outlined"
+                                    density="compact"
+                                    clearable
+                                    hide-details
+                                    @update:model-value="fetchFeedbacks"
+                                />
+                            </v-col>
+                            <v-col cols="6" sm="2" md="2">
+                                <v-select
+                                    v-model="ratingFilter"
+                                    :items="ratingFilterOptions"
+                                    item-title="label"
+                                    item-value="value"
+                                    label="Rating"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    clearable
+                                />
+                            </v-col>
+                            <v-col cols="5" sm="2" md="2">
+                                <v-text-field
+                                    v-model="dateFrom"
+                                    label="From"
+                                    type="date"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    @update:model-value="fetchFeedbacks"
+                                />
+                            </v-col>
+                            <v-col cols="5" sm="2" md="2">
+                                <v-text-field
+                                    v-model="dateTo"
+                                    label="To"
+                                    type="date"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    @update:model-value="fetchFeedbacks"
+                                />
+                            </v-col>
+                            <v-col cols="2" sm="1" md="1">
+                                <v-btn icon variant="text" density="compact" @click="resetFilters" title="Reset filters">
+                                    <v-icon>mdi-refresh</v-icon>
+                                </v-btn>
+                            </v-col>
+                        </v-row>
+                    </v-card-text>
+                </v-card>
+
+                <!-- Distribution Insights (compact side-by-side) -->
+                <v-row dense class="mb-3">
+                    <v-col cols="12" md="6">
+                        <v-card rounded="lg" elevation="0" class="fill-height">
+                            <v-card-text class="pa-3">
+                                <div class="d-flex align-center mb-2">
+                                    <v-icon size="16" color="amber-darken-2" class="mr-1">mdi-chart-bar</v-icon>
+                                    <span class="text-caption font-weight-bold">Rating Distribution</span>
+                                </div>
+                                <div v-for="star in [5, 4, 3, 2, 1]" :key="star" class="rating-row mb-1">
                                     <div class="rating-label">
                                         <span class="font-weight-medium">{{ star }}</span>
-                                        <v-icon size="14" color="amber-darken-2" class="ml-1">mdi-star</v-icon>
+                                        <v-icon size="12" color="amber-darken-2" class="ml-1">mdi-star</v-icon>
                                     </div>
                                     <div class="rating-bar-wrap">
                                         <div class="rating-bar" :style="{ width: getRatingPercent(star) + '%' }" :class="`rating-bar-${star}`"></div>
@@ -107,17 +183,17 @@
                                 </div>
                             </v-card-text>
                         </v-card>
-
-                        <!-- Tag Distribution -->
-                        <v-card rounded="lg" elevation="0" class="mt-3" v-if="Object.keys(stats.tag_distribution || {}).length > 0">
-                            <v-card-title class="text-subtitle-1 font-weight-bold pb-0">
-                                <v-icon start color="primary">mdi-tag-multiple</v-icon>
-                                Feedback Tags
-                            </v-card-title>
-                            <v-card-text>
-                                <div v-for="(count, tag) in stats.tag_distribution" :key="tag" class="tag-dist-row mb-2">
+                    </v-col>
+                    <v-col cols="12" md="6" v-if="Object.keys(stats.tag_distribution || {}).length > 0">
+                        <v-card rounded="lg" elevation="0" class="fill-height">
+                            <v-card-text class="pa-3">
+                                <div class="d-flex align-center mb-2">
+                                    <v-icon size="16" color="primary" class="mr-1">mdi-tag-multiple</v-icon>
+                                    <span class="text-caption font-weight-bold">Feedback Tags</span>
+                                </div>
+                                <div v-for="(count, tag) in stats.tag_distribution" :key="tag" class="tag-dist-row mb-1">
                                     <div class="tag-dist-label">
-                                        <v-icon size="14" :color="getTagColor(tag)" class="mr-1">{{ getTagIcon(tag) }}</v-icon>
+                                        <v-icon size="12" :color="getTagColor(tag)" class="mr-1">{{ getTagIcon(tag) }}</v-icon>
                                         <span class="font-weight-medium text-caption">{{ tag }}</span>
                                     </div>
                                     <div class="tag-dist-bar-wrap">
@@ -125,86 +201,6 @@
                                     </div>
                                     <div class="tag-dist-count">{{ count }}</div>
                                 </div>
-                            </v-card-text>
-                        </v-card>
-                    </v-col>
-
-                    <!-- Filters -->
-                    <v-col cols="12" md="8">
-                        <v-card rounded="lg" elevation="0">
-                            <v-card-title class="text-subtitle-1 font-weight-bold pb-0">
-                                <v-icon start color="primary">mdi-filter-variant</v-icon>
-                                Filters
-                            </v-card-title>
-                            <v-card-text>
-                                <v-row dense>
-                                    <v-col cols="12" sm="6">
-                                        <v-select
-                                            v-model="selectedRescuer"
-                                            :items="rescuerOptions"
-                                            item-title="label"
-                                            item-value="value"
-                                            label="Filter by Rescuer"
-                                            variant="outlined"
-                                            density="compact"
-                                            clearable
-                                            hide-details
-                                            @update:model-value="fetchFeedbacks"
-                                        />
-                                    </v-col>
-                                    <v-col cols="6" sm="3">
-                                        <v-text-field
-                                            v-model="dateFrom"
-                                            label="From"
-                                            type="date"
-                                            variant="outlined"
-                                            density="compact"
-                                            hide-details
-                                            @update:model-value="fetchFeedbacks"
-                                        />
-                                    </v-col>
-                                    <v-col cols="6" sm="3">
-                                        <v-text-field
-                                            v-model="dateTo"
-                                            label="To"
-                                            type="date"
-                                            variant="outlined"
-                                            density="compact"
-                                            hide-details
-                                            @update:model-value="fetchFeedbacks"
-                                        />
-                                    </v-col>
-                                    <v-col cols="12" sm="6">
-                                        <v-text-field
-                                            v-model="searchQuery"
-                                            label="Search feedbacks..."
-                                            variant="outlined"
-                                            density="compact"
-                                            hide-details
-                                            prepend-inner-icon="mdi-magnify"
-                                            clearable
-                                        />
-                                    </v-col>
-                                    <v-col cols="6" sm="3">
-                                        <v-select
-                                            v-model="ratingFilter"
-                                            :items="ratingFilterOptions"
-                                            item-title="label"
-                                            item-value="value"
-                                            label="Rating"
-                                            variant="outlined"
-                                            density="compact"
-                                            hide-details
-                                            clearable
-                                        />
-                                    </v-col>
-                                    <v-col cols="6" sm="3">
-                                        <v-btn block color="grey-lighten-1" variant="outlined" density="compact" @click="resetFilters" class="mt-1">
-                                            <v-icon start>mdi-refresh</v-icon>
-                                            Reset
-                                        </v-btn>
-                                    </v-col>
-                                </v-row>
                             </v-card-text>
                         </v-card>
                     </v-col>
@@ -323,7 +319,7 @@
                 <!-- Feedback Detail Dialog -->
                 <v-dialog v-model="showDetailDialog" :width="isMobile ? '95%' : 600" rounded="lg">
                     <v-card v-if="selectedFeedback" rounded="lg">
-                        <v-card-title class="d-flex align-center pa-4" style="background: linear-gradient(135deg, #3674B5 0%, #2d5f96 100%); color: white;">
+                        <v-card-title class="d-flex align-center pa-4" style="background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%); color: white;">
                             <v-icon color="white" class="mr-2">mdi-message-star</v-icon>
                             Feedback Detail
                             <v-spacer />
@@ -434,165 +430,167 @@
                 <!-- ===================== BUG REPORTS & SUGGESTIONS TAB ===================== -->
                 <div v-show="activeTab === 'system'">
 
-                    <!-- System Stats Cards -->
-                    <v-row class="mb-4 mb-md-6">
-                        <v-col cols="6" sm="4" md="2">
-                            <v-card rounded="lg" class="stat-card text-center pa-3 pa-md-4" elevation="0">
-                                <div class="stat-icon-wrap mb-2">
-                                    <v-icon size="28" color="primary">mdi-clipboard-list</v-icon>
-                                </div>
-                                <div class="text-h5 font-weight-bold" style="color: #3674B5;">{{ sysStats.total || 0 }}</div>
-                                <div class="text-caption text-grey">Total Reports</div>
-                            </v-card>
-                        </v-col>
-                        <v-col cols="6" sm="4" md="2">
-                            <v-card rounded="lg" class="stat-card text-center pa-3 pa-md-4" elevation="0">
-                                <div class="stat-icon-wrap mb-2">
-                                    <v-icon size="28" color="error">mdi-bug</v-icon>
-                                </div>
-                                <div class="text-h5 font-weight-bold" style="color: #C62828;">{{ sysStats.bugs || 0 }}</div>
-                                <div class="text-caption text-grey">Bug Reports</div>
-                            </v-card>
-                        </v-col>
-                        <v-col cols="6" sm="4" md="2">
-                            <v-card rounded="lg" class="stat-card text-center pa-3 pa-md-4" elevation="0">
-                                <div class="stat-icon-wrap mb-2">
-                                    <v-icon size="28" color="amber-darken-2">mdi-lightbulb-on</v-icon>
-                                </div>
-                                <div class="text-h5 font-weight-bold" style="color: #F9A825;">{{ sysStats.improvements || 0 }}</div>
-                                <div class="text-caption text-grey">Suggestions</div>
-                            </v-card>
-                        </v-col>
-                        <v-col cols="6" sm="4" md="2">
-                            <v-card rounded="lg" class="stat-card text-center pa-3 pa-md-4" elevation="0">
-                                <div class="stat-icon-wrap mb-2">
-                                    <v-icon size="28" color="orange">mdi-alert-circle-outline</v-icon>
-                                </div>
-                                <div class="text-h5 font-weight-bold" style="color: #EF6C00;">{{ sysStats.open || 0 }}</div>
-                                <div class="text-caption text-grey">Open</div>
-                            </v-card>
-                        </v-col>
-                        <v-col cols="6" sm="4" md="2">
-                            <v-card rounded="lg" class="stat-card text-center pa-3 pa-md-4" elevation="0">
-                                <div class="stat-icon-wrap mb-2">
-                                    <v-icon size="28" color="info">mdi-magnify-scan</v-icon>
-                                </div>
-                                <div class="text-h5 font-weight-bold" style="color: #1565C0;">{{ sysStats.in_review || 0 }}</div>
-                                <div class="text-caption text-grey">In Review</div>
-                            </v-card>
-                        </v-col>
-                        <v-col cols="6" sm="4" md="2">
-                            <v-card rounded="lg" class="stat-card text-center pa-3 pa-md-4" elevation="0">
-                                <div class="stat-icon-wrap mb-2">
-                                    <v-icon size="28" color="success">mdi-check-circle</v-icon>
-                                </div>
-                                <div class="text-h5 font-weight-bold" style="color: #2E7D32;">{{ sysStats.resolved || 0 }}</div>
-                                <div class="text-caption text-grey">Resolved</div>
-                            </v-card>
-                        </v-col>
-                    </v-row>
+                    <!-- System Stats Banner -->
+                    <v-card rounded="lg" class="system-stats-banner mb-3" elevation="0">
+                        <div class="stats-banner-grid">
+                            <div class="stat-inline">
+                                <v-icon size="22" class="stat-inline-icon">mdi-clipboard-list</v-icon>
+                                <div class="stat-inline-value">{{ sysStats.total || 0 }}</div>
+                                <div class="stat-inline-label">Total</div>
+                            </div>
+                            <div class="stat-inline">
+                                <v-icon size="22" class="stat-inline-icon red-icon">mdi-bug</v-icon>
+                                <div class="stat-inline-value">{{ sysStats.bugs || 0 }}</div>
+                                <div class="stat-inline-label">Bugs</div>
+                            </div>
+                            <div class="stat-inline">
+                                <v-icon size="22" class="stat-inline-icon amber-icon">mdi-lightbulb-on</v-icon>
+                                <div class="stat-inline-value">{{ sysStats.improvements || 0 }}</div>
+                                <div class="stat-inline-label">Suggestions</div>
+                            </div>
+                            <div class="stat-inline">
+                                <v-icon size="22" class="stat-inline-icon orange-icon">mdi-alert-circle-outline</v-icon>
+                                <div class="stat-inline-value">{{ sysStats.open || 0 }}</div>
+                                <div class="stat-inline-label">Open</div>
+                            </div>
+                            <div class="stat-inline">
+                                <v-icon size="22" class="stat-inline-icon blue-icon">mdi-magnify-scan</v-icon>
+                                <div class="stat-inline-value">{{ sysStats.in_review || 0 }}</div>
+                                <div class="stat-inline-label">In Review</div>
+                            </div>
+                            <div class="stat-inline">
+                                <v-icon size="22" class="stat-inline-icon green-icon">mdi-check-circle</v-icon>
+                                <div class="stat-inline-value">{{ sysStats.resolved || 0 }}</div>
+                                <div class="stat-inline-label">Resolved</div>
+                            </div>
+                        </div>
+                    </v-card>
 
-                    <!-- System Filters + Area Distribution -->
-                    <v-row class="mb-6">
-                        <!-- Area Distribution -->
-                        <v-col cols="12" md="4">
-                            <v-card rounded="lg" elevation="0" v-if="sysStats.area_distribution && Object.keys(sysStats.area_distribution).length > 0">
-                                <v-card-title class="text-subtitle-1 font-weight-bold pb-0">
-                                    <v-icon start color="primary">mdi-chart-pie</v-icon>
-                                    Reports by Area
-                                </v-card-title>
-                                <v-card-text>
-                                    <div v-for="(count, area) in sysStats.area_distribution" :key="area" class="tag-dist-row mb-2">
-                                        <div class="tag-dist-label">
-                                            <v-icon size="14" :color="getSysAreaColor(area)" class="mr-1">{{ getSysAreaIcon(area) }}</v-icon>
-                                            <span class="font-weight-medium text-caption">{{ area }}</span>
-                                        </div>
-                                        <div class="tag-dist-bar-wrap">
-                                            <div class="tag-dist-bar" :style="{ width: getSysAreaPercent(count) + '%', background: getSysAreaColor(area) }"></div>
-                                        </div>
-                                        <div class="tag-dist-count">{{ count }}</div>
-                                    </div>
-                                </v-card-text>
-                            </v-card>
-                        </v-col>
-
+                    <!-- App Source Sub-tabs + Filters (combined compact card) -->
+                    <v-card rounded="lg" elevation="0" class="mb-3">
+                        <!-- Sub-tabs -->
+                        <div class="d-flex align-center pa-3 pb-0 ga-2 flex-wrap">
+                            <v-chip
+                                :color="sysAppFilter === 'all' ? 'orange-darken-2' : 'orange-lighten-4'"
+                                variant="flat"
+                                @click="sysAppFilter = 'all'"
+                                size="small"
+                                class="cursor-pointer sys-tab-chip"
+                                :class="{ 'active-tab': sysAppFilter === 'all' }"
+                            >
+                                <v-icon start size="14">mdi-view-grid</v-icon>
+                                All ({{ sysFeedbacks.length }})
+                            </v-chip>
+                            <v-chip
+                                :color="sysAppFilter === 'user' ? 'indigo-darken-1' : 'indigo-lighten-4'"
+                                variant="flat"
+                                @click="sysAppFilter = 'user'"
+                                size="small"
+                                class="cursor-pointer sys-tab-chip"
+                                :class="{ 'active-tab': sysAppFilter === 'user' }"
+                            >
+                                <v-icon start size="14">mdi-account</v-icon>
+                                User App ({{ sysUserAppCount }})
+                            </v-chip>
+                            <v-chip
+                                :color="sysAppFilter === 'rescuer' ? 'teal-darken-1' : 'teal-lighten-4'"
+                                variant="flat"
+                                @click="sysAppFilter = 'rescuer'"
+                                size="small"
+                                class="cursor-pointer sys-tab-chip"
+                                :class="{ 'active-tab': sysAppFilter === 'rescuer' }"
+                            >
+                                <v-icon start size="14">mdi-lifebuoy</v-icon>
+                                Rescuer App ({{ sysRescuerAppCount }})
+                            </v-chip>
+                        </div>
                         <!-- Filters -->
-                        <v-col cols="12" md="8">
-                            <v-card rounded="lg" elevation="0">
-                                <v-card-title class="text-subtitle-1 font-weight-bold pb-0">
-                                    <v-icon start color="primary">mdi-filter-variant</v-icon>
-                                    Filters
-                                </v-card-title>
-                                <v-card-text>
-                                    <v-row dense>
-                                        <v-col cols="12" sm="4">
-                                            <v-select
-                                                v-model="sysCategoryFilter"
-                                                :items="sysCategoryOptions"
-                                                item-title="label"
-                                                item-value="value"
-                                                label="Category"
-                                                variant="outlined"
-                                                density="compact"
-                                                clearable
-                                                hide-details
-                                            />
-                                        </v-col>
-                                        <v-col cols="12" sm="4">
-                                            <v-select
-                                                v-model="sysAreaFilter"
-                                                :items="sysAreaOptions"
-                                                item-title="label"
-                                                item-value="value"
-                                                label="Area"
-                                                variant="outlined"
-                                                density="compact"
-                                                clearable
-                                                hide-details
-                                            />
-                                        </v-col>
-                                        <v-col cols="12" sm="4">
-                                            <v-select
-                                                v-model="sysStatusFilter"
-                                                :items="sysStatusOptions"
-                                                item-title="label"
-                                                item-value="value"
-                                                label="Status"
-                                                variant="outlined"
-                                                density="compact"
-                                                clearable
-                                                hide-details
-                                            />
-                                        </v-col>
-                                        <v-col cols="12" sm="8">
-                                            <v-text-field
-                                                v-model="sysSearchQuery"
-                                                label="Search reports..."
-                                                variant="outlined"
-                                                density="compact"
-                                                hide-details
-                                                prepend-inner-icon="mdi-magnify"
-                                                clearable
-                                            />
-                                        </v-col>
-                                        <v-col cols="12" sm="4">
-                                            <v-btn block color="grey-lighten-1" variant="outlined" density="compact" @click="resetSysFilters" class="mt-1">
-                                                <v-icon start>mdi-refresh</v-icon>
-                                                Reset
-                                            </v-btn>
-                                        </v-col>
-                                    </v-row>
-                                </v-card-text>
-                            </v-card>
-                        </v-col>
-                    </v-row>
+                        <v-card-text class="pa-3 pb-2">
+                            <v-row dense align="center">
+                                <v-col cols="12" sm="3">
+                                    <v-text-field
+                                        v-model="sysSearchQuery"
+                                        label="Search reports..."
+                                        variant="outlined"
+                                        density="compact"
+                                        hide-details
+                                        prepend-inner-icon="mdi-magnify"
+                                        clearable
+                                    />
+                                </v-col>
+                                <v-col cols="6" sm="2">
+                                    <v-select
+                                        v-model="sysCategoryFilter"
+                                        :items="sysCategoryOptions"
+                                        item-title="label"
+                                        item-value="value"
+                                        label="Category"
+                                        variant="outlined"
+                                        density="compact"
+                                        clearable
+                                        hide-details
+                                    />
+                                </v-col>
+                                <v-col cols="6" sm="2">
+                                    <v-select
+                                        v-model="sysAreaFilter"
+                                        :items="sysAreaOptions"
+                                        item-title="label"
+                                        item-value="value"
+                                        label="Area"
+                                        variant="outlined"
+                                        density="compact"
+                                        clearable
+                                        hide-details
+                                    />
+                                </v-col>
+                                <v-col cols="6" sm="2">
+                                    <v-select
+                                        v-model="sysStatusFilter"
+                                        :items="sysStatusOptions"
+                                        item-title="label"
+                                        item-value="value"
+                                        label="Status"
+                                        variant="outlined"
+                                        density="compact"
+                                        clearable
+                                        hide-details
+                                    />
+                                </v-col>
+                                <v-col cols="auto">
+                                    <v-btn icon variant="text" density="compact" @click="resetSysFilters" title="Reset filters">
+                                        <v-icon>mdi-refresh</v-icon>
+                                    </v-btn>
+                                </v-col>
+                            </v-row>
+                        </v-card-text>
+                    </v-card>
+
+                    <!-- Area Distribution (compact) -->
+                    <v-card rounded="lg" elevation="0" class="mb-3" v-if="sysStats.area_distribution && Object.keys(sysStats.area_distribution).length > 0">
+                        <v-card-text class="pa-3">
+                            <div class="d-flex align-center mb-2">
+                                <v-icon size="16" color="primary" class="mr-1">mdi-chart-pie</v-icon>
+                                <span class="text-caption font-weight-bold">Reports by Area</span>
+                            </div>
+                            <div class="d-flex flex-wrap ga-3">
+                                <div v-for="(count, area) in sysStats.area_distribution" :key="area" class="area-chip-item">
+                                    <v-chip size="small" :color="getSysAreaColor(area)" variant="tonal">
+                                        <v-icon start size="12">{{ getSysAreaIcon(area) }}</v-icon>
+                                        {{ area }}
+                                        <span class="ml-1 font-weight-bold">({{ count }})</span>
+                                    </v-chip>
+                                </div>
+                            </div>
+                        </v-card-text>
+                    </v-card>
 
                     <!-- System Feedbacks List -->
                     <v-card rounded="lg" elevation="0">
                         <v-card-title class="d-flex align-center justify-space-between">
                             <div>
                                 <v-icon start color="primary">mdi-format-list-bulleted</v-icon>
-                                <span class="text-subtitle-1 font-weight-bold">All Reports ({{ filteredSysFeedbacks.length }})</span>
+                                <span class="text-subtitle-1 font-weight-bold">{{ sysAppFilter === 'user' ? 'User App' : sysAppFilter === 'rescuer' ? 'Rescuer App' : 'All' }} Reports ({{ filteredSysFeedbacks.length }})</span>
                             </div>
                         </v-card-title>
 
@@ -679,7 +677,7 @@
                     <!-- System Report Detail Dialog -->
                     <v-dialog v-model="showSysDetailDialog" :width="isMobile ? '95%' : 650" rounded="lg">
                         <v-card v-if="selectedSysReport" rounded="lg">
-                            <v-card-title class="d-flex align-center pa-4" style="background: linear-gradient(135deg, #3674B5 0%, #2d5f96 100%); color: white;">
+                            <v-card-title class="d-flex align-center pa-4" style="background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%); color: white;">
                                 <v-icon color="white" class="mr-2">{{ selectedSysReport.category === 'bug' ? 'mdi-bug' : 'mdi-lightbulb-on' }}</v-icon>
                                 {{ selectedSysReport.category === 'bug' ? 'Bug Report' : 'Improvement Suggestion' }} Detail
                                 <v-spacer />
@@ -746,7 +744,7 @@
                                 <v-divider class="mb-4" />
 
                                 <!-- Admin Status & Notes -->
-                                <p class="text-subtitle-2 font-weight-bold mb-2" style="color: #13294B;">
+                                <p class="text-subtitle-2 font-weight-bold mb-2" style="color: #0D47A1;">
                                     <v-icon start size="18" color="primary">mdi-shield-account</v-icon>
                                     Admin Actions
                                 </p>
@@ -776,7 +774,7 @@
 
                                 <v-btn
                                     block
-                                    color="#3674B5"
+                                    color="#1976D2"
                                     :loading="sysUpdating"
                                     @click="updateSysReport"
                                     class="text-none"
@@ -906,13 +904,13 @@ const fetchStats = async () => {
 const fetchRescuers = async () => {
     try {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        const resp = await fetch('/admin/rescuers', {
+        const resp = await fetch('/admin/rescuers?per_page=200', {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken || '' },
             credentials: 'include',
         });
         const data = await resp.json();
-        // Parse rescuers from Inertia response
-        const rescuers = data?.props?.rescuers || data?.rescuers || [];
+        // Parse rescuers from JSON response
+        const rescuers = data?.data?.data || data?.props?.rescuers?.data || data?.rescuers || [];
         rescuerOptions.value = [
             ...rescuers.map(r => ({
                 label: `${r.first_name || ''} ${r.last_name || ''}`.trim() || r.name || 'Unknown',
@@ -1018,10 +1016,11 @@ const sysStatusFilter = ref(null);
 const sysSearchQuery = ref('');
 const sysCurrentPage = ref(1);
 const sysPageSize = 10;
+const sysAppFilter = ref('all');
 
 const sysCategoryOptions = [
     { label: 'Bug Report', value: 'bug' },
-    { label: 'Improvement', value: 'improvement' },
+    { label: 'Suggestion', value: 'improvement' },
 ];
 
 const sysAreaOptions = [
@@ -1044,9 +1043,24 @@ const sysStatusOptions = [
     { label: 'Closed', value: 'closed' },
 ];
 
+// App source counts
+const sysUserAppCount = computed(() => {
+    return sysFeedbacks.value.filter(r => r.user?.role && r.user.role !== 'rescuer').length;
+});
+const sysRescuerAppCount = computed(() => {
+    return sysFeedbacks.value.filter(r => r.user?.role === 'rescuer').length;
+});
+
 // Sys Computed
 const filteredSysFeedbacks = computed(() => {
     let result = [...sysFeedbacks.value];
+
+    // Filter by app source (user vs rescuer)
+    if (sysAppFilter.value === 'user') {
+        result = result.filter(r => r.user?.role && r.user.role !== 'rescuer');
+    } else if (sysAppFilter.value === 'rescuer') {
+        result = result.filter(r => r.user?.role === 'rescuer');
+    }
 
     if (sysCategoryFilter.value) {
         result = result.filter(r => r.category === sysCategoryFilter.value);
@@ -1142,6 +1156,7 @@ const resetSysFilters = () => {
     sysStatusFilter.value = null;
     sysSearchQuery.value = '';
     sysCurrentPage.value = 1;
+    sysAppFilter.value = 'all';
 };
 
 // Sys Helpers
@@ -1197,53 +1212,125 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.page-header {
+/* Gradient Text */
+.gradient-text {
+    background: linear-gradient(135deg, #1976D2, #0D47A1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ===== Tab Cards ===== */
+.tab-card {
+    transition: all 0.25s ease;
+    border: 2px solid transparent;
+}
+.tab-card:hover {
+    transform: translateY(-1px);
+}
+.tab-active-rescue {
+    background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%) !important;
+    border-color: transparent;
+}
+.tab-active-system {
+    background: linear-gradient(135deg, #EF6C00 0%, #E65100 100%) !important;
+    border-color: transparent;
+}
+.tab-inactive {
+    background: white !important;
+    border-color: #e8ecf0;
+}
+.tab-inactive:hover {
+    border-color: #90CAF9;
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.1);
+}
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* ===== System Tab Chips ===== */
+.sys-tab-chip {
+    transition: all 0.25s ease;
+    font-weight: 600 !important;
+    border: 2px solid transparent;
+    min-height: 32px;
+}
+.sys-tab-chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.sys-tab-chip.active-tab {
+    color: white !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ===== Stats Banners ===== */
+.rescue-stats-banner {
+    background: linear-gradient(135deg, #1976D2 0%, #1565C0 50%, #0D47A1 100%) !important;
+}
+.system-stats-banner {
+    background: linear-gradient(135deg, #EF6C00 0%, #E65100 50%, #BF360C 100%) !important;
+}
+.stats-banner-grid {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-}
-
-.stat-card {
-    border: 1px solid #e8ecf0;
-    transition: box-shadow 0.2s ease;
-}
-.stat-card:hover {
-    box-shadow: 0 4px 16px rgba(54, 116, 181, 0.1) !important;
-}
-
-.stat-icon-wrap {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    background: #f4f6f9;
-    display: inline-flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    gap: 8px;
+}
+.stat-inline {
+    text-align: center;
+    min-width: 70px;
+    padding: 4px 8px;
+}
+.stat-inline-icon {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 2px;
+}
+.stat-inline-icon.amber-icon { color: #FFD54F; }
+.stat-inline-icon.green-icon { color: #A5D6A7; }
+.stat-inline-icon.teal-icon { color: #80CBC4; }
+.stat-inline-icon.red-icon { color: #EF9A9A; }
+.stat-inline-icon.orange-icon { color: #FFCC80; }
+.stat-inline-icon.blue-icon { color: #90CAF9; }
+.stat-inline-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: white;
+    line-height: 1.2;
+}
+.stat-inline-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-/* Rating distribution */
+/* ===== Rating distribution ===== */
 .rating-row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 .rating-label {
-    width: 40px;
+    width: 36px;
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    font-size: 13px;
+    font-size: 12px;
 }
 .rating-bar-wrap {
     flex: 1;
-    height: 8px;
+    height: 6px;
     background: #f0f0f0;
-    border-radius: 4px;
+    border-radius: 3px;
     overflow: hidden;
 }
 .rating-bar {
     height: 100%;
-    border-radius: 4px;
+    border-radius: 3px;
     transition: width 0.5s ease;
 }
 .rating-bar-5 { background: linear-gradient(90deg, #2E7D32, #43A047); }
@@ -1252,27 +1339,60 @@ onMounted(async () => {
 .rating-bar-2 { background: linear-gradient(90deg, #EF6C00, #FF9800); }
 .rating-bar-1 { background: linear-gradient(90deg, #C62828, #EF5350); }
 .rating-count {
-    width: 30px;
+    width: 24px;
     text-align: right;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: #546E7A;
 }
 
-/* Feedback items */
+/* ===== Tag distribution ===== */
+.tag-dist-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.tag-dist-label {
+    width: 130px;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tag-dist-bar-wrap {
+    flex: 1;
+    height: 5px;
+    background: #f0f0f0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+.tag-dist-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+.tag-dist-count {
+    width: 22px;
+    text-align: right;
+    font-size: 11px;
+    font-weight: 600;
+    color: #546E7A;
+}
+
+/* ===== Feedback items ===== */
 .feedback-item {
-    padding: 16px 20px;
+    padding: 14px 16px;
     border-bottom: 1px solid #f0f0f0;
     cursor: pointer;
     transition: background 0.15s ease;
 }
 .feedback-item:hover {
-    background: #f8fafb;
+    background: #f5f8fc;
 }
 .feedback-item:last-child {
     border-bottom: none;
 }
-
 .feedback-header {
     display: flex;
     justify-content: space-between;
@@ -1290,77 +1410,23 @@ onMounted(async () => {
     border-radius: 20px;
     border: 1px solid #FFF59D;
 }
-
 .feedback-ratings-grid {
     display: flex;
-    gap: 16px;
+    gap: 6px;
     flex-wrap: wrap;
 }
-.rating-mini {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.rating-mini-label {
-    font-size: 11px;
-    color: #78909C;
-    font-weight: 500;
-}
-
 .feedback-comment {
     font-size: 13px;
     color: #546E7A;
     line-height: 1.5;
-    padding: 8px 12px;
+    padding: 6px 10px;
     background: #fafbfd;
-    border-radius: 8px;
+    border-radius: 6px;
     border-left: 3px solid #e0e0e0;
 }
-
 .feedback-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
-}
-
-/* Detail dialog */
-.detail-rating-box {
-    background: #f8fafb;
-    border-radius: 12px;
-    border: 1px solid #e8ecf0;
-}
-
-/* Tag distribution */
-.tag-dist-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.tag-dist-label {
-    width: 140px;
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.tag-dist-bar-wrap {
-    flex: 1;
-    height: 6px;
-    background: #f0f0f0;
-    border-radius: 3px;
-    overflow: hidden;
-}
-.tag-dist-bar {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 0.5s ease;
-}
-.tag-dist-count {
-    width: 24px;
-    text-align: right;
-    font-size: 12px;
-    font-weight: 600;
-    color: #546E7A;
 }
 </style>

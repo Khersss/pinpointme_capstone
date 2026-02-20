@@ -363,6 +363,8 @@
                 {{ snackbar.message }}
             </div>
         </v-snackbar>
+
+
     </v-app>
 </template>
 
@@ -373,6 +375,7 @@ import { useDisplay } from 'vuetify';
 import RescuerMenu from '@/Components/Pages/Rescuer/Menu/RescuerMenu.vue';
 import RescuerBottomNav from '@/Components/Pages/Rescuer/Menu/RescuerBottomNav.vue';
 import { submitSystemFeedback, getUserSystemFeedbacks, getUnreadMessageCount } from '@/Composables/useApi';
+
 
 const { mobile } = useDisplay();
 const isMobile = computed(() => mobile.value);
@@ -794,7 +797,7 @@ onMounted(async () => {
     .page-container {
         max-width: 800px;
         margin: 0 auto;
-        padding-bottom: 40px !important;
+        padding-bottom: 0 !important;
     }
 
     .desktop-only {

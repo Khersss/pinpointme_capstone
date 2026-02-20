@@ -896,7 +896,7 @@ class RescueRequestController extends Controller
         if ($rescueRequest->assigned_rescuer) {
             $rescuer = \App\Models\User::find($rescueRequest->assigned_rescuer);
             if ($rescuer) {
-                $rescuer->update(['status' => 'active']);
+                $rescuer->update(['status' => 'available']);
             }
         }
 
@@ -1115,13 +1115,14 @@ class RescueRequestController extends Controller
                 'type' => 'rescue_cancelled',
                 'title' => 'Rescue Cancellation Request',
                 'message' => sprintf(
-                    'Rescue request %s — cancellation requested by user.',
-                    $rescueRequest->rescue_code ?? '#' . $rescueRequest->id
+                    'Rescue request %s — cancellation requested by %s.',
+                    $rescueRequest->rescue_code ?? '#' . $rescueRequest->id,
+                    trim(($rescueRequest->firstName ?? '') . ' ' . ($rescueRequest->lastName ?? '')) ?: 'Unknown User'
                 ),
                 'data' => [
                     'rescue_id' => $rescueRequest->id,
                     'rescue_code' => $rescueRequest->rescue_code,
-                    'user_name' => trim(($rescueRequest->first_name ?? '') . ' ' . ($rescueRequest->last_name ?? '')) ?: 'Unknown User',
+                    'user_name' => trim(($rescueRequest->firstName ?? '') . ' ' . ($rescueRequest->lastName ?? '')) ?: 'Unknown User',
                     'cancellation_reason' => $request->cancellation_reason,
                     'cancelled_at' => now()->toISOString(),
                     'status' => 'pending_approval',
@@ -1188,13 +1189,14 @@ class RescueRequestController extends Controller
             'type' => 'rescue_cancelled',
             'title' => 'Rescue Request Cancelled',
             'message' => sprintf(
-                'Rescue request %s has been cancelled by the user (no rescuer assigned).',
-                $rescueRequest->rescue_code ?? '#' . $rescueRequest->id
+                'Rescue request %s has been cancelled by %s (no rescuer assigned).',
+                $rescueRequest->rescue_code ?? '#' . $rescueRequest->id,
+                trim(($rescueRequest->firstName ?? '') . ' ' . ($rescueRequest->lastName ?? '')) ?: 'the user'
             ),
             'data' => [
                 'rescue_id' => $rescueRequest->id,
                 'rescue_code' => $rescueRequest->rescue_code,
-                'user_name' => trim(($rescueRequest->first_name ?? '') . ' ' . ($rescueRequest->last_name ?? '')) ?: 'Unknown User',
+                'user_name' => trim(($rescueRequest->firstName ?? '') . ' ' . ($rescueRequest->lastName ?? '')) ?: 'Unknown User',
                 'cancellation_reason' => $request->cancellation_reason,
                 'cancelled_at' => now()->toISOString(),
                 'status' => 'cancelled',

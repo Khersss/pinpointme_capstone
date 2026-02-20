@@ -145,6 +145,13 @@ class AuthController extends Controller
             $user = User::where('email', $credentials['email'])->first();
             
             if ($user && Hash::check($credentials['password'], $user->password)) {
+                // Block inactive users
+                if ($user->status === 'inactive') {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Your account has been deactivated. Please contact the administrator.'
+                    ], 403);
+                }
                 // Block unverified external rescuers
                 if ($user->role === 'rescuer' && $user->status === 'otp_pending') {
                     return response()->json([
@@ -210,6 +217,13 @@ class AuthController extends Controller
             $user = Auth::user();
             // Update last login timestamp
             $user->update(['last_login_at' => Carbon::now()]);
+            // Block inactive users from logging in
+            if ($user->status === 'inactive') {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                return redirect('/login')->withErrors(['email' => 'Your account has been deactivated. Please contact the administrator.']);
+            }
             // Block login if SDCA Google and not verified
             if (str_ends_with($user->email, '@sdca.edu.ph') && !$user->email_verified_at) {
                 Auth::logout();
@@ -2737,7 +2751,7 @@ class AuthController extends Controller
                     }
                 },
             ],
-            'organization' => 'required|string|max:255',
+            'organization' => 'nullable|string|max:255',
         ], [
             'first_name.required' => 'First name is required.',
             'first_name.regex' => 'First name must contain letters only (no numbers or special characters).',
@@ -2746,7 +2760,6 @@ class AuthController extends Controller
             'email.required' => 'Email address is required.',
             'email.email' => 'Please enter a valid email address.',
             'phone.required' => 'Phone number is required.',
-            'organization.required' => 'Organization / affiliation is required.',
         ]);
 
         if ($validator->fails()) {

@@ -153,6 +153,8 @@
             @close="popupAlert.show = false"
             @click="popupAlert.show = false"
         />
+
+
     </v-app>
 </template>
 
@@ -166,6 +168,7 @@ import UserMenu from '@/Components/Pages/User/Menu/UserMenu.vue';
 import UserAppBar from '@/Components/Pages/User/Menu/UserAppBar.vue';
 import UserBottomNav from '@/Components/Pages/User/Menu/UserBottomNav.vue';
 import NotificationPopup from '@/Components/NotificationPopup.vue';
+
 
 // Auth
 const page = usePage();
@@ -615,7 +618,6 @@ onUnmounted(() => {
 /* Main Content */
 .notifications-main {
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 120px);
-    min-height: 100vh;
 }
 
 /* Notification Banner */
@@ -911,7 +913,7 @@ onUnmounted(() => {
 @media (min-width: 1024px) {
     .notifications-main {
         margin-left: 0;
-        padding-bottom: 40px;
+        padding-bottom: 0;
         width: 100%;
     }
     
@@ -920,6 +922,7 @@ onUnmounted(() => {
         margin: 0 auto;
         padding-left: clamp(24px, 5vw, 80px);
         padding-right: clamp(24px, 5vw, 80px);
+        padding-bottom: 120px;
     }
 }
 

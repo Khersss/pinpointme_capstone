@@ -7,13 +7,10 @@
         <v-main>
             <v-container fluid :class="isMobile ? 'pa-3' : 'pa-6'" class="pm-container">
                 <!-- Page Header -->
-                <div class="pm-page-header mb-4">
-                    <div class="pm-header-content">
-                        <h1 :class="isMobile ? 'text-h6' : 'text-h5'" class="font-weight-bold gradient-text">
-                            <v-icon :size="isMobile ? 20 : 24" class="mr-2" color="primary">mdi-shield-check</v-icon>
-                            Preventive Measures
-                        </h1>
-                        <p class="text-grey mt-1 text-caption">Manage educational content and safety videos</p>
+                <div class="page-header mb-4 mb-md-6">
+                    <div class="page-header-content">
+                        <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold gradient-text">Preventive Measures</h1>
+                        <p class="text-grey mt-1 text-body-2">Manage educational content and safety videos</p>
                     </div>
                     <v-btn 
                         color="primary" 
@@ -30,7 +27,7 @@
                 <!-- Stats Row -->
                 <div class="pm-stats-row mb-4">
                     <div class="pm-stat-card">
-                        <div class="pm-stat-icon" style="background: linear-gradient(135deg, #3674B5, #2196F3);">
+                        <div class="pm-stat-icon" style="background: linear-gradient(135deg, #1976D2, #2196F3);">
                             <v-icon size="20" color="white">mdi-video</v-icon>
                         </div>
                         <div class="pm-stat-info">
@@ -39,7 +36,7 @@
                         </div>
                     </div>
                     <div class="pm-stat-card">
-                        <div class="pm-stat-icon" style="background: linear-gradient(135deg, #13294B, #3674B5);">
+                        <div class="pm-stat-icon" style="background: linear-gradient(135deg, #0D47A1, #1976D2);">
                             <v-icon size="20" color="white">mdi-folder</v-icon>
                         </div>
                         <div class="pm-stat-info">
@@ -619,14 +616,14 @@ const getCategoryGradient = (cat) => {
         'Earthquake': 'linear-gradient(135deg, #8D6E63, #5D4037)',
         'First Aid': 'linear-gradient(135deg, #EC407A, #AD1457)',
         'Evacuation': 'linear-gradient(135deg, #FFA726, #E65100)',
-        'General Safety': 'linear-gradient(135deg, #3674B5, #13294B)',
+        'General Safety': 'linear-gradient(135deg, #1976D2, #0D47A1)',
         'Flood': 'linear-gradient(135deg, #42A5F5, #1565C0)',
         'Medical Emergency': 'linear-gradient(135deg, #EF5350, #C62828)',
         'fire': 'linear-gradient(135deg, #FF6B35, #D32F2F)',
         'earthquake': 'linear-gradient(135deg, #8D6E63, #5D4037)',
         'first_aid': 'linear-gradient(135deg, #EC407A, #AD1457)',
         'evacuation': 'linear-gradient(135deg, #FFA726, #E65100)',
-        'general': 'linear-gradient(135deg, #3674B5, #13294B)',
+        'general': 'linear-gradient(135deg, #1976D2, #0D47A1)',
         'flood': 'linear-gradient(135deg, #42A5F5, #1565C0)',
         'medical': 'linear-gradient(135deg, #EF5350, #C62828)',
         'safety': 'linear-gradient(135deg, #66BB6A, #2E7D32)',
@@ -902,7 +899,7 @@ const getThumbnail = (measure) => {
         return `/storage/${measure.thumbnail}`;
     }
     if (isLocalVideo(measure.video_url || measure.video_path)) {
-        return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect fill="#13294B" width="320" height="180"/><polygon fill="#3674B5" points="130,60 130,120 200,90"/></svg>');
+        return 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect fill="#0D47A1" width="320" height="180"/><polygon fill="#1976D2" points="130,60 130,120 200,90"/></svg>');
     }
     const videoId = getYouTubeId(measure.video_url || measure.video_path);
     return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : '';
@@ -952,14 +949,14 @@ onMounted(() => {
 <style scoped>
 /* PPM Gradient Text */
 .gradient-text {
-    background: linear-gradient(135deg, #3674B5, #13294B);
+    background: linear-gradient(135deg, #1976D2, #0D47A1);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
 /* Page Header */
-.pm-page-header {
+.page-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -967,7 +964,7 @@ onMounted(() => {
     gap: 12px;
 }
 
-.pm-header-content {
+.page-header-content {
     flex: 1;
     min-width: 180px;
 }
@@ -1055,16 +1052,16 @@ onMounted(() => {
 }
 
 .pm-cat-pill:hover {
-    border-color: #3674B5;
-    color: #3674B5;
-    background: rgba(54, 116, 181, 0.04);
+    border-color: #1976D2;
+    color: #1976D2;
+    background: rgba(25, 118, 210, 0.04);
 }
 
 .pm-cat-pill.active {
-    background: linear-gradient(135deg, #3674B5, #13294B);
+    background: linear-gradient(135deg, #1976D2, #0D47A1);
     color: white;
     border-color: transparent;
-    box-shadow: 0 4px 12px rgba(54, 116, 181, 0.3);
+    box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
 }
 
 .pm-cat-pill.active .v-icon { color: white !important; }
@@ -1090,7 +1087,7 @@ onMounted(() => {
 
 .pm-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(54, 116, 181, 0.12);
+    box-shadow: 0 8px 24px rgba(25, 118, 210, 0.12);
 }
 
 /* Thumbnail */
@@ -1114,7 +1111,7 @@ onMounted(() => {
     position: relative;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #3674B5 0%, #13294B 100%);
+    background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1148,7 +1145,7 @@ onMounted(() => {
     position: absolute;
     bottom: 0; left: 0; right: 0;
     height: 60%;
-    background: linear-gradient(180deg, transparent 0%, rgba(19, 41, 75, 0.7) 100%);
+    background: linear-gradient(180deg, transparent 0%, rgba(13, 71, 161, 0.7) 100%);
     pointer-events: none;
     transition: opacity 0.3s ease;
 }
@@ -1171,7 +1168,7 @@ onMounted(() => {
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background: rgba(54, 116, 181, 0.9);
+    background: rgba(25, 118, 210, 0.9);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1189,14 +1186,14 @@ onMounted(() => {
     position: absolute;
     top: -8px; left: -8px; right: -8px; bottom: -8px;
     border-radius: 50%;
-    border: 2px solid rgba(54, 116, 181, 0.4);
+    border: 2px solid rgba(25, 118, 210, 0.4);
     animation: ripple 2s ease-out infinite;
 }
 
 .pm-card:hover .pm-play-circle {
     transform: scale(1.15);
-    background: #3674B5;
-    box-shadow: 0 6px 30px rgba(54, 116, 181, 0.5);
+    background: #1976D2;
+    box-shadow: 0 6px 30px rgba(25, 118, 210, 0.5);
 }
 
 /* Enhanced Badges */
@@ -1341,7 +1338,7 @@ onMounted(() => {
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #3674B5, #13294B);
+    background: linear-gradient(135deg, #1976D2, #0D47A1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1419,7 +1416,7 @@ onMounted(() => {
 
 /* Dialog Toolbar */
 .pm-dialog-toolbar {
-    background: linear-gradient(135deg, #3674B5, #13294B) !important;
+    background: linear-gradient(135deg, #1976D2, #0D47A1) !important;
 }
 
 /* Video Container */
@@ -1458,7 +1455,7 @@ onMounted(() => {
 
 .pm-preview-header {
     position: relative;
-    background: linear-gradient(135deg, #3674B5 0%, #13294B 100%);
+    background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%);
     color: white;
     padding: 20px;
     overflow: hidden;
@@ -1471,7 +1468,7 @@ onMounted(() => {
     pointer-events: none;
 }
 
-.pm-header-content {
+.page-header-content {
     position: relative;
     z-index: 2;
     display: flex;
@@ -1548,11 +1545,11 @@ onMounted(() => {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #3674B5, #13294B);
+    background: linear-gradient(135deg, #1976D2, #0D47A1);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(54, 116, 181, 0.3);
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
 }
 
 .pm-author-text {
@@ -1619,7 +1616,7 @@ onMounted(() => {
 
 .pm-preview-edit:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(54, 116, 181, 0.3);
+    box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
 }
 
 .pm-preview-toggle:hover {
@@ -1660,7 +1657,7 @@ onMounted(() => {
 
 /* Responsive */
 @media (max-width: 600px) {
-    .pm-page-header {
+    .page-header {
         flex-direction: column;
         align-items: flex-start;
     }

@@ -12,7 +12,7 @@
                 <div class="header-title">
                     <div class="title-with-icon">
                         <v-icon size="24" class="mr-2">mdi-message-text</v-icon>
-                        <h1>Messages</h1>
+                        <h1>Inbox</h1>
                     </div>
                     <p v-if="unreadCount > 0">{{ unreadCount }} unread message{{ unreadCount !== 1 ? 's' : '' }}</p>
                 </div>
@@ -93,6 +93,8 @@
             @close="popupAlert.show = false"
             @click="handleNotificationClick"
         />
+
+
     </v-app>
 </template>
 
@@ -106,6 +108,7 @@ import RescuerMenu from '@/Components/Pages/Rescuer/Menu/RescuerMenu.vue';
 import RescuerBottomNav from '@/Components/Pages/Rescuer/Menu/RescuerBottomNav.vue';
 import NotificationPopup from '@/Components/NotificationPopup.vue';
 import InboxList from '@/Pages/Shared/InboxList.vue';
+
 
 const { isDark } = useDarkMode();
 
@@ -360,12 +363,13 @@ const refreshConversations = async () => {
 };
 
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
     // Load rescuer status from localStorage on mount
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
     rescuerStatus.value = userData.status || 'available';
     
-    fetchConversations(true);
+    await fetchConversations(true);
+    
     pollingInterval.value = setInterval(() => fetchConversations(false), 10000);
     
     document.addEventListener('visibilitychange', handleVisibilityChange);

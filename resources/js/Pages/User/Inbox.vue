@@ -2,7 +2,7 @@
     <v-app class="bg-user-gradient-light">
         <!-- App Bar -->
         <UserAppBar 
-            title="Messages" 
+            title="Inbox" 
             :subtitle="totalUnreadCount > 0 ? totalUnreadCount + ' unread message' + (totalUnreadCount !== 1 ? 's' : '') : ''"
             :notification-count="0"
             @toggle-drawer="drawer = true"
@@ -54,6 +54,8 @@
             :notification-count="0" 
             :message-count="totalUnreadCount"
         />
+
+
     </v-app>
 </template>
 
@@ -67,6 +69,7 @@ import UserAppBar from '@/Components/Pages/User/Menu/UserAppBar.vue';
 import UserBottomNav from '@/Components/Pages/User/Menu/UserBottomNav.vue';
 import NotificationPopup from '@/Components/NotificationPopup.vue';
 import InboxList from '@/Pages/Shared/InboxList.vue';
+
 
 // Notification Alert System
 const { playNotificationSound, vibrate, notify } = useNotificationAlert();
@@ -282,13 +285,7 @@ const totalUnreadCount = computed(() => {
 <style scoped>
 /* Main Content */
 .messages-main {
-    min-height: 100vh;
-}
-
-@media (max-width: 1023px) {
-    .messages-main {
-        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 100px) !important;
-    }
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 100px);
 }
 
 @media (max-width: 600px) {
@@ -299,7 +296,7 @@ const totalUnreadCount = computed(() => {
 
 @media (min-width: 1024px) {
     .messages-main {
-        padding-bottom: 40px;
+        padding-bottom: 0;
     }
 }
 </style>

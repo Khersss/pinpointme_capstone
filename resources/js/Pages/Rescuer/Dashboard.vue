@@ -73,7 +73,7 @@
                             size="x-small"
                             variant="flat"
                         >
-                            {{ request.urgency_level || 'Unknown' }}
+                            {{ request.urgency_level || 'Low' }}
                         </v-chip>
                     </template>
                 </v-list-item>
@@ -620,6 +620,8 @@
                 </div>
             </v-overlay>
         </v-main>
+
+
     </v-app>
 </template>
 
@@ -634,6 +636,7 @@ import RescuerMenu from '@/Components/Pages/Rescuer/Menu/RescuerMenu.vue';
 import RescuerBottomNav from '@/Components/Pages/Rescuer/Menu/RescuerBottomNav.vue';
 import NotificationPopup from '@/Components/NotificationPopup.vue';
 
+
 const { isDark } = useDarkMode();
 
 // Get Inertia page for auth
@@ -641,7 +644,10 @@ const page = usePage();
 const authUser = computed(() => page.props?.auth?.user);
 
 // Notification Alert System
-const { playNotificationSound, vibrate, stopForceAlert, isForceAlertPlaying } = useNotificationAlert();
+const { playNotificationSound, vibrate, stopForceAlert, stopEmergencySound, isForceAlertPlaying } = useNotificationAlert();
+
+// Track the request ID that triggered the last emergency alarm
+const lastAlarmRequestId = ref(null);
 
 // Popup alert state
 const popupAlert = ref({
@@ -708,8 +714,8 @@ const pendingRequests = computed(() =>
     rescueRequests.value
         .filter((r) => r.status === 'pending')
         .sort((a, b) => {
-            const prioA = urgencyPriority[(a.urgency_level || 'medium').toLowerCase()] || 2;
-            const prioB = urgencyPriority[(b.urgency_level || 'medium').toLowerCase()] || 2;
+            const prioA = urgencyPriority[(a.urgency_level || 'low').toLowerCase()] || 1;
+            const prioB = urgencyPriority[(b.urgency_level || 'low').toLowerCase()] || 1;
             if (prioB !== prioA) return prioB - prioA; // Higher priority first
             return new Date(a.created_at) - new Date(b.created_at); // Oldest first within same priority
         })
@@ -903,8 +909,9 @@ onUnmounted(() => {
         clearInterval(pollingInterval);
         pollingInterval = null;
     }
-    // Always stop force alert sound when leaving the dashboard
+    // Always stop all alarm sounds when leaving the dashboard
     stopForceAlert();
+    stopEmergencySound();
 });
 
 // Start polling for new rescue requests
@@ -937,6 +944,15 @@ const pollForNewRequests = async () => {
         // Find new requests (IDs that weren't in the previous list)
         const newRequests = currentPending.filter(r => !previousPendingIds.value.includes(r.id));
         
+        // ── Auto-stop emergency alarm when the request that triggered it is no longer pending ──
+        // This handles: another rescuer accepted, request cancelled, etc.
+        if (lastAlarmRequestId.value && !currentPendingIds.includes(lastAlarmRequestId.value)) {
+            console.log('[Dashboard] Request that triggered alarm is no longer pending — stopping alarm');
+            stopEmergencySound();
+            popupAlert.value.show = false;
+            lastAlarmRequestId.value = null;
+        }
+        
         if (newRequests.length > 0) {
             // Don't send any notifications if rescuer is restricted by admin
             if (isRescuerRestricted.value) {
@@ -949,6 +965,7 @@ const pollForNewRequests = async () => {
             // If rescuer is available → emergency alarm
             else {
                 triggerNewRequestNotification(newRequests[0], newRequests.length);
+                lastAlarmRequestId.value = newRequests[0].id;
             }
         }
         
@@ -996,7 +1013,7 @@ const pollForNewRequests = async () => {
 
 // Trigger notification for new rescue request
 const triggerNewRequestNotification = (request, totalNew) => {
-    const urgencyText = request.urgency_level || 'Unknown';
+    const urgencyText = request.urgency_level || 'Low';
     const location = getLocationDisplay(request);
     const name = request.firstName || 'Someone';
     
@@ -1014,7 +1031,7 @@ const triggerNewRequestNotification = (request, totalNew) => {
 
 // Soft notification for new request when rescuer has an ongoing rescue (default sound only)
 const triggerSoftRequestNotification = (request, totalNew) => {
-    const urgencyText = request.urgency_level || 'Unknown';
+    const urgencyText = request.urgency_level || 'Low';
     const location = getLocationDisplay(request);
     const name = request.firstName || 'Someone';
 
@@ -1307,15 +1324,18 @@ const getLocationDisplay = (request) => {
 };
 
 const getUrgencyColor = (level) => {
-    switch (level?.toLowerCase()) {
+    const normalizedLevel = (level || 'low').toLowerCase();
+    switch (normalizedLevel) {
         case 'critical':
             return 'error';
         case 'high':
             return 'warning';
         case 'medium':
             return 'info';
+        case 'low':
+            return 'success';
         default:
-            return 'grey';
+            return 'success'; // Default to low (success/green) for empty/unknown
     }
 };
 
@@ -2249,9 +2269,28 @@ const showNotification = (message, color = 'info') => {
 }
 
 @media (min-width: 1025px) {
-    /* On desktop: no bottom padding needed since no bottom nav */
+    /* On desktop: allow natural page scroll so footer is reachable */
+    .app-container {
+        position: static !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    .app-container :deep(.v-application__wrap) {
+        min-height: 100vh !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    .main-container {
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
     .content-area {
-        padding-bottom: 20px;
+        overflow-y: visible !important;
+        padding-bottom: 0;
     }
 }
 

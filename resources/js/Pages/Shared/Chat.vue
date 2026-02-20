@@ -180,86 +180,124 @@
                     </div>
 
                     <!-- Normal Input -->
-                    <div v-else class="chat-input-container d-flex align-center ga-2">
-                        <!-- Plus Button -->
-                        <v-menu offset-y>
-                            <template v-slot:activator="{ props }">
+                    <div v-else>
+                        <!-- Mobile: Expandable Attachment Buttons -->
+                        <transition name="slide-attachments">
+                            <div v-if="showAttachmentButtons" class="attachment-bar d-flex align-center ga-2 px-3 py-2 mobile-only">
                                 <v-btn 
                                     icon 
+                                    size="small"
                                     color="primary" 
-                                    class="chat-icon-btn"
-                                    v-bind="props"
+                                    variant="tonal"
+                                    @click="triggerCameraCapture(); showAttachmentButtons = false"
                                 >
-                                    <v-icon color="white">mdi-plus</v-icon>
+                                    <v-icon size="20">mdi-camera</v-icon>
                                 </v-btn>
-                            </template>
-                            <v-list density="compact">
-                                <v-list-item @click="triggerFileUpload">
-                                    <template v-slot:prepend>
-                                        <v-icon>mdi-file</v-icon>
-                                    </template>
-                                    <v-list-item-title>File</v-list-item-title>
-                                </v-list-item>
-                            </v-list>
-                        </v-menu>
-                        
-                        <!-- Camera Button -->
-                        <v-btn 
-                            icon 
-                            color="primary" 
-                            class="chat-icon-btn"
-                            @click="triggerCameraCapture"
-                        >
-                            <v-icon color="white">mdi-camera</v-icon>
-                        </v-btn>
-                        
-                        <!-- Gallery Button -->
-                        <v-btn 
-                            icon 
-                            color="primary" 
-                            class="chat-icon-btn"
-                            @click="triggerImageUpload"
-                        >
-                            <v-icon color="white">mdi-image</v-icon>
-                        </v-btn>
-                        
-                        <!-- Microphone Button -->
-                        <v-btn 
-                            icon 
-                            color="primary" 
-                            class="chat-icon-btn"
-                            @click="startRecording"
-                        >
-                            <v-icon color="white">mdi-microphone</v-icon>
-                        </v-btn>
-                        
-                        <!-- Text Input -->
-                        <v-textarea
-                            v-model="messageInput"
-                            placeholder="Aa"
-                            variant="outlined"
-                            density="compact"
-                            hide-details
-                            rounded
-                            rows="1"
-                            auto-grow
-                            max-rows="4"
-                            class="flex-grow-1 chat-text-input"
-                            @keyup.enter.exact="sendTextMessage"
-                            @keyup.enter.shift.prevent
-                        />
-                        
-                        <!-- Send Button -->
-                        <v-btn
-                            icon
-                            color="primary"
-                            class="chat-icon-btn"
-                            :disabled="!messageInput.trim() || isSending"
-                            :loading="isSending"
-                            @click="sendTextMessage()"
-                        >
-                            <v-icon color="white">mdi-send</v-icon>
-                        </v-btn>
+                                <v-btn 
+                                    icon 
+                                    size="small"
+                                    color="primary" 
+                                    variant="tonal"
+                                    @click="triggerImageUpload(); showAttachmentButtons = false"
+                                >
+                                    <v-icon size="20">mdi-image</v-icon>
+                                </v-btn>
+                                <v-btn 
+                                    icon 
+                                    size="small"
+                                    color="primary" 
+                                    variant="tonal"
+                                    @click="triggerFileUpload(); showAttachmentButtons = false"
+                                >
+                                    <v-icon size="20">mdi-file</v-icon>
+                                </v-btn>
+                                <v-btn 
+                                    icon 
+                                    size="small"
+                                    color="primary" 
+                                    variant="tonal"
+                                    @click="startRecording(); showAttachmentButtons = false"
+                                >
+                                    <v-icon size="20">mdi-microphone</v-icon>
+                                </v-btn>
+                            </div>
+                        </transition>
+
+                        <!-- Main Input Row -->
+                        <div class="chat-input-container d-flex align-center ga-2">
+                            <!-- Mobile: Toggle Attachment Button -->
+                            <v-btn 
+                                icon 
+                                color="primary" 
+                                class="chat-icon-btn mobile-only"
+                                @click="showAttachmentButtons = !showAttachmentButtons"
+                            >
+                                <v-icon color="white" :class="{ 'rotate-45': showAttachmentButtons }" style="transition: transform 0.2s ease;">mdi-plus</v-icon>
+                            </v-btn>
+                            
+                            <!-- Desktop: Traditional Separate Buttons -->
+                            <v-btn 
+                                icon 
+                                color="primary" 
+                                class="chat-icon-btn desktop-only"
+                                @click="triggerCameraCapture()"
+                            >
+                                <v-icon color="white">mdi-camera</v-icon>
+                            </v-btn>
+                            <v-btn 
+                                icon 
+                                color="primary" 
+                                class="chat-icon-btn desktop-only"
+                                @click="triggerImageUpload()"
+                            >
+                                <v-icon color="white">mdi-image</v-icon>
+                            </v-btn>
+                            <v-btn 
+                                icon 
+                                color="primary" 
+                                class="chat-icon-btn desktop-only"
+                                @click="triggerFileUpload()"
+                            >
+                                <v-icon color="white">mdi-file</v-icon>
+                            </v-btn>
+                            <v-btn 
+                                icon 
+                                color="primary" 
+                                class="chat-icon-btn desktop-only"
+                                @click="startRecording()"
+                            >
+                                <v-icon color="white">mdi-microphone</v-icon>
+                            </v-btn>
+                            
+                            <!-- Text Input -->
+                            <v-textarea
+                                v-model="messageInput"
+                                placeholder="Aa"
+                                variant="outlined"
+                                density="compact"
+                                hide-details
+                                rounded
+                                rows="1"
+                                auto-grow
+                                max-rows="4"
+                                class="flex-grow-1 chat-text-input"
+                                @keyup.enter.exact="sendTextMessage"
+                                @keyup.enter.shift.prevent
+                                @focus="showAttachmentButtons = false"
+                            />
+                            
+                            <!-- Send Button -->
+                            <v-btn
+                                icon
+                                color="primary"
+                                class="chat-icon-btn"
+                                :disabled="!messageInput.trim() || isSending"
+                                :loading="isSending"
+                                @click="sendTextMessage()"
+                            >
+                                <v-icon color="white">mdi-send</v-icon>
+                            </v-btn>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -484,6 +522,7 @@ const showPhotoViewer = ref(false);
 const showCameraDialog = ref(false);
 const pollingInterval = ref(null);
 const audioElements = ref({});
+const showAttachmentButtons = ref(false);
 
 // Recording state
 const isRecording = ref(false);
@@ -1108,60 +1147,54 @@ const scrollToBottom = () => {
 };
 
 const goBack = () => {
-    // Check if there's a 'from' query parameter to determine where to go back
+    // Check if there's a 'from' query parameter first (most reliable)
     const urlParams = new URLSearchParams(window.location.search);
     const from = urlParams.get('from');
     
-    // Handle specific 'from' parameters first
+    // Handle specific 'from' parameters
+    if (from === 'user-inbox') {
+        router.visit('/user/inbox?from=chat');
+        return;
+    }
+    
+    if (from === 'rescuer-chats') {
+        router.visit('/rescuer/chats?from=chat');
+        return;
+    }
+    
     if (from === 'dashboard-inprogress') {
-        // Go back to dashboard with inProgress tab selected
         router.visit('/rescuer/dashboard?tab=inProgress');
         return;
     } 
     
     if (from === 'dashboard-pending') {
-        // Go back to dashboard with pending tab selected
         router.visit('/rescuer/dashboard?tab=pending');
         return;
     }
     
     if (from === 'dashboard-rescued') {
-        // Go back to dashboard with rescued tab selected
         router.visit('/rescuer/dashboard?tab=rescued');
         return;
     }
     
-    if (from === 'rescuer-chats') {
-        // Go back to rescuer chats page
-        router.visit('/rescuer/chats');
-        return;
-    }
-    
-    if (from === 'user-inbox') {
-        // Go back to user inbox page
-        router.visit('/user/inbox');
-        return;
-    }
-    
     if (from === 'active-rescue' && rescueRequest.value?.id) {
-        // Go back to active rescue page
         router.visit(`/rescuer/active/${rescueRequest.value.id}`);
         return;
     }
     
-    // Try to use browser history first (if user navigated within the app)
-    if (window.history.length > 1) {
+    // Try browser history as fallback if from parameter exists but no specific handler
+    if (from && window.history.length > 1) {
         const referrer = document.referrer;
         const currentOrigin = window.location.origin;
         
-        // Only go back if the referrer is from the same origin (same app)
+        // Only go back if referrer is from same origin
         if (referrer && referrer.startsWith(currentOrigin)) {
             window.history.back();
             return;
         }
     }
     
-    // Fallback to role-specific default pages
+    // Final fallback to role-specific default pages
     if (props.userRole === 'rescuer') {
         router.visit('/rescuer/chats');
     } else {
@@ -1471,8 +1504,9 @@ watch(() => conversation.value?.id, (newId) => {
 
 .message-meta {
     opacity: 0.7;
-    font-size: 6px;
+    font-size: 0.7rem;
     margin-top: 4px;
+    line-height: 1.2;
 }
 
 .own-message .message-meta {
@@ -1544,6 +1578,53 @@ watch(() => conversation.value?.id, (newId) => {
     background-color: #ffebee;
     border-radius: 24px;
     padding: 12px;
+}
+
+/* ============================
+   ATTACHMENT BAR (Retractable)
+   ============================ */
+.attachment-bar {
+    background: #f0f4f8;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 16px 16px 0 0;
+}
+
+.rotate-45 {
+    transform: rotate(45deg);
+}
+
+.slide-attachments-enter-active,
+.slide-attachments-leave-active {
+    transition: all 0.25s ease;
+    max-height: 60px;
+    overflow: hidden;
+}
+
+.slide-attachments-enter-from,
+.slide-attachments-leave-to {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* Desktop/Mobile visibility controls */
+.mobile-only {
+    display: flex;
+}
+
+.desktop-only {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    .mobile-only {
+        display: none;
+    }
+    
+    .desktop-only {
+        display: flex;
+    }
 }
 
 .recording-dot {

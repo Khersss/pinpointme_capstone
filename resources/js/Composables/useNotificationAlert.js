@@ -138,6 +138,14 @@ export function useNotificationAlert() {
         beepLoop();
     };
 
+    // ── Stop Emergency sound ───────────────────────────────────
+    const stopEmergencySound = () => {
+        if (emergencyAudio) {
+            emergencyAudio.pause();
+            emergencyAudio.currentTime = 0;
+        }
+    };
+
     // ── Stop the force-alert ringtone ──────────────────────────
     const stopForceAlert = () => {
         isForceAlertPlaying.value = false;
@@ -340,6 +348,7 @@ export function useNotificationAlert() {
         hideAlert,
         handleAlertClick,
         playNotificationSound,
+        stopEmergencySound,
         stopForceAlert,
         vibrate,
         requestNotificationPermission,

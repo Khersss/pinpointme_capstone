@@ -8,36 +8,128 @@
         <v-main>
             <v-container fluid :class="isMobile ? 'pa-3' : 'pa-6'">
                 <!-- Page Header -->
-                <div class="page-header mb-4 mb-md-6">
-                    <div class="page-header-content">
-                        <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold">Rescue Reports</h1>
-                        <p class="text-grey mt-1 text-body-2">View and analyze rescue request data</p>
+                <div class="d-flex align-center mb-4">
+                    <div>
+                        <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold gradient-text">Reports & Analytics</h1>
+                        <p class="text-grey mt-1 text-body-2">Monitor rescue operations and system reports</p>
                     </div>
                 </div>
 
-                <!-- Report Tabs -->
-                <v-tabs v-model="activeTab" class="mb-4" color="primary" bg-color="white" rounded="lg">
-                    <v-tab value="rescue">
-                        <v-icon start>mdi-ambulance</v-icon>
-                        Rescue Reports
-                    </v-tab>
-                    <v-tab value="self-safe">
-                        <v-icon start>mdi-shield-check</v-icon>
-                        Self-Safe Reports
-                    </v-tab>
-                    <v-tab value="false-alarm">
-                        <v-icon start>mdi-alert-decagram</v-icon>
-                        False Alarm Reports
-                    </v-tab>
-                </v-tabs>
+                <!-- Section Navigation Cards -->
+                <v-row class="mb-4" dense>
+                    <v-col cols="12" sm="4">
+                        <v-card
+                            class="tab-card cursor-pointer"
+                            :class="activeTab === 'rescue' ? 'tab-active-rescue' : 'tab-inactive'"
+                            @click="activeTab = 'rescue'"
+                            rounded="lg"
+                            :elevation="activeTab === 'rescue' ? 3 : 0"
+                        >
+                            <div class="d-flex align-center pa-3">
+                                <v-avatar :color="activeTab === 'rescue' ? 'rgba(255,255,255,0.2)' : '#E3F2FD'" size="38" rounded="lg" class="mr-3">
+                                    <v-icon :color="activeTab === 'rescue' ? 'white' : '#1976D2'" size="20">mdi-ambulance</v-icon>
+                                </v-avatar>
+                                <div class="flex-grow-1">
+                                    <div :class="activeTab === 'rescue' ? 'text-white' : ''" class="font-weight-bold text-body-2">Rescue Reports</div>
+                                    <div :class="activeTab === 'rescue' ? 'text-blue-lighten-4' : 'text-grey'" class="text-caption">Emergency operations</div>
+                                </div>
+                                <v-chip :color="activeTab === 'rescue' ? 'white' : 'primary'" :variant="activeTab === 'rescue' ? 'flat' : 'tonal'" size="x-small" class="font-weight-bold">
+                                    <span :class="activeTab === 'rescue' ? 'text-primary' : ''">{{ counts.total || 0 }}</span>
+                                </v-chip>
+                            </div>
+                        </v-card>
+                    </v-col>
+                    <v-col cols="12" sm="4">
+                        <v-card
+                            class="tab-card cursor-pointer"
+                            :class="activeTab === 'self-safe' ? 'tab-active-success' : 'tab-inactive'"
+                            @click="activeTab = 'self-safe'"
+                            rounded="lg"
+                            :elevation="activeTab === 'self-safe' ? 3 : 0"
+                        >
+                            <div class="d-flex align-center pa-3">
+                                <v-avatar :color="activeTab === 'self-safe' ? 'rgba(255,255,255,0.2)' : '#E8F5E8'" size="38" rounded="lg" class="mr-3">
+                                    <v-icon :color="activeTab === 'self-safe' ? 'white' : '#388E3C'" size="20">mdi-shield-check</v-icon>
+                                </v-avatar>
+                                <div class="flex-grow-1">
+                                    <div :class="activeTab === 'self-safe' ? 'text-white' : ''" class="font-weight-bold text-body-2">Self-Safe Reports</div>
+                                    <div :class="activeTab === 'self-safe' ? 'text-green-lighten-4' : 'text-grey'" class="text-caption">Safe confirmations</div>
+                                </div>
+                                <v-chip :color="activeTab === 'self-safe' ? 'white' : 'success'" :variant="activeTab === 'self-safe' ? 'flat' : 'tonal'" size="x-small" class="font-weight-bold">
+                                    <span :class="activeTab === 'self-safe' ? 'text-success' : ''">{{ selfSafeReports.length || 0 }}</span>
+                                </v-chip>
+                            </div>
+                        </v-card>
+                    </v-col>
+                    <v-col cols="12" sm="4">
+                        <v-card
+                            class="tab-card cursor-pointer"
+                            :class="activeTab === 'false-alarm' ? 'tab-active-warning' : 'tab-inactive'"
+                            @click="activeTab = 'false-alarm'"
+                            rounded="lg"
+                            :elevation="activeTab === 'false-alarm' ? 3 : 0"
+                        >
+                            <div class="d-flex align-center pa-3">
+                                <v-avatar :color="activeTab === 'false-alarm' ? 'rgba(255,255,255,0.2)' : '#FFF3E0'" size="38" rounded="lg" class="mr-3">
+                                    <v-icon :color="activeTab === 'false-alarm' ? 'white' : '#F57C00'" size="20">mdi-alert-decagram</v-icon>
+                                </v-avatar>
+                                <div class="flex-grow-1">
+                                    <div :class="activeTab === 'false-alarm' ? 'text-white' : ''" class="font-weight-bold text-body-2">False Alarm Reports</div>
+                                    <div :class="activeTab === 'false-alarm' ? 'text-orange-lighten-4' : 'text-grey'" class="text-caption">Incorrect reports</div>
+                                </div>
+                                <v-chip :color="activeTab === 'false-alarm' ? 'white' : 'orange'" :variant="activeTab === 'false-alarm' ? 'flat' : 'tonal'" size="x-small" class="font-weight-bold">
+                                    <span :class="activeTab === 'false-alarm' ? 'text-orange-darken-3' : ''">{{ falseAlarmReports.length || 0 }}</span>
+                                </v-chip>
+                            </div>
+                        </v-card>
+                    </v-col>
+                </v-row>
 
                 <!-- Rescue Reports Tab Content -->
                 <div v-show="activeTab === 'rescue'">
+
+                <!-- Stats Banner -->
+                <v-card rounded="lg" class="rescue-stats-banner mb-3" elevation="0">
+                    <div class="stats-banner-grid">
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon">mdi-table</v-icon>
+                            <div class="stat-inline-value">{{ reportsList.length || 0 }}</div>
+                            <div class="stat-inline-label">Total Reports</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon green-icon">mdi-check-circle</v-icon>
+                            <div class="stat-inline-value">{{ getStatusCount('rescued') || 0 }}</div>
+                            <div class="stat-inline-label">Rescued</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon amber-icon">mdi-clock-outline</v-icon>
+                            <div class="stat-inline-value">{{ getStatusCount('in_progress') || 0 }}</div>
+                            <div class="stat-inline-label">In Progress</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon red-icon">mdi-alert-circle</v-icon>
+                            <div class="stat-inline-value">{{ getStatusCount('urgent') || 0 }}</div>
+                            <div class="stat-inline-label">Urgent</div>
+                        </div>
+                    </div>
+                </v-card>
+
                 <!-- Filters -->
-                <v-card rounded="lg" class="mb-6">
-                    <v-card-text>
-                        <v-row align="center">
-                            <v-col cols="12" sm="6" md="3">
+                <v-card rounded="lg" elevation="0" class="mb-3">
+                    <v-card-text class="pa-3 pb-2">
+                        <v-row dense align="center">
+                            <v-col cols="12" sm="4" md="3">
+                                <v-text-field
+                                    v-model="search"
+                                    label="Search reports..."
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    prepend-inner-icon="mdi-magnify"
+                                    clearable
+                                />
+                            </v-col>
+                            <v-col cols="6" sm="3" md="2">
                                 <v-select
                                     v-model="timeFilter"
                                     :items="timeFilters"
@@ -46,11 +138,12 @@
                                     label="Time Period"
                                     variant="outlined"
                                     density="compact"
+                                    clearable
                                     hide-details
                                     @update:model-value="fetchReports"
                                 />
                             </v-col>
-                            <v-col cols="12" sm="6" md="3">
+                            <v-col cols="6" sm="3" md="2">
                                 <v-select
                                     v-model="statusFilter"
                                     :items="statusFilters"
@@ -59,31 +152,17 @@
                                     label="Status"
                                     variant="outlined"
                                     density="compact"
+                                    clearable
                                     hide-details
                                     @update:model-value="fetchReports"
                                 />
                             </v-col>
-                            <v-col cols="12" md="6">
-                                <v-text-field
-                                    v-model="search"
-                                    prepend-inner-icon="mdi-magnify"
-                                    label="Search..."
-                                    variant="outlined"
-                                    density="compact"
-                                    hide-details
-                                    clearable
-                                />
-                            </v-col>
-                        </v-row>
-                        <v-row class="mt-2">
-                            <v-col cols="12" class="d-flex gap-2 justify-end">
-                                <v-btn variant="outlined" @click="resetFilters" size="default">
-                                    <v-icon start>mdi-filter-off</v-icon>
-                                    Reset
+                            <v-col cols="auto" class="d-flex gap-2">
+                                <v-btn variant="outlined" size="small" @click="resetFilters">
+                                    <v-icon size="small">mdi-filter-off</v-icon>
                                 </v-btn>
-                                <v-btn color="error" @click="openExportDialog" :loading="exporting" size="default">
-                                    <v-icon start>mdi-file-pdf-box</v-icon>
-                                    Export PDF
+                                <v-btn color="primary" size="small" @click="openExportDialog" :loading="exporting">
+                                    <v-icon size="small">mdi-file-pdf-box</v-icon>
                                 </v-btn>
                             </v-col>
                         </v-row>
@@ -124,7 +203,7 @@
                             </template>
                             <template v-slot:item.urgency_level="{ item }">
                                 <v-chip :color="getUrgencyColor(item.urgency_level)" size="small" variant="outlined">
-                                    {{ item.urgency_level || 'Medium' }}
+                                    {{ item.urgency_level || 'Low' }}
                                 </v-chip>
                             </template>
                             <template v-slot:item.completion_photo="{ item }">
@@ -198,37 +277,73 @@
 
                 <!-- Self-Safe Reports Tab Content -->
                 <div v-show="activeTab === 'self-safe'">
-                    <!-- Self-Safe Filters -->
-                    <v-card rounded="lg" class="mb-6">
-                        <v-card-text>
-                            <v-row align="center">
-                                <v-col cols="12" sm="6" md="3">
-                                    <v-select
-                                        v-model="selfSafeTimeFilter"
-                                        :items="timeFilters"
-                                        item-title="label"
-                                        item-value="value"
-                                        label="Time Period"
-                                        variant="outlined"
-                                        density="compact"
-                                        hide-details
-                                        @update:model-value="fetchSelfSafeReports"
-                                    />
-                                </v-col>
-                                <v-col cols="12" md="9">
-                                    <v-text-field
-                                        v-model="selfSafeSearch"
-                                        prepend-inner-icon="mdi-magnify"
-                                        label="Search by name, reason, or rescue code..."
-                                        variant="outlined"
-                                        density="compact"
-                                        hide-details
-                                        clearable
-                                    />
-                                </v-col>
-                            </v-row>
-                        </v-card-text>
-                    </v-card>
+
+                <!-- Stats Banner -->
+                <v-card rounded="lg" class="self-safe-stats-banner mb-3" elevation="0">
+                    <div class="stats-banner-grid">
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon">mdi-clipboard-list</v-icon>
+                            <div class="stat-inline-value">{{ selfSafeReports.length || 0 }}</div>
+                            <div class="stat-inline-label">Total Reports</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon blue-icon">mdi-camera-check</v-icon>
+                            <div class="stat-inline-value">{{ getPhotoProofCount() || 0 }}</div>
+                            <div class="stat-inline-label">With Photos</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon amber-icon">mdi-calendar-today</v-icon>
+                            <div class="stat-inline-value">{{ getTodayCount('self-safe') || 0 }}</div>
+                            <div class="stat-inline-label">Today</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon teal-icon">mdi-calendar-week</v-icon>
+                            <div class="stat-inline-value">{{ getWeekCount('self-safe') || 0 }}</div>
+                            <div class="stat-inline-label">This Week</div>
+                        </div>
+                    </div>
+                </v-card>
+
+                <!-- Filters -->
+                <v-card rounded="lg" elevation="0" class="mb-3">
+                    <v-card-text class="pa-3 pb-2">
+                        <v-row dense align="center">
+                            <v-col cols="12" sm="6" md="4">
+                                <v-text-field
+                                    v-model="selfSafeSearch"
+                                    label="Search by name, reason..."
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    prepend-inner-icon="mdi-magnify"
+                                    clearable
+                                />
+                            </v-col>
+                            <v-col cols="6" sm="3" md="2">
+                                <v-select
+                                    v-model="selfSafeTimeFilter"
+                                    :items="timeFilters"
+                                    item-title="label"
+                                    item-value="value"
+                                    label="Time Period"
+                                    variant="outlined"
+                                    density="compact"
+                                    clearable
+                                    hide-details
+                                    @update:model-value="fetchSelfSafeReports"
+                                />
+                            </v-col>
+                            <v-col cols="auto" class="d-flex gap-2">
+                                <v-btn variant="outlined" size="small" @click="resetSelfSafeFilters">
+                                    <v-icon size="small">mdi-filter-off</v-icon>
+                                </v-btn>
+                                <v-btn color="success" size="small" @click="exportSelfSafeReports" :loading="selfSafeExporting">
+                                    <v-icon size="small">mdi-file-pdf-box</v-icon>
+                                </v-btn>
+                            </v-col>
+                        </v-row>
+                    </v-card-text>
+                </v-card>
 
                     <!-- Self-Safe Reports Table -->
                     <v-card rounded="lg">
@@ -291,75 +406,73 @@
 
                 <!-- False Alarm Reports Tab Content -->
                 <div v-show="activeTab === 'false-alarm'">
-                    <!-- False Alarm Stat Cards -->
-                    <v-row class="mb-4">
-                        <v-col cols="6" sm="3">
-                            <v-card rounded="lg" class="text-center pa-4" elevation="0" style="border: 1px solid #e8ecf0;">
-                                <v-icon size="28" color="error" class="mb-2">mdi-alert-decagram</v-icon>
-                                <div class="text-h5 font-weight-bold text-red-darken-3">{{ falseAlarmReports.length }}</div>
-                                <div class="text-caption text-grey">Total Reports</div>
-                            </v-card>
-                        </v-col>
-                        <v-col cols="6" sm="3">
-                            <v-card rounded="lg" class="text-center pa-4" elevation="0" style="border: 1px solid #e8ecf0;">
-                                <v-icon size="28" color="warning" class="mb-2">mdi-calendar-today</v-icon>
-                                <div class="text-h5 font-weight-bold text-orange-darken-3">{{ falseAlarmTodayCount }}</div>
-                                <div class="text-caption text-grey">Today</div>
-                            </v-card>
-                        </v-col>
-                        <v-col cols="6" sm="3">
-                            <v-card rounded="lg" class="text-center pa-4" elevation="0" style="border: 1px solid #e8ecf0;">
-                                <v-icon size="28" color="info" class="mb-2">mdi-calendar-week</v-icon>
-                                <div class="text-h5 font-weight-bold text-blue-darken-3">{{ falseAlarmWeekCount }}</div>
-                                <div class="text-caption text-grey">This Week</div>
-                            </v-card>
-                        </v-col>
-                        <v-col cols="6" sm="3">
-                            <v-card rounded="lg" class="text-center pa-4" elevation="0" style="border: 1px solid #e8ecf0;">
-                                <v-icon size="28" color="purple" class="mb-2">mdi-calendar-month</v-icon>
-                                <div class="text-h5 font-weight-bold text-purple-darken-2">{{ falseAlarmMonthCount }}</div>
-                                <div class="text-caption text-grey">This Month</div>
-                            </v-card>
-                        </v-col>
-                    </v-row>
 
-                    <!-- False Alarm Filters -->
-                    <v-card rounded="lg" class="mb-6" elevation="0">
-                        <v-card-text>
-                            <v-row align="center" dense>
-                                <v-col cols="12" sm="4" md="3">
-                                    <v-select
-                                        v-model="falseAlarmTimeFilter"
-                                        :items="falseAlarmTimeOptions"
-                                        item-title="label"
-                                        item-value="value"
-                                        label="Time Period"
-                                        variant="outlined"
-                                        density="compact"
-                                        hide-details
-                                        @update:model-value="fetchFalseAlarmReports"
-                                    />
-                                </v-col>
-                                <v-col cols="12" sm="5" md="4">
-                                    <v-text-field
-                                        v-model="falseAlarmSearch"
-                                        label="Search reports..."
-                                        variant="outlined"
-                                        density="compact"
-                                        hide-details
-                                        prepend-inner-icon="mdi-magnify"
-                                        clearable
-                                    />
-                                </v-col>
-                                <v-col cols="12" sm="3" md="2">
-                                    <v-btn block variant="outlined" density="compact" @click="resetFalseAlarmFilters" class="mt-1">
-                                        <v-icon start>mdi-filter-off</v-icon>
-                                        Reset
-                                    </v-btn>
-                                </v-col>
-                            </v-row>
-                        </v-card-text>
-                    </v-card>
+                <!-- Stats Banner -->
+                <v-card rounded="lg" class="false-alarm-stats-banner mb-3" elevation="0">
+                    <div class="stats-banner-grid">
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon">mdi-alert-decagram</v-icon>
+                            <div class="stat-inline-value">{{ falseAlarmReports.length || 0 }}</div>
+                            <div class="stat-inline-label">Total Reports</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon amber-icon">mdi-calendar-today</v-icon>
+                            <div class="stat-inline-value">{{ falseAlarmTodayCount || 0 }}</div>
+                            <div class="stat-inline-label">Today</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon blue-icon">mdi-calendar-week</v-icon>
+                            <div class="stat-inline-value">{{ falseAlarmWeekCount || 0 }}</div>
+                            <div class="stat-inline-label">This Week</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon red-icon">mdi-calendar-month</v-icon>
+                            <div class="stat-inline-value">{{ falseAlarmMonthCount || 0 }}</div>
+                            <div class="stat-inline-label">This Month</div>
+                        </div>
+                    </div>
+                </v-card>
+
+                <!-- Filters -->
+                <v-card rounded="lg" elevation="0" class="mb-3">
+                    <v-card-text class="pa-3 pb-2">
+                        <v-row dense align="center">
+                            <v-col cols="12" sm="6" md="4">
+                                <v-text-field
+                                    v-model="falseAlarmSearch"
+                                    label="Search reports..."
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    prepend-inner-icon="mdi-magnify"
+                                    clearable
+                                />
+                            </v-col>
+                            <v-col cols="6" sm="3" md="2">
+                                <v-select
+                                    v-model="falseAlarmTimeFilter"
+                                    :items="falseAlarmTimeOptions"
+                                    item-title="label"
+                                    item-value="value"
+                                    label="Time Period"
+                                    variant="outlined"
+                                    density="compact"
+                                    clearable
+                                    hide-details
+                                    @update:model-value="fetchFalseAlarmReports"
+                                />
+                            </v-col>
+                            <v-col cols="auto" class="d-flex gap-2">
+                                <v-btn variant="outlined" size="small" @click="resetFalseAlarmFilters">
+                                    <v-icon size="small">mdi-filter-off</v-icon>
+                                </v-btn>
+                                <v-btn color="warning" size="small" @click="exportFalseAlarmReports" :loading="falseAlarmExporting">
+                                    <v-icon size="small">mdi-file-pdf-box</v-icon>
+                                </v-btn>
+                            </v-col>
+                        </v-row>
+                    </v-card-text>
+                </v-card>
 
                     <!-- False Alarm Reports Table -->
                     <v-card rounded="lg" elevation="0">
@@ -653,7 +766,7 @@
                             <v-list-item-title>Urgency Level</v-list-item-title>
                             <v-list-item-subtitle>
                                 <v-chip :color="getUrgencyColor(selectedReport.urgency_level)" size="small">
-                                    {{ selectedReport.urgency_level || 'Medium' }}
+                                    {{ selectedReport.urgency_level || 'Low' }}
                                 </v-chip>
                             </v-list-item-subtitle>
                         </v-list-item>
@@ -731,7 +844,7 @@
 
         <!-- Export Options Dialog -->
         <v-dialog v-model="exportDialog" max-width="420" persistent>
-            <v-card rounded="xl">
+            <v-card rounded="lg">
                 <v-card-title class="d-flex align-center bg-error pa-4">
                     <v-icon color="white" class="mr-2">mdi-file-pdf-box</v-icon>
                     <span class="text-white font-weight-bold">Export to PDF</span>
@@ -770,6 +883,8 @@
         <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000">
             {{ snackbarText }}
         </v-snackbar>
+        
+
     </v-app>
 </template>
 
@@ -779,6 +894,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useDisplay } from 'vuetify';
 import AdminAppBar from '@/Components/AdminAppBar.vue';
+
 
 const { mobile } = useDisplay();
 const isMobile = computed(() => mobile.value);
@@ -810,6 +926,7 @@ const activeTab = ref('rescue');
 
 // Self-Safe Reports State
 const selfSafeLoading = ref(false);
+const selfSafeExporting = ref(false);
 const selfSafeSearch = ref('');
 const selfSafeTimeFilter = ref('day');
 const selfSafeReports = ref([]);
@@ -820,6 +937,7 @@ const fullScreenPhotoUrl = ref('');
 
 // False Alarm Reports State
 const falseAlarmLoading = ref(false);
+const falseAlarmExporting = ref(false);
 const falseAlarmSearch = ref('');
 const falseAlarmTimeFilter = ref('all');
 const falseAlarmReports = ref([]);
@@ -939,6 +1057,59 @@ const filteredSelfSafeData = computed(() => {
     }
     return data;
 });
+
+// Stats Helper Functions
+const getStatusCount = (status) => {
+    if (!reportsList.value || reportsList.value.length === 0) return 0;
+    
+    switch (status) {
+        case 'rescued':
+            return reportsList.value.filter(r => ['rescued', 'completed', 'safe'].includes(r.status)).length;
+        case 'in_progress':
+            return reportsList.value.filter(r => ['accepted', 'in_progress', 'en_route'].includes(r.status)).length;
+        case 'urgent':
+            return reportsList.value.filter(r => r.urgency_level === 'high' || r.urgency_level === 'urgent').length;
+        default:
+            return 0;
+    }
+};
+
+const getPhotoProofCount = () => {
+    if (!selfSafeReports.value || selfSafeReports.value.length === 0) return 0;
+    return selfSafeReports.value.filter(r => r.safe_proof_photo).length;
+};
+
+const getTodayCount = (type) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (type === 'self-safe') {
+        if (!selfSafeReports.value || selfSafeReports.value.length === 0) return 0;
+        return selfSafeReports.value.filter(r => {
+            const reportDate = new Date(r.created_at);
+            reportDate.setHours(0, 0, 0, 0);
+            return reportDate.getTime() === today.getTime();
+        }).length;
+    }
+    
+    return 0;
+};
+
+const getWeekCount = (type) => {
+    const today = new Date();
+    const weekstart = new Date(today.setDate(today.getDate() - today.getDay()));
+    weekstart.setHours(0, 0, 0, 0);
+    
+    if (type === 'self-safe') {
+        if (!selfSafeReports.value || selfSafeReports.value.length === 0) return 0;
+        return selfSafeReports.value.filter(r => {
+            const reportDate = new Date(r.created_at);
+            return reportDate >= weekstart;
+        }).length;
+    }
+    
+    return 0;
+};
 
 // Self-Safe Reports Functions
 const fetchSelfSafeReports = async () => {
@@ -1112,7 +1283,7 @@ const exportToPDF = async (data, timePeriod) => {
             r.time || '',
             r.date || '',
             formatStatus(r.status),
-            r.urgency_level || 'Medium',
+            r.urgency_level || 'Low',
             r.rescuer_name || 'Unassigned'
         ]);
         
@@ -1174,7 +1345,7 @@ const generateCSV = (data) => {
         r.time,
         r.date,
         r.status,
-        r.urgency_level || 'Medium',
+        r.urgency_level || 'Low',
         r.rescuer_name || ''
     ]);
     return [headers, ...rows].map(row => row.map(cell => `"${cell || ''}"`).join(',')).join('\n');
@@ -1228,7 +1399,7 @@ const getUrgencyColor = (urgency) => {
         Medium: 'warning',
         Low: 'success'
     };
-    return colors[urgency] || 'grey';
+    return colors[urgency] || 'success';
 };
 
 // Watch for tab changes to load self-safe reports
@@ -1293,6 +1464,88 @@ const resetFalseAlarmFilters = () => {
     fetchFalseAlarmReports();
 };
 
+const resetSelfSafeFilters = () => {
+    selfSafeTimeFilter.value = 'day';
+    selfSafeSearch.value = '';
+    fetchSelfSafeReports();
+};
+
+const exportSelfSafeReports = async () => {
+    if (selfSafeExporting.value) return;
+    
+    selfSafeExporting.value = true;
+    try {
+        // Create PDF export for self-safe reports
+        const doc = new jsPDF();
+        doc.text('Self-Safe Reports', 20, 20);
+        
+        const tableData = filteredSelfSafeData.value.map(report => [
+            report.user_name || 'N/A',
+            report.rescue_code || 'N/A',
+            (report.safe_proof_reason || '').substring(0, 50) + '...',
+            formatDateTime(report.created_at) || 'N/A',
+            report.safe_proof_photo ? 'Yes' : 'No'
+        ]);
+        
+        autoTable(doc, {
+            head: [['User', 'Rescue Code', 'Reason', 'Date', 'Photo']],
+            body: tableData,
+            startY: 30,
+        });
+        
+        doc.save('self-safe-reports.pdf');
+        
+        snackbarText.value = 'Self-Safe reports exported successfully!';
+        snackbarColor.value = 'success';
+        snackbar.value = true;
+    } catch (error) {
+        console.error('Export error:', error);
+        snackbarText.value = 'Export failed. Please try again.';
+        snackbarColor.value = 'error';
+        snackbar.value = true;
+    } finally {
+        selfSafeExporting.value = false;
+    }
+};
+
+const exportFalseAlarmReports = async () => {
+    if (falseAlarmExporting.value) return;
+    
+    falseAlarmExporting.value = true;
+    try {
+        // Create PDF export for false alarm reports
+        const doc = new jsPDF();
+        doc.text('False Alarm Reports', 20, 20);
+        
+        const tableData = falseAlarmReports.value.map(report => [
+            formatDateTime(report.created_at) || 'N/A',
+            getFalseAlarmReporter(report),
+            getFalseAlarmRequester(report),
+            (getFalseAlarmReason(report) || '').substring(0, 50) + '...',
+            getFalseAlarmCode(report)
+        ]);
+        
+        autoTable(doc, {
+            head: [['Date', 'Reporter', 'Requester', 'Reason', 'Code']],
+            body: tableData,
+            startY: 30,
+        });
+        
+        doc.save('false-alarm-reports.pdf');
+        
+        snackbarText.value = 'False Alarm reports exported successfully!';
+        snackbarColor.value = 'success';
+        snackbar.value = true;
+    } catch (error) {
+        console.error('Export error:', error);
+        snackbarText.value = 'Export failed. Please try again.';
+        snackbarColor.value = 'error';
+        snackbar.value = true;
+    } finally {
+        falseAlarmExporting.value = false;
+    }
+};
+
 const viewFalseAlarmDetails = (item) => {
     selectedFalseAlarm.value = item;
     falseAlarmDetailsDialog.value = true;
@@ -1354,6 +1607,14 @@ const getFalseAlarmCode = (report) => {
 </script>
 
 <style scoped>
+/* Gradient Text */
+.gradient-text {
+    background: linear-gradient(135deg, #1976D2, #0D47A1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
 /* Gradient App Bar */
 .gradient-app-bar {
     background: linear-gradient(135deg, #1976D2 0%, #1565C0 50%, #0D47A1 100%) !important;
@@ -1397,6 +1658,85 @@ const getFalseAlarmCode = (report) => {
 
 .gap-2 {
     gap: 8px;
+}
+
+/* ===== Tab Cards ===== */
+.tab-card {
+    transition: all 0.25s ease;
+    border: 2px solid transparent;
+}
+.tab-card:hover {
+    transform: translateY(-1px);
+}
+.tab-active-rescue {
+    background: linear-gradient(135deg, #1976D2 0%, #0D47A1 100%) !important;
+    border-color: transparent;
+}
+.tab-active-self-safe {
+    background: linear-gradient(135deg, #388E3C 0%, #2E7D32 100%) !important;
+    border-color: transparent;
+}
+.tab-active-false-alarm {
+    background: linear-gradient(135deg, #EF6C00 0%, #E65100 100%) !important;
+    border-color: transparent;
+}
+.tab-inactive {
+    background: white !important;
+    border-color: #e8ecf0;
+}
+.tab-inactive:hover {
+    border-color: #90CAF9;
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.1);
+}
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* ===== Stats Banners ===== */
+.rescue-stats-banner {
+    background: linear-gradient(135deg, #1976D2 0%, #1565C0 50%, #0D47A1 100%) !important;
+}
+.self-safe-stats-banner {
+    background: linear-gradient(135deg, #388E3C 0%, #43A047 50%, #4CAF50 100%) !important;
+}
+.false-alarm-stats-banner {
+    background: linear-gradient(135deg, #EF6C00 0%, #FF9800 50%, #FFA726 100%) !important;
+}
+.stats-banner-grid {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    gap: 8px;
+}
+.stat-inline {
+    text-align: center;
+    min-width: 70px;
+    padding: 4px 8px;
+}
+.stat-inline-icon {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 2px;
+}
+.stat-inline-icon.amber-icon { color: #FFD54F; }
+.stat-inline-icon.green-icon { color: #A5D6A7; }
+.stat-inline-icon.teal-icon { color: #80CBC4; }
+.stat-inline-icon.red-icon { color: #EF9A9A; }
+.stat-inline-icon.orange-icon { color: #FFCC80; }
+.stat-inline-icon.blue-icon { color: #90CAF9; }
+.stat-inline-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: white;
+    line-height: 1.2;
+}
+.stat-inline-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Page Header Responsive Styles */

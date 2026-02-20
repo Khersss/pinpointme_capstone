@@ -351,6 +351,8 @@
         
         <!-- Bottom Navigation (Mobile/Tablet only) -->
         <RescuerBottomNav :notification-count="0" :message-count="unreadMessageCount" />
+
+
     </v-app>
 </template>
 
@@ -360,6 +362,7 @@ import { router } from '@inertiajs/vue3';
 import { useApi, getUnreadMessageCount } from '@/Composables/useApi';
 import RescuerMenu from '@/Components/Pages/Rescuer/Menu/RescuerMenu.vue';
 import RescuerBottomNav from '@/Components/Pages/Rescuer/Menu/RescuerBottomNav.vue';
+
 
 const { get } = useApi();
 
@@ -704,8 +707,15 @@ onMounted(async () => {
         display: flex;
     }
 
+    /* Allow natural page scroll so footer is reachable */
+    .history-viewport {
+        height: auto;
+        overflow: visible;
+    }
+
     .history-content {
-        padding-bottom: 16px;
+        overflow-y: visible;
+        padding-bottom: 0;
     }
 }
 </style>

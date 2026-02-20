@@ -8,65 +8,39 @@
         <v-main>
             <v-container fluid :class="isMobile ? 'pa-3' : 'pa-6'">
                 <!-- Page Header -->
-                <div class="page-header mb-4 mb-md-6">
-                    <div class="page-header-content">
-                        <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold">Building Management</h1>
+                <div class="d-flex align-center mb-4">
+                    <div>
+                        <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold gradient-text">Building Management</h1>
                         <p class="text-grey mt-1 text-body-2">Manage buildings, floors, and rooms</p>
                     </div>
-                    <v-btn 
-                        color="primary" 
-                        @click="openAddBuildingDialog"
-                        :size="isMobile ? 'small' : 'default'"
-                        class="add-building-btn"
-                    >
-                        <v-icon start>mdi-plus</v-icon>
-                        <span v-if="!isMobile">Add Building</span>
-                        <span v-else>Add</span>
-                    </v-btn>
                 </div>
 
-                <!-- Stats Cards -->
-                <v-row class="mb-6">
-                    <v-col cols="12" sm="4">
-                        <v-card class="pa-4" rounded="lg">
-                            <div class="d-flex align-center">
-                                <v-avatar color="primary" size="48">
-                                    <v-icon color="white">mdi-office-building</v-icon>
-                                </v-avatar>
-                                <div class="ml-3">
-                                    <p class="text-grey text-caption mb-0">Total Buildings</p>
-                                    <h4 class="text-h5 font-weight-bold">{{ buildingsList.length }}</h4>
-                                </div>
-                            </div>
-                        </v-card>
-                    </v-col>
-                    <v-col cols="12" sm="4">
-                        <v-card class="pa-4" rounded="lg">
-                            <div class="d-flex align-center">
-                                <v-avatar color="info" size="48">
-                                    <v-icon color="white">mdi-layers</v-icon>
-                                </v-avatar>
-                                <div class="ml-3">
-                                    <p class="text-grey text-caption mb-0">Total Floors</p>
-                                    <h4 class="text-h5 font-weight-bold">{{ totalFloors }}</h4>
-                                </div>
-                            </div>
-                        </v-card>
-                    </v-col>
-                    <v-col cols="12" sm="4">
-                        <v-card class="pa-4" rounded="lg">
-                            <div class="d-flex align-center">
-                                <v-avatar color="success" size="48">
-                                    <v-icon color="white">mdi-door</v-icon>
-                                </v-avatar>
-                                <div class="ml-3">
-                                    <p class="text-grey text-caption mb-0">Total Rooms</p>
-                                    <h4 class="text-h5 font-weight-bold">{{ totalRooms }}</h4>
-                                </div>
-                            </div>
-                        </v-card>
-                    </v-col>
-                </v-row>
+                <!-- Stats Banner -->
+                <v-card rounded="lg" class="buildings-stats-banner mb-3" elevation="0">
+                    <div class="stats-banner-grid">
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon">mdi-office-building</v-icon>
+                            <div class="stat-inline-value">{{ buildingsList.length || 0 }}</div>
+                            <div class="stat-inline-label">Buildings</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon blue-icon">mdi-layers</v-icon>
+                            <div class="stat-inline-value">{{ totalFloors || 0 }}</div>
+                            <div class="stat-inline-label">Floors</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon green-icon">mdi-door</v-icon>
+                            <div class="stat-inline-value">{{ totalRooms || 0 }}</div>
+                            <div class="stat-inline-label">Rooms</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-btn color="white" variant="flat" size="small" class="text-primary" @click="openAddBuildingDialog">
+                                <v-icon start size="small">mdi-plus</v-icon>
+                                Add Building
+                            </v-btn>
+                        </div>
+                    </div>
+                </v-card>
 
                 <!-- Buildings List -->
                 <v-row>
@@ -513,6 +487,8 @@
         <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3000">
             {{ snackbarText }}
         </v-snackbar>
+        
+
     </v-app>
 </template>
 
@@ -522,6 +498,7 @@ import { router } from '@inertiajs/vue3';
 import QRCode from 'qrcode';
 import { useDisplay } from 'vuetify';
 import AdminAppBar from '@/Components/AdminAppBar.vue';
+
 
 const { mobile } = useDisplay();
 const isMobile = computed(() => mobile.value);
@@ -1604,14 +1581,56 @@ const printEvacuationPlan = () => {
 };
 
 onMounted(() => {
-    // Expand first building by default
-    if (buildingsList.value.length > 0) {
-        expandedBuildings.value.push(buildingsList.value[0].id);
-    }
+    // Buildings are collapsed by default — user clicks to expand
 });
 </script>
 
 <style scoped>
+/* Gradient Text */
+.gradient-text {
+    background: linear-gradient(135deg, #1976D2, #0D47A1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ===== Stats Banner ===== */
+.buildings-stats-banner {
+    background: linear-gradient(135deg, #1976D2 0%, #1565C0 50%, #0D47A1 100%) !important;
+}
+.stats-banner-grid {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    gap: 8px;
+}
+.stat-inline {
+    text-align: center;
+    min-width: 70px;
+    padding: 4px 8px;
+}
+.stat-inline-icon {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 2px;
+}
+.stat-inline-icon.blue-icon { color: #90CAF9; }
+.stat-inline-icon.green-icon { color: #A5D6A7; }
+.stat-inline-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: white;
+    line-height: 1.2;
+}
+.stat-inline-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 .evacuation-canvas-container {
     overflow: auto;
     background-color: #e0e0e0;
@@ -1662,24 +1681,6 @@ onMounted(() => {
     gap: 16px;
 }
 
-/* Page Header Responsive Styles */
-.page-header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.page-header-content {
-    flex: 1;
-    min-width: 200px;
-}
-
-.add-building-btn {
-    flex-shrink: 0;
-}
-
 /* Floor Header Responsive Styles */
 .floor-header {
     display: flex;
@@ -1707,20 +1708,6 @@ onMounted(() => {
 
 /* Mobile Specific Styles */
 @media (max-width: 600px) {
-    .page-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .page-header-content {
-        width: 100%;
-    }
-    
-    .add-building-btn {
-        align-self: flex-end;
-        margin-top: -32px;
-    }
-    
     .floor-header {
         flex-direction: column;
         align-items: flex-start;

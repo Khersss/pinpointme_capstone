@@ -268,6 +268,8 @@
         
         <!-- Bottom Navigation for Mobile -->
         <UserBottomNav :notification-count="0" :message-count="unreadCount" />
+
+
     </v-app>
 </template>
 
@@ -278,6 +280,7 @@ import { useUnreadMessages } from '@/Composables/useUnreadMessages';
 import UserMenu from '@/Components/Pages/User/Menu/UserMenu.vue';
 import UserAppBar from '@/Components/Pages/User/Menu/UserAppBar.vue';
 import UserBottomNav from '@/Components/Pages/User/Menu/UserBottomNav.vue';
+
 
 // Props from Inertia
 const props = defineProps({
@@ -1091,8 +1094,6 @@ onMounted(() => {
 
 /* Main Content */
 .main-content {
-    height: 100%;
-    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 120px) !important;
 }
@@ -1151,7 +1152,7 @@ onMounted(() => {
     }
     
     .main-content {
-        padding-bottom: 40px !important;
+        padding-bottom: 0 !important;
     }
     
     /* Larger video modal on desktop */

@@ -7,7 +7,7 @@
                 <!-- Page Header -->
                 <div class="page-header mb-4 mb-md-6">
                     <div class="page-header-content">
-                        <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold">False Alarm Reports</h1>
+                        <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold gradient-text">False Alarm Reports</h1>
                         <p class="text-grey mt-1 text-body-2">View reports submitted by rescuers for false/joke rescue requests</p>
                     </div>
                 </div>
@@ -453,6 +453,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Gradient Text */
+.gradient-text {
+    background: linear-gradient(135deg, #1976D2, #0D47A1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
 .page-header {
     display: flex;
     justify-content: space-between;
@@ -464,7 +472,7 @@ onMounted(() => {
     transition: box-shadow 0.2s ease;
 }
 .stat-card:hover {
-    box-shadow: 0 4px 16px rgba(198, 40, 40, 0.1) !important;
+    box-shadow: 0 4px 16px rgba(25, 118, 210, 0.1) !important;
 }
 
 .stat-icon-wrap {

@@ -8,118 +8,51 @@
         <v-main>
             <v-container fluid :class="isMobile ? 'pa-3' : 'pa-6'">
                 <!-- Page Header -->
-                <div class="page-header mb-4 mb-md-6">
-                    <div class="page-header-content">
+                <div class="d-flex align-center mb-4">
+                    <div>
                         <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold gradient-text">Rescuer Management</h1>
                         <p class="text-grey mt-1 text-body-2">To maintain security and compliance.</p>
                     </div>
-                    <div class="page-header-actions">
-                        <v-menu offset-y>
-                            <template v-slot:activator="{ props }">
-                                <v-btn 
-                                    color="info" 
-                                    v-bind="props"
-                                    :size="isMobile ? 'small' : 'default'"
-                                    class="mr-2"
-                                >
-                                    <v-icon :start="!isMobile">mdi-file-export</v-icon>
-                                    <span v-if="!isMobile">Export</span>
-                                    <v-icon end size="small">mdi-chevron-down</v-icon>
-                                </v-btn>
-                            </template>
-                            <v-list>
-                                <v-list-item @click="exportRescuers('csv')" prepend-icon="mdi-file-delimited">
-                                    <v-list-item-title>Export as CSV</v-list-item-title>
-                                </v-list-item>
-                                <v-list-item @click="exportRescuers('xlsx')" prepend-icon="mdi-file-excel">
-                                    <v-list-item-title>Export as XLSX</v-list-item-title>
-                                </v-list-item>
-                                <v-list-item @click="exportRescuers('pdf')" prepend-icon="mdi-file-pdf-box">
-                                    <v-list-item-title>Export as PDF</v-list-item-title>
-                                </v-list-item>
-                            </v-list>
-                        </v-menu>
-                        <!-- Add Rescuer Button with Dropdown -->
-                        <v-menu>
-                            <template v-slot:activator="{ props }">
-                                <v-btn 
-                                    color="primary" 
-                                    v-bind="props" 
-                                    rounded="lg"
-                                    :size="isMobile ? 'small' : 'default'"
-                                >
-                                    <v-icon :start="!isMobile">mdi-plus</v-icon>
-                                    <span v-if="!isMobile">Add Rescuer</span>
-                                    <span v-else>Add</span>
-                                    <v-icon end size="small">mdi-chevron-down</v-icon>
-                                </v-btn>
-                            </template>
-                            <v-list density="compact">
-                                <v-list-item @click="openAddDialog" prepend-icon="mdi-account-plus">
-                                    <v-list-item-title>Add Single Rescuer</v-list-item-title>
-                                </v-list-item>
-                                <v-list-item @click="openBulkDialog" prepend-icon="mdi-account-multiple-plus">
-                                    <v-list-item-title>Bulk Add Rescuers</v-list-item-title>
-                                </v-list-item>
-                            </v-list>
-                        </v-menu>
-                    </div>
                 </div>
 
-                <!-- Status Cards -->
-                <v-row class="mb-6">
-                    <v-col cols="6" sm="6" md="2.4">
-                        <v-card class="stat-card-white" rounded="lg" elevation="2">
-                            <v-card-text class="text-center py-4">
-                                <p class="text-grey text-caption mb-1">Total Rescuers</p>
-                                <h2 class="text-h4 font-weight-bold">{{ counts.total }}</h2>
-                            </v-card-text>
-                        </v-card>
-                    </v-col>
-                    <v-col cols="6" sm="6" md="2.4">
-                        <v-card class="stat-card-white" rounded="lg" elevation="2">
-                            <v-card-text class="text-center py-4">
-                                <p class="text-grey text-caption mb-1">Available</p>
-                                <h2 class="text-h4 font-weight-bold text-success">{{ counts.available }}</h2>
-                            </v-card-text>
-                        </v-card>
-                    </v-col>
-                    <v-col cols="6" sm="6" md="2.4">
-                        <v-card class="stat-card-white" rounded="lg" elevation="2">
-                            <v-card-text class="text-center py-4">
-                                <p class="text-grey text-caption mb-1">On a rescue</p>
-                                <h2 class="text-h4 font-weight-bold text-warning">{{ counts.on_rescue }}</h2>
-                            </v-card-text>
-                        </v-card>
-                    </v-col>
-                    <v-col cols="6" sm="6" md="2.4">
-                        <v-card class="stat-card-white" rounded="lg" elevation="2">
-                            <v-card-text class="text-center py-4">
-                                <p class="text-grey text-caption mb-1">Off Duty</p>
-                                <h2 class="text-h4 font-weight-bold text-grey">{{ counts.off_duty }}</h2>
-                            </v-card-text>
-                        </v-card>
-                    </v-col>
-                    <v-col cols="6" sm="6" md="2.4">
-                        <v-card class="stat-card-white" rounded="lg" elevation="2">
-                            <v-card-text class="text-center py-4">
-                                <p class="text-grey text-caption mb-1">Unavailable</p>
-                                <h2 class="text-h4 font-weight-bold text-error">{{ counts.unavailable }}</h2>
-                            </v-card-text>
-                        </v-card>
-                    </v-col>
-                    <v-col cols="6" sm="6" md="2.4">
-                        <v-card class="stat-card-white" rounded="lg" elevation="2" :class="{ 'pending-highlight': counts.pending > 0 }">
-                            <v-card-text class="text-center py-4">
-                                <p class="text-grey text-caption mb-1">Pending Approval</p>
-                                <h2 class="text-h4 font-weight-bold text-orange">{{ counts.pending || 0 }}</h2>
-                            </v-card-text>
-                        </v-card>
-                    </v-col>
-                </v-row>
+                <!-- Stats Banner -->
+                <v-card rounded="lg" class="rescuers-stats-banner mb-3" elevation="0">
+                    <div class="stats-banner-grid">
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon">mdi-account-group</v-icon>
+                            <div class="stat-inline-value">{{ counts.total || 0 }}</div>
+                            <div class="stat-inline-label">Total</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon green-icon">mdi-check-circle</v-icon>
+                            <div class="stat-inline-value">{{ counts.available || 0 }}</div>
+                            <div class="stat-inline-label">Available</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon amber-icon">mdi-alert-circle</v-icon>
+                            <div class="stat-inline-value">{{ counts.on_rescue || 0 }}</div>
+                            <div class="stat-inline-label">On Rescue</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon">mdi-sleep</v-icon>
+                            <div class="stat-inline-value">{{ counts.off_duty || 0 }}</div>
+                            <div class="stat-inline-label">Off Duty</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon red-icon">mdi-close-circle</v-icon>
+                            <div class="stat-inline-value">{{ counts.unavailable || 0 }}</div>
+                            <div class="stat-inline-label">Unavailable</div>
+                        </div>
+                        <div class="stat-inline">
+                            <v-icon size="22" class="stat-inline-icon orange-icon">mdi-account-clock</v-icon>
+                            <div class="stat-inline-value">{{ counts.pending || 0 }}</div>
+                            <div class="stat-inline-label">Pending</div>
+                        </div>
+                    </div>
+                </v-card>
 
                 <!-- Pending Rescuer Applications -->
-                <v-card v-if="pendingApplications.length > 0" rounded="lg" elevation="2" class="mb-6 pending-card">
+                <v-card v-if="pendingApplications.length > 0" rounded="lg" elevation="0" class="mb-3 pending-card">
                     <v-card-title class="d-flex align-center justify-space-between pa-4">
                         <div class="d-flex align-center">
                             <v-icon start color="orange-darken-2">mdi-account-clock</v-icon>
@@ -181,99 +114,83 @@
                     </v-expand-transition>
                 </v-card>
 
-                <!-- Main Table Card -->
-                <v-card rounded="lg" elevation="2">
-                    <!-- Table Header -->
-                    <v-card-text class="pa-4">
-                        <div class="d-flex flex-wrap align-center justify-space-between gap-3">
-                            <div class="d-flex align-center">
-                                <span class="font-weight-medium text-subtitle-1">Rescuers</span>
-                                <v-chip size="small" color="grey-lighten-2" class="ml-2">
-                                    Showing rescuers from all organizational units
-                                </v-chip>
-                            </div>
-                            <div class="d-flex flex-wrap align-center gap-2">
-                                <!-- Bulk Actions -->
-                                <v-btn 
-                                    v-if="selectedRescuers.length > 0"
-                                    variant="outlined" 
-                                    color="error" 
-                                    size="small"
-                                    @click="bulkDeleteConfirm"
-                                >
-                                    <v-icon start size="small">mdi-delete</v-icon>
-                                    Bulk delete rescuers ({{ selectedRescuers.length }})
-                                </v-btn>
-                                <v-btn 
-                                    v-if="selectedRescuers.length > 0"
-                                    variant="outlined" 
-                                    size="small"
-                                    @click="openBulkUpdateDialog"
-                                >
-                                    <v-icon start size="small">mdi-pencil</v-icon>
-                                    Bulk update rescuers
+                <!-- Filters -->
+                <v-card rounded="lg" elevation="0" class="mb-3">
+                    <v-card-text class="pa-3 pb-2">
+                        <v-row dense align="center">
+                            <v-col cols="12" sm="4" md="3">
+                                <v-text-field
+                                    v-model="search"
+                                    label="Search rescuers..."
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    prepend-inner-icon="mdi-magnify"
+                                    clearable
+                                    @input="debouncedSearch"
+                                />
+                            </v-col>
+                            <v-col cols="6" sm="3" md="2">
+                                <v-select
+                                    v-model="statusFilter"
+                                    :items="statusOptions"
+                                    item-title="label"
+                                    item-value="value"
+                                    label="Status"
+                                    variant="outlined"
+                                    density="compact"
+                                    clearable
+                                    hide-details
+                                    @update:model-value="fetchRescuers"
+                                />
+                            </v-col>
+                            <v-col cols="auto" class="d-flex gap-2">
+                                <v-btn variant="outlined" size="small" @click="statusFilter = 'all'; search = ''; fetchRescuers()" title="Reset">
+                                    <v-icon size="small">mdi-filter-off</v-icon>
                                 </v-btn>
                                 <v-menu>
                                     <template v-slot:activator="{ props }">
-                                        <v-btn variant="outlined" size="small" v-bind="props">
-                                            <v-icon start size="small">mdi-filter</v-icon>
-                                            Filter
+                                        <v-btn variant="outlined" size="small" v-bind="props" title="Export">
+                                            <v-icon size="small">mdi-export-variant</v-icon>
                                         </v-btn>
                                     </template>
-                                    <v-list density="compact" min-width="200">
-                                        <v-list-subheader>Filter by Status</v-list-subheader>
-                                        <v-list-item 
-                                            v-for="option in statusOptions" 
-                                            :key="option.value"
-                                            :active="statusFilter === option.value"
-                                            @click="statusFilter = option.value; fetchRescuers()"
-                                        >
-                                            <v-list-item-title>{{ option.label }}</v-list-item-title>
+                                    <v-list density="compact">
+                                        <v-list-item @click="exportRescuers('csv')" prepend-icon="mdi-file-delimited">
+                                            <v-list-item-title>Export CSV</v-list-item-title>
+                                        </v-list-item>
+                                        <v-list-item @click="exportRescuers('xlsx')" prepend-icon="mdi-file-excel">
+                                            <v-list-item-title>Export XLSX</v-list-item-title>
+                                        </v-list-item>
+                                        <v-list-item @click="exportRescuers('pdf')" prepend-icon="mdi-file-pdf-box">
+                                            <v-list-item-title>Export PDF</v-list-item-title>
                                         </v-list-item>
                                     </v-list>
                                 </v-menu>
-                                <v-menu>
-                                    <template v-slot:activator="{ props }">
-                                        <v-btn variant="outlined" size="small" v-bind="props">
-                                            <v-icon start size="small">mdi-sort</v-icon>
-                                            Sort
-                                        </v-btn>
-                                    </template>
-                                    <v-list density="compact" min-width="200">
-                                        <v-list-item @click="sortBy = 'name'; sortOrder = 'asc'; sortRescuers()">
-                                            <v-list-item-title>Name (A-Z)</v-list-item-title>
-                                        </v-list-item>
-                                        <v-list-item @click="sortBy = 'name'; sortOrder = 'desc'; sortRescuers()">
-                                            <v-list-item-title>Name (Z-A)</v-list-item-title>
-                                        </v-list-item>
-                                        <v-list-item @click="sortBy = 'created_at'; sortOrder = 'desc'; sortRescuers()">
-                                            <v-list-item-title>Newest First</v-list-item-title>
-                                        </v-list-item>
-                                        <v-list-item @click="sortBy = 'created_at'; sortOrder = 'asc'; sortRescuers()">
-                                            <v-list-item-title>Oldest First</v-list-item-title>
-                                        </v-list-item>
-                                    </v-list>
-                                </v-menu>
-                            </div>
-                        </div>
+                                <v-btn color="primary" size="small" @click="openAddDialog">
+                                    <v-icon size="small">mdi-plus</v-icon>
+                                </v-btn>
+                            </v-col>
+                        </v-row>
                     </v-card-text>
-                    
-                    <v-divider></v-divider>
+                </v-card>
 
-                    <!-- Search Bar -->
-                    <v-card-text class="pa-4">
-                        <v-text-field
-                            v-model="search"
-                            prepend-inner-icon="mdi-magnify"
-                            placeholder="Search rescuers by name, email, or ID..."
-                            variant="outlined"
-                            density="compact"
-                            hide-details
-                            clearable
-                            rounded="lg"
-                            @input="debouncedSearch"
-                        />
-                    </v-card-text>
+                <!-- Bulk Actions Bar -->
+                <v-card v-if="selectedRescuers.length > 0" rounded="lg" elevation="0" class="mb-3 pa-2">
+                    <div class="d-flex align-center gap-2 pa-1">
+                        <v-chip size="small" color="primary" variant="flat">{{ selectedRescuers.length }} selected</v-chip>
+                        <v-btn variant="outlined" color="error" size="small" @click="bulkDeleteConfirm">
+                            <v-icon start size="small">mdi-delete</v-icon>
+                            Delete
+                        </v-btn>
+                        <v-btn variant="outlined" size="small" @click="openBulkUpdateDialog">
+                            <v-icon start size="small">mdi-pencil</v-icon>
+                            Update
+                        </v-btn>
+                    </div>
+                </v-card>
+
+                <!-- Main Table Card -->
+                <v-card rounded="lg" elevation="0">
 
                     <!-- Data Table -->
                     <v-data-table
@@ -281,7 +198,8 @@
                         :headers="headers"
                         :items="rescuersList"
                         :loading="loading"
-                        :items-per-page="itemsPerPage"
+                        v-model:items-per-page="itemsPerPage"
+                        v-model:page="page"
                         item-value="id"
                         show-select
                         class="elevation-0"
@@ -394,51 +312,18 @@
                                 <p class="text-grey mt-4">No rescuers found. Click "Add Rescuer" to create one.</p>
                             </div>
                         </template>
-
-                        <!-- Bottom Row -->
-                        <template v-slot:bottom>
-                            <div class="d-flex align-center justify-space-between px-4 py-2">
-                                <div class="d-flex align-center">
-                                    <span class="text-body-2 text-grey mr-2">Rows per page:</span>
-                                    <v-select
-                                        v-model="itemsPerPage"
-                                        :items="[10, 25, 50, 100]"
-                                        variant="outlined"
-                                        density="compact"
-                                        hide-details
-                                        style="width: 80px;"
-                                    />
-                                </div>
-                                <v-pagination
-                                    v-model="page"
-                                    :length="Math.ceil(rescuersList.length / itemsPerPage)"
-                                    :total-visible="5"
-                                    density="compact"
-                                    rounded
-                                />
-                            </div>
-                        </template>
                     </v-data-table>
                 </v-card>
 
                 <!-- Recent Activity -->
-                <v-card rounded="lg" class="mt-6" elevation="2">
+                <v-card rounded="lg" class="mt-4" elevation="0">
                     <v-card-title class="d-flex align-center justify-space-between pa-4">
                         <div class="d-flex align-center">
                             <v-icon start color="primary">mdi-history</v-icon>
                             <span class="font-weight-bold">Recent Activity</span>
                             <v-chip size="x-small" color="primary" class="ml-2">{{ auditTrail.length }}</v-chip>
                         </div>
-                        <v-btn 
-                            v-if="auditTrail.length > 0"
-                            variant="text" 
-                            size="small" 
-                            color="primary"
-                            @click="activityExpanded = !activityExpanded"
-                        >
-                            {{ activityExpanded ? 'Collapse' : 'Expand' }}
-                            <v-icon end>{{ activityExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
-                        </v-btn>
+
                     </v-card-title>
                     <v-divider></v-divider>
                     <v-card-text class="pa-4">
@@ -515,7 +400,8 @@
                                     variant="outlined"
                                     density="compact"
                                     :rules="[rules.nameOnly]"
-                                    @keypress="preventNumbers"
+                                    @keypress="preventInvalidNameChars"
+                                    @input="sanitizeName('first_name')"
                                 />
                             </v-col>
                             <v-col cols="6">
@@ -525,7 +411,8 @@
                                     variant="outlined"
                                     density="compact"
                                     :rules="[rules.nameOnly]"
-                                    @keypress="preventNumbers"
+                                    @keypress="preventInvalidNameChars"
+                                    @input="sanitizeName('last_name')"
                                 />
                             </v-col>
                         </v-row>
@@ -543,6 +430,8 @@
                             class="mb-3"
                             hint="Must be an SDCA email address"
                             persistent-hint
+                            @keypress="preventInvalidEmailChars"
+                            @input="sanitizeEmail"
                         />
                         <v-text-field
                             v-model="formData.phone"
@@ -557,7 +446,8 @@
                             type="tel"
                             inputmode="numeric"
                             maxlength="11"
-                            @input="formData.phone = formData.phone.replace(/\\D/g, '')"
+                            @keypress="preventNonDigits"
+                            @input="sanitizePhone"
                         />
                         <v-text-field
                             v-model="formData.rescuer_id"
@@ -565,14 +455,15 @@
                             variant="outlined"
                             density="compact"
                             :rules="[rules.rescuerId]"
-                            :hint="`Must be exactly 9 digits (${(formData.rescuer_id || '').replace(/\\D/g, '').length}/9)`"
+                            :hint="`Must be exactly 9 digits (${(formData.rescuer_id || '').replace(/\D/g, '').length}/9)`"
                             persistent-hint
                             placeholder="123456789"
                             class="mb-3"
                             type="text"
                             inputmode="numeric"
                             maxlength="9"
-                            @input="formData.rescuer_id = formData.rescuer_id.replace(/\\D/g, '')"
+                            @keypress="preventNonDigits"
+                            @input="sanitizeRescuerId"
                         />
                         
                         <!-- OTP Activation Notice for new rescuers -->
@@ -583,7 +474,6 @@
                             class="mb-3"
                             density="compact"
                         >
-                            <v-icon start size="small">mdi-information</v-icon>
                             <span class="text-body-2">
                                 An email with OTP verification will be sent to the rescuer. 
                                 Account will be <strong>pending</strong> until email is verified and password is changed.
@@ -597,149 +487,6 @@
                     <v-btn variant="text" @click="dialog = false">Cancel</v-btn>
                     <v-btn color="primary" :loading="saving" @click="saveRescuer">
                         {{ isEditing ? 'Update' : 'Create & Send OTP' }}
-                    </v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
-
-        <!-- Bulk Add Dialog -->
-        <v-dialog v-model="bulkDialog" max-width="700">
-            <v-card rounded="lg">
-                <v-card-title class="d-flex align-center pa-4">
-                    <v-icon color="primary" class="mr-2">mdi-account-multiple-plus</v-icon>
-                    Bulk Add Rescuers
-                </v-card-title>
-                <v-divider></v-divider>
-                <v-card-text class="pa-4">
-                    <v-tabs v-model="bulkTab" color="primary">
-                        <v-tab value="upload">Upload File</v-tab>
-                        <v-tab value="manual">Manual Entry</v-tab>
-                    </v-tabs>
-
-                    <v-tabs-window v-model="bulkTab" class="mt-4">
-                        <!-- Upload File Tab -->
-                        <v-tabs-window-item value="upload">
-                            <v-alert type="info" variant="tonal" class="mb-4" density="compact">
-                                <strong>File Format:</strong> Upload an Excel (.xlsx, .xls) or CSV file with the following columns: 
-                                <code>rescuer_id, first_name, last_name, email, phone</code>
-                            </v-alert>
-                            
-                            <div class="d-flex gap-2 mb-4">
-                                <v-btn variant="outlined" color="success" size="small" @click="downloadTemplate('excel')">
-                                    <v-icon start>mdi-microsoft-excel</v-icon>
-                                    Download Excel Template
-                                </v-btn>
-                                <v-btn variant="outlined" color="info" size="small" @click="downloadTemplate('csv')">
-                                    <v-icon start>mdi-file-delimited</v-icon>
-                                    Download CSV Template
-                                </v-btn>
-                            </div>
-
-                            <v-file-input
-                                v-model="bulkFile"
-                                label="Select file"
-                                variant="outlined"
-                                density="compact"
-                                accept=".xlsx,.xls,.csv"
-                                prepend-icon="mdi-file-upload"
-                                :rules="[v => !v || v.size < 5000000 || 'File size should be less than 5 MB']"
-                                show-size
-                                @update:model-value="previewBulkFile"
-                            />
-
-                            <!-- Preview Table -->
-                            <v-card v-if="bulkPreviewData.length > 0" variant="outlined" class="mt-4">
-                                <v-card-title class="text-subtitle-1">
-                                    Preview ({{ bulkPreviewData.length }} records)
-                                </v-card-title>
-                                <v-data-table
-                                    :headers="bulkPreviewHeaders"
-                                    :items="bulkPreviewData.slice(0, 5)"
-                                    :items-per-page="5"
-                                    density="compact"
-                                    class="elevation-0"
-                                />
-                                <v-card-text v-if="bulkPreviewData.length > 5" class="text-caption text-grey">
-                                    ... and {{ bulkPreviewData.length - 5 }} more records
-                                </v-card-text>
-                            </v-card>
-                        </v-tabs-window-item>
-
-                        <!-- Manual Entry Tab -->
-                        <v-tabs-window-item value="manual">
-                            <v-alert type="info" variant="tonal" class="mb-4" density="compact">
-                                Enter rescuer details below. Click "Add Row" to add more rescuers. Rescuer ID must be 9 digits.
-                            </v-alert>
-
-                            <div v-for="(row, index) in manualBulkData" :key="index" class="mb-3">
-                                <v-row align="center" dense>
-                                    <v-col cols="2">
-                                        <v-text-field
-                                            v-model="row.rescuer_id"
-                                            label="Rescuer ID"
-                                            variant="outlined"
-                                            density="compact"
-                                            hide-details
-                                            maxlength="9"
-                                            @input="row.rescuer_id = row.rescuer_id.replace(/\D/g, '')"
-                                        />
-                                    </v-col>
-                                    <v-col cols="2">
-                                        <v-text-field
-                                            v-model="row.first_name"
-                                            label="First Name"
-                                            variant="outlined"
-                                            density="compact"
-                                            hide-details
-                                        />
-                                    </v-col>
-                                    <v-col cols="2">
-                                        <v-text-field
-                                            v-model="row.last_name"
-                                            label="Last Name"
-                                            variant="outlined"
-                                            density="compact"
-                                            hide-details
-                                        />
-                                    </v-col>
-                                    <v-col cols="5">
-                                        <v-text-field
-                                            v-model="row.email"
-                                            label="Email"
-                                            variant="outlined"
-                                            density="compact"
-                                            hide-details
-                                        />
-                                    </v-col>
-                                    <v-col cols="1">
-                                        <v-btn 
-                                            icon 
-                                            size="small" 
-                                            color="error" 
-                                            variant="text"
-                                            @click="removeManualRow(index)"
-                                            :disabled="manualBulkData.length === 1"
-                                        >
-                                            <v-icon>mdi-close</v-icon>
-                                        </v-btn>
-                                    </v-col>
-                                </v-row>
-                            </div>
-
-                            <v-btn variant="outlined" size="small" @click="addManualRow">
-                                <v-icon start>mdi-plus</v-icon>
-                                Add Row
-                            </v-btn>
-                        </v-tabs-window-item>
-                    </v-tabs-window>
-                </v-card-text>
-                <v-divider></v-divider>
-                <v-card-actions class="pa-4">
-                    <v-spacer />
-                    <v-btn variant="text" @click="bulkDialog = false">Cancel</v-btn>
-                    <v-btn color="primary" :loading="bulkSaving" @click="processBulkAdd">
-                        <v-icon start>mdi-upload</v-icon>
-                        Import Rescuers
                     </v-btn>
                 </v-card-actions>
             </v-card>
@@ -919,7 +666,7 @@ import AdminAppBar from '@/Components/AdminAppBar.vue';
 const { mobile } = useDisplay();
 const isMobile = computed(() => mobile.value);
 
-import { ref, computed } from 'vue';
+import { ref, computed, onUnmounted } from 'vue';
 import * as XLSX from 'xlsx';
 import { getProfilePictureUrl } from '@/Composables/useApi';
 import jsPDF from 'jspdf';
@@ -934,14 +681,12 @@ const props = defineProps({
 // State
 const loading = ref(false);
 const dialog = ref(false);
-const bulkDialog = ref(false);
 const bulkUpdateDialog = ref(false);
 const deleteDialog = ref(false);
 const bulkDeleteDialog = ref(false);
 const profileDialog = ref(false);
 const isEditing = ref(false);
 const saving = ref(false);
-const bulkSaving = ref(false);
 const bulkUpdating = ref(false);
 const deleting = ref(false);
 const bulkDeleting = ref(false);
@@ -953,17 +698,13 @@ const snackbar = ref(false);
 const snackbarText = ref('');
 const snackbarColor = ref('success');
 const page = ref(1);
-const itemsPerPage = ref(50);
+const itemsPerPage = ref(10);
 const sortBy = ref('name');
 const sortOrder = ref('asc');
 const selectedRescuers = ref([]);
 
-// Bulk upload
-const bulkTab = ref('upload');
-const bulkFile = ref(null);
-const bulkPreviewData = ref([]);
+// Bulk update
 const bulkUpdateStatus = ref('available');
-const manualBulkData = ref([{ first_name: '', last_name: '', email: '', phone: '' }]);
 
 // Data
 // Export rescuers as CSV, XLSX, or PDF
@@ -1135,14 +876,49 @@ const declineRescuerApplication = async () => {
 
 // Load pending applications on mount
 import { onMounted } from 'vue';
+
+let rescuerPollingInterval = null;
+const RESCUER_POLLING_INTERVAL = 10000; // 10 seconds
+
+const silentFetchRescuers = async () => {
+    try {
+        const params = new URLSearchParams();
+        if (search.value) params.append('search', search.value);
+        if (statusFilter.value !== 'all') params.append('status', statusFilter.value);
+        
+        const response = await fetch(`/admin/rescuers?${params}`, {
+            headers: { 'Accept': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.success) {
+            rescuersList.value = data.data.data || data.data;
+            counts.value = data.counts;
+            if (data.audit_trail) {
+                auditTrail.value = data.audit_trail;
+            }
+        }
+    } catch (error) {
+        // Silent fail for polling
+    }
+};
+
 onMounted(() => {
     fetchPendingApplications();
+    // Poll rescuer data to keep status updated
+    rescuerPollingInterval = setInterval(silentFetchRescuers, RESCUER_POLLING_INTERVAL);
+});
+
+onUnmounted(() => {
+    if (rescuerPollingInterval) {
+        clearInterval(rescuerPollingInterval);
+        rescuerPollingInterval = null;
+    }
 });
 
 // Activity pagination
 const activityPage = ref(1);
 const activityPerPage = ref(5);
-const activityExpanded = ref(false);
+
 
 const formData = ref({
     first_name: '',
@@ -1156,11 +932,15 @@ const formData = ref({
 // Validation rules
 const rules = {
     required: (v) => !!v || 'Required',
-    // Name validation - no numbers allowed
+    // Name validation - only letters, spaces, hyphens, periods, commas, apostrophes
     nameOnly: (v) => {
         if (!v) return 'Required';
         if (/[0-9]/.test(v)) {
             return 'Names cannot contain numbers';
+        }
+        // Block emoji and special characters
+        if (/[^a-zA-Z\s\-\.\'\,ñÑ]/.test(v)) {
+            return 'Names can only contain letters, spaces, hyphens, and apostrophes';
         }
         return true;
     },
@@ -1233,14 +1013,6 @@ const headers = [
     { title: 'Status', key: 'status', sortable: true },
     { title: 'Date created', key: 'created_at', sortable: true },
     { title: '', key: 'actions', sortable: false, align: 'end', width: '50px' }
-];
-
-const bulkPreviewHeaders = [
-    { title: 'Rescuer ID', key: 'rescuer_id' },
-    { title: 'First Name', key: 'first_name' },
-    { title: 'Last Name', key: 'last_name' },
-    { title: 'Email', key: 'email' },
-    { title: 'Phone', key: 'phone' }
 ];
 
 const statusOptions = [
@@ -1323,14 +1095,6 @@ const openEditDialog = (rescuer) => {
     selectedRescuer.value = rescuer;
     formData.value = { ...rescuer };
     dialog.value = true;
-};
-
-const openBulkDialog = () => {
-    bulkTab.value = 'upload';
-    bulkFile.value = null;
-    bulkPreviewData.value = [];
-    manualBulkData.value = [{ rescuer_id: '', first_name: '', last_name: '', email: '', phone: '' }];
-    bulkDialog.value = true;
 };
 
 const openBulkUpdateDialog = () => {
@@ -1531,122 +1295,62 @@ const processBulkUpdate = async () => {
     }
 };
 
-const previewBulkFile = async (file) => {
-    if (!file) {
-        bulkPreviewData.value = [];
-        return;
-    }
-    
-    try {
-        const data = await file.arrayBuffer();
-        const workbook = XLSX.read(data);
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-        
-        bulkPreviewData.value = jsonData.map(row => ({
-            rescuer_id: row.rescuer_id || row['Rescuer ID'] || row['ID'] || '',
-            first_name: row.first_name || row['First Name'] || '',
-            last_name: row.last_name || row['Last Name'] || '',
-            email: row.email || row['Email'] || '',
-            phone: row.phone || row['Phone'] || ''
-        }));
-    } catch (error) {
-        console.error('Error parsing file:', error);
-        showSnackbar('Error parsing file. Please check the format.', 'error');
-    }
-};
-
-const processBulkAdd = async () => {
-    bulkSaving.value = true;
-    
-    let dataToProcess = [];
-    if (bulkTab.value === 'upload') {
-        dataToProcess = bulkPreviewData.value;
-    } else {
-        dataToProcess = manualBulkData.value.filter(row => row.first_name && row.last_name && row.email);
-    }
-    
-    if (dataToProcess.length === 0) {
-        showSnackbar('No valid data to import', 'warning');
-        bulkSaving.value = false;
-        return;
-    }
-    
-    try {
-        let successCount = 0;
-        let errorCount = 0;
-        
-        for (const row of dataToProcess) {
-            try {
-                const response = await fetch('/admin/rescuers', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
-                    },
-                    body: JSON.stringify({
-                        rescuer_id: (row.rescuer_id || '').toString().replace(/\D/g, ''),
-                        first_name: row.first_name,
-                        last_name: row.last_name,
-                        email: row.email,
-                        phone: row.phone || '',
-                        send_otp: true
-                    })
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    successCount++;
-                } else {
-                    errorCount++;
-                }
-            } catch {
-                errorCount++;
-            }
-        }
-        
-        showSnackbar(`Imported ${successCount} rescuer(s). ${errorCount > 0 ? `${errorCount} failed.` : ''}`, successCount > 0 ? 'success' : 'error');
-        bulkDialog.value = false;
-        fetchRescuers();
-    } catch (error) {
-        console.error('Error bulk adding:', error);
-        showSnackbar('Error importing rescuers', 'error');
-    } finally {
-        bulkSaving.value = false;
-    }
-};
-
-const downloadTemplate = (format) => {
-    const templateData = [
-        { rescuer_id: '123456789', first_name: 'John', last_name: 'Doe', email: 'john.doe@sdca.edu.ph', phone: '09171234567' },
-        { rescuer_id: '987654321', first_name: 'Jane', last_name: 'Smith', email: 'jane.smith@sdca.edu.ph', phone: '09181234567' }
-    ];
-    
-    const worksheet = XLSX.utils.json_to_sheet(templateData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Rescuers');
-    
-    if (format === 'csv') {
-        XLSX.writeFile(workbook, 'rescuers_template.csv');
-    } else {
-        XLSX.writeFile(workbook, 'rescuers_template.xlsx');
-    }
-};
-
-const addManualRow = () => {
-    manualBulkData.value.push({ rescuer_id: '', first_name: '', last_name: '', email: '', phone: '' });
-};
-
-const removeManualRow = (index) => {
-    manualBulkData.value.splice(index, 1);
-};
-
 const showSnackbar = (text, color) => {
     snackbarText.value = text;
     snackbarColor.value = color;
     snackbar.value = true;
+};
+
+// Prevent invalid characters in name fields (only allow letters, spaces, hyphens, apostrophes, ñ)
+const preventInvalidNameChars = (event) => {
+    const char = String.fromCharCode(event.keyCode || event.which);
+    if (!/[a-zA-ZñÑ\s\-\.\,\']/.test(char)) {
+        event.preventDefault();
+    }
+};
+
+// Sanitize name input - strip emoji and invalid characters on paste/input
+const sanitizeName = (field) => {
+    if (formData.value[field]) {
+        formData.value[field] = formData.value[field].replace(/[^a-zA-ZñÑ\s\-\.\,\']/g, '');
+    }
+};
+
+// Prevent non-digit characters in numeric fields (phone, ID)
+const preventNonDigits = (event) => {
+    const char = String.fromCharCode(event.keyCode || event.which);
+    if (!/[0-9]/.test(char)) {
+        event.preventDefault();
+    }
+};
+
+// Sanitize phone input - strip anything that isn't a digit (including emoji)
+const sanitizePhone = () => {
+    if (formData.value.phone) {
+        formData.value.phone = formData.value.phone.replace(/\D/g, '').slice(0, 11);
+    }
+};
+
+// Sanitize rescuer ID input - strip anything that isn't a digit
+const sanitizeRescuerId = () => {
+    if (formData.value.rescuer_id) {
+        formData.value.rescuer_id = formData.value.rescuer_id.replace(/\D/g, '').slice(0, 9);
+    }
+};
+
+// Prevent invalid characters in email field
+const preventInvalidEmailChars = (event) => {
+    const char = String.fromCharCode(event.keyCode || event.which);
+    if (!/[a-zA-Z0-9@._\-+]/.test(char)) {
+        event.preventDefault();
+    }
+};
+
+// Sanitize email input - strip emoji and invalid characters
+const sanitizeEmail = () => {
+    if (formData.value.email) {
+        formData.value.email = formData.value.email.replace(/[^a-zA-Z0-9@._\-+]/g, '');
+    }
 };
 
 // Helpers
@@ -1722,16 +1426,6 @@ const formatAction = (action) => {
 </script>
 
 <style scoped>
-/* Gradient App Bar */
-.gradient-app-bar {
-    background: linear-gradient(135deg, #1976D2 0%, #1565C0 50%, #0D47A1 100%) !important;
-}
-
-/* Gradient Drawer Header */
-.gradient-drawer-header {
-    background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
-}
-
 /* Gradient Text */
 .gradient-text {
     background: linear-gradient(135deg, #1976D2, #0D47A1);
@@ -1740,67 +1434,51 @@ const formatAction = (action) => {
     background-clip: text;
 }
 
-/* Stat Card White */
-.stat-card-white {
-    background: white;
-    border: 1px solid #e0e0e0;
+/* ===== Stats Banner ===== */
+.rescuers-stats-banner {
+    background: linear-gradient(135deg, #1976D2 0%, #1565C0 50%, #0D47A1 100%) !important;
 }
-
-/* Text colors */
-.text-white-50 {
-    color: rgba(255, 255, 255, 0.7) !important;
+.stats-banner-grid {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    gap: 8px;
 }
-
-/* Card hover effect */
-.v-card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+.stat-inline {
+    text-align: center;
+    min-width: 60px;
+    padding: 4px 6px;
+}
+.stat-inline-icon {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 2px;
+}
+.stat-inline-icon.green-icon { color: #A5D6A7; }
+.stat-inline-icon.amber-icon { color: #FFD54F; }
+.stat-inline-icon.red-icon { color: #EF9A9A; }
+.stat-inline-icon.orange-icon { color: #FFCC80; }
+.stat-inline-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: white;
+    line-height: 1.2;
+}
+.stat-inline-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Gap utility */
 .gap-2 {
     gap: 8px;
 }
-
 .gap-3 {
     gap: 12px;
-}
-
-/* Page Header Responsive Styles */
-.page-header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.page-header-content {
-    flex: 1;
-    min-width: 200px;
-}
-
-.page-header-actions {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-/* Mobile Specific Styles */
-@media (max-width: 600px) {
-    .page-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .page-header-content {
-        width: 100%;
-    }
-    
-    .page-header-actions {
-        width: 100%;
-        justify-content: flex-end;
-    }
 }
 
 /* Pending Applications */
@@ -1819,17 +1497,7 @@ const formatAction = (action) => {
     box-shadow: 0 2px 8px rgba(255, 152, 0, 0.12);
 }
 
-.pending-highlight {
-    border: 2px solid #E65100 !important;
-    animation: pulse-border 2s infinite;
-}
-
 .text-orange {
     color: #E65100 !important;
-}
-
-@keyframes pulse-border {
-    0%, 100% { border-color: #E65100; }
-    50% { border-color: #FF9800; }
 }
 </style>

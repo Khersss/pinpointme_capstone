@@ -930,7 +930,7 @@ const saveAnnotations = async () => {
 
 // Navigation
 const goBack = () => {
-    window.history.back();
+    window.location.href = '/admin/buildings';
 };
 
 // Snackbar

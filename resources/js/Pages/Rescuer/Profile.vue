@@ -963,6 +963,8 @@
         >
             {{ snackbar.message }}
         </v-snackbar>
+
+
     </v-app>
 </template>
 
@@ -976,6 +978,7 @@ import { useDisplay } from 'vuetify';
 import { useNotificationAlert } from '@/Composables/useNotificationAlert';
 import { useDarkMode } from '@/Composables/useDarkMode';
 import { setUserActiveStatus } from '@/Utilities/firebase';
+
 
 // Auth check
 const page = usePage();
@@ -2374,6 +2377,13 @@ onUnmounted(() => {
     
     .header-title p {
         font-size: 0.75rem;
+    }
+}
+
+/* Desktop: remove extra padding since no bottom nav */
+@media (min-width: 1024px) {
+    .profile-container {
+        padding-bottom: 0 !important;
     }
 }
 

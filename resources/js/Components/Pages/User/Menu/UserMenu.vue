@@ -105,7 +105,7 @@ const menuItems = computed(() => [
     },
     {
         id: 'inbox',
-        name: 'Inbox',
+        name: 'Messsages',
         icon: 'mdi-message-text',
         path: '/user/inbox',
     },

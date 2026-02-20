@@ -248,8 +248,8 @@
                                 <v-icon size="10">mdi-clock-outline</v-icon>
                                 {{ formatTimeAgo(notif.time) }}
                             </span>
-                            <span v-if="notif.request" class="nc-urgency-chip" :class="`nc-urgency-${(notif.request.urgency_level || 'medium').toLowerCase()}`">
-                                {{ (notif.request.urgency_level || 'Medium') }}
+                            <span v-if="notif.request" class="nc-urgency-chip" :class="`nc-urgency-${(notif.request.urgency_level || 'low').toLowerCase()}`">
+                                {{ (notif.request.urgency_level || 'Low') }}
                             </span>
                             <!-- Show safe badge if rescued/completed -->
                             <span v-if="notif.request && ['rescued', 'completed', 'safe'].includes(notif.request.status)" class="nc-safe-chip">
@@ -355,8 +355,8 @@
                                 <v-icon size="10">mdi-clock-outline</v-icon>
                                 {{ formatTimeAgo(notif.time) }}
                             </span>
-                            <span v-if="notif.type === 'pending' && notif.request" class="nc-urgency-chip" :class="`nc-urgency-${(notif.request.urgency_level || 'medium').toLowerCase()}`">
-                                {{ (notif.request.urgency_level || 'Medium') }}
+                            <span v-if="notif.type === 'pending' && notif.request" class="nc-urgency-chip" :class="`nc-urgency-${(notif.request.urgency_level || 'low').toLowerCase()}`">
+                                {{ (notif.request.urgency_level || 'Low') }}
                             </span>
                             <!-- Show safe badge if rescued/completed -->
                             <span v-if="notif.request && ['rescued', 'completed', 'safe'].includes(notif.request.status)" class="nc-safe-chip">
@@ -1105,8 +1105,8 @@ const sortedForceAlertNotifications = computed(() => {
     );
     const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
     return urgent.sort((a, b) => {
-        const urgencyA = (a.request?.urgency_level || 'medium').toLowerCase();
-        const urgencyB = (b.request?.urgency_level || 'medium').toLowerCase();
+        const urgencyA = (a.request?.urgency_level || 'low').toLowerCase();
+        const urgencyB = (b.request?.urgency_level || 'low').toLowerCase();
         return (priorityOrder[urgencyA] ?? 2) - (priorityOrder[urgencyB] ?? 2);
     });
 });
@@ -1330,8 +1330,8 @@ const handleDeclineRescuer = async () => {
 const URGENCY_THRESHOLDS = { critical: 10, high: 30, medium: 120, low: 300 };
 
 const getThresholdSeconds = (request) => {
-    const urgency = (request.urgency_level || 'medium').toLowerCase();
-    return URGENCY_THRESHOLDS[urgency] ?? 120;
+    const urgency = (request.urgency_level || 'low').toLowerCase();
+    return URGENCY_THRESHOLDS[urgency] ?? 300;
 };
 
 const getElapsedSeconds = (request) => {
@@ -1354,7 +1354,7 @@ const getForceAlertCountdown = (request) => {
 
 const getThresholdLabel = (request) => {
     const secs = getThresholdSeconds(request);
-    const urgency = (request.urgency_level || 'medium').toLowerCase();
+    const urgency = (request.urgency_level || 'low').toLowerCase();
     const label = secs >= 60 ? `${secs / 60} min` : `${secs}s`;
     return `${urgency.charAt(0).toUpperCase() + urgency.slice(1)} — notify after ${label}`;
 };
@@ -1622,14 +1622,6 @@ const fetchPendingRequests = async () => {
                 callback: () => { showNotificationPanel.value = true; notifTab.value = 'activity'; },
             };
 
-            showToast('🚨 New Rescue Request', `${name} needs help at ${location}`, {
-                color: 'error', icon: 'mdi-alert-octagon', timeout: 8000,
-                action: {
-                    label: 'View',
-                    handler: () => { showNotificationPanel.value = true; notifTab.value = 'activity'; snackbar.value.show = false; }
-                }
-            });
-
             playNotificationSound('message');
             vibrate([200, 100, 200]);
             setTimeout(() => { popupAlert.value.show = false; }, 10000);
@@ -1659,10 +1651,52 @@ const fetchPendingRequests = async () => {
                     addActivityNotification(`rescue-pending-${reqId}`, `${name} needs help!`, `📍 ${location}`, 'mdi-alert-circle', 'warning', 'pending', req);
                 } else if (status === 'accepted' || status === 'in_progress' || status === 'en_route') {
                     addActivityNotification(`rescue-progress-${reqId}`, 'Rescue in progress', `${name} — ${location}`, 'mdi-run-fast', 'info', 'progress', req);
+                    // Play sound + popup when rescuer responds (status change from previous)
+                    if (previousReq && previousStatus !== status) {
+                        popupAlert.value = {
+                            show: true,
+                            title: 'Rescuer Responded',
+                            message: `A rescuer is now handling ${name}'s request at ${location}`,
+                            type: 'info',
+                            icon: 'mdi-run-fast',
+                            callback: () => { showNotificationPanel.value = true; notifTab.value = 'activity'; },
+                        };
+                        playNotificationSound('message');
+                        vibrate([100, 50, 100]);
+                        setTimeout(() => { popupAlert.value.show = false; }, 6000);
+                    }
                 } else if (status === 'rescued' || status === 'completed' || status === 'safe') {
                     addActivityNotification(`rescue-done-${reqId}`, 'Rescue completed', `${name} has been rescued at ${location}`, 'mdi-check-circle', 'success', 'completed', req);
+                    // Play sound + popup when rescue is completed
+                    if (previousReq && previousStatus !== status) {
+                        popupAlert.value = {
+                            show: true,
+                            title: 'Rescue Completed',
+                            message: `${name} has been rescued at ${location}`,
+                            type: 'success',
+                            icon: 'mdi-check-circle',
+                            callback: () => { showNotificationPanel.value = true; notifTab.value = 'activity'; },
+                        };
+                        playNotificationSound('success');
+                        vibrate([100]);
+                        setTimeout(() => { popupAlert.value.show = false; }, 6000);
+                    }
                 } else if (status === 'cancelled') {
                     addActivityNotification(`rescue-cancelled-${reqId}`, 'Rescue cancelled', `Request for ${name} at ${location} was cancelled`, 'mdi-close-circle', 'error', 'cancelled', req);
+                    // Play sound + popup when request is cancelled
+                    if (previousReq && previousStatus !== status) {
+                        popupAlert.value = {
+                            show: true,
+                            title: 'Request Cancelled',
+                            message: `Request for ${name} at ${location} was cancelled`,
+                            type: 'error',
+                            icon: 'mdi-close-circle',
+                            callback: () => { showNotificationPanel.value = true; notifTab.value = 'activity'; },
+                        };
+                        playNotificationSound('message');
+                        vibrate([200, 100, 200]);
+                        setTimeout(() => { popupAlert.value.show = false; }, 6000);
+                    }
                 }
             }
         });
@@ -1689,14 +1723,14 @@ const fetchPendingRequests = async () => {
                 notifiedThresholdIds.value.add(req.id);
                 const name = `${req.firstName || ''} ${req.lastName || ''}`.trim() || 'Someone';
                 const location = getReqLocation(req);
-                const urgency = (req.urgency_level || 'Medium');
-                const secs = getThresholdSeconds(req);
-                const waitLabel = secs >= 60 ? `${secs / 60} minute(s)` : `${secs} seconds`;
+                const urgency = (req.urgency_level || 'Low');
+                const elapsed = getElapsedSeconds(req);
+                const elapsedLabel = elapsed >= 60 ? `${Math.floor(elapsed / 60)} minute(s)` : `${elapsed} seconds`;
 
                 popupAlert.value = {
                     show: true,
                     title: `⚠️ No Response — ${urgency} Urgency`,
-                    message: `It's been ${waitLabel}, still no rescuer for ${name} at ${location}. You may now send a Force Alert.`,
+                    message: `It's been ${elapsedLabel} – ${name} is in ${urgency} condition at ${location}. Alert the responder immediately!`,
                     type: 'warning', icon: 'mdi-timer-alert',
                     callback: () => { showNotificationPanel.value = true; notifTab.value = 'activity'; },
                 };
@@ -1764,13 +1798,6 @@ const fetchAdminConversations = async () => {
                         type: 'info', icon: 'mdi-message-text',
                         callback: () => { showNotificationPanel.value = true; notifTab.value = 'messages'; },
                     };
-                    showToast('💬 New Message', `${senderName}: ${truncate(lastMsg?.content, 50)}`, {
-                        color: 'primary', icon: 'mdi-message-text', timeout: 6000,
-                        action: {
-                            label: 'View',
-                            handler: () => { showNotificationPanel.value = true; notifTab.value = 'messages'; snackbar.value.show = false; }
-                        }
-                    });
                     playNotificationSound('message');
                     vibrate([100, 50, 100]);
                     setTimeout(() => { popupAlert.value.show = false; }, 6000);

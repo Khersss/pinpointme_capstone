@@ -342,7 +342,7 @@
                                 <div v-if="rescue.assigned_rescuer || rescue.rescuer" class="rescuer-info">
                                     <div class="rescuer-details">
                                         <h4>{{ getRescuerName() }}</h4>
-                                        <p v-if="!rescuerProfilePicture" class="text-body-2 text-grey-darken-1">{{ getRescuerInitials() }}</p>
+                                        <p v-if="!rescuerProfilePicture" class="text-body-2 text-grey-darken-1"></p>
                                     </div>
                                     <v-icon 
                                         color="primary" 
@@ -571,7 +571,7 @@
                                     
                                     <v-btn
                                         variant="outlined"
-                                        color="grey"
+                                        color="#3674B5"
                                         size="large"
                                         rounded="xl"
                                         @click="handleCancelSafeApproval"
@@ -579,7 +579,7 @@
                                         flex
                                     >
                                         <v-icon start size="18">mdi-undo</v-icon>
-                                        <span>Cancel Request</span>
+                                        <span>Cancel</span>
                                     </v-btn>
                                 </div>
                             </div>
@@ -836,8 +836,22 @@
                         <!-- Normal Action Container (no pending approval) -->
                         <div v-else-if="rescue.status !== 'rescued' && rescue.status !== 'safe' && rescue.status !== 'cancelled'" class="action-container">
                             <div class="primary-action">
-                                <!-- Slide to confirm Mark as Safe -->
-                                <div class="slide-to-confirm" @mousedown="startSlide" @touchstart="startSlide">
+                                <!-- Locked Slide for High/Critical urgency without rescuer -->
+                                <div v-if="isSlideLockedByUrgency" class="slide-to-confirm slide-locked">
+                                    <div class="slide-track slide-track-locked">
+                                        <div class="slide-thumb slide-thumb-locked">
+                                            <v-icon size="24" color="white">mdi-lock</v-icon>
+                                        </div>
+                                        <div class="slide-text">
+                                            <span class="slide-instruction slide-locked-text">
+                                                Waiting for rescuer to accept...
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Normal Slide to confirm Mark as Safe -->
+                                <div v-else class="slide-to-confirm" @mousedown="startSlide" @touchstart="startSlide">
                                     <div class="slide-track">
                                         <div class="slide-progress" :style="{ width: slideProgress + '%' }"></div>
                                         <div 
@@ -861,9 +875,23 @@
                                 </div>
                             </div>
                             
-                            <!-- Info hint if rescuer is assigned -->
+                            <!-- Combined urgency notice for High/Critical -->
                             <v-alert 
-                                v-if="(rescue.assigned_rescuer || rescue.rescuer) && ['assigned', 'in_progress'].includes(rescue.status)"
+                                v-if="isHighOrCriticalUrgency"
+                                type="warning" 
+                                variant="tonal" 
+                                density="compact" 
+                                class="mb-3 rounded-lg"
+                                icon="mdi-shield-lock-outline"
+                            >
+                                <div class="text-caption">
+                                    Your urgency level is <strong>{{ rescue.urgency_level }}</strong>. A rescuer must accept and verify your safety before you can be marked as safe or cancel this request.
+                                </div>
+                            </v-alert>
+
+                            <!-- Info hint if rescuer is assigned (non-high/critical) -->
+                            <v-alert 
+                                v-else-if="(rescue.assigned_rescuer || rescue.rescuer) && ['assigned', 'in_progress'].includes(rescue.status)"
                                 type="info" 
                                 variant="tonal" 
                                 density="compact" 
@@ -871,19 +899,6 @@
                             >
                                 <div class="text-caption">
                                      Since a rescuer is assigned, they will need to approve your safe request.
-                                </div>
-                            </v-alert>
-
-                            <!-- Info hint if urgency is critical (no rescuer assigned) -->
-                            <v-alert 
-                                v-else-if="isCriticalUrgency"
-                                type="warning" 
-                                variant="tonal" 
-                                density="compact" 
-                                class="mb-3 rounded-lg"
-                            >
-                                <div class="text-caption">
-                                    Your urgency level is <strong>Critical</strong>. An administrator must approve your safe request to ensure your safety. A rescuer may be dispatched to verify.
                                 </div>
                             </v-alert>
                             
@@ -936,16 +951,6 @@
                                         <span>Cancel Locked</span>
                                     </v-btn>
                                 </div>
-                                <v-alert
-                                    v-if="isCancelBlockedByUrgency && !['rescued', 'safe', 'cancelled', 'completed'].includes(rescue.status)"
-                                    type="warning"
-                                    variant="tonal"
-                                    density="compact"
-                                    class="mt-2 mx-2"
-                                    icon="mdi-shield-lock-outline"
-                                >
-                                    <span class="text-caption">Cancellation is disabled for <strong>{{ rescue.urgency_level?.toUpperCase() }}</strong> urgency requests. A rescuer must verify your safety.</span>
-                                </v-alert>
                             </div>
                         </div>
                     </div>
@@ -964,7 +969,7 @@
             <!-- ═══════════════════════════════════════════════════════ -->
 
             <!-- Safe Proof Dialog (photo + reason for marking safe) -->
-            <v-dialog v-model="showSafeProofDialog" max-width="500" persistent>
+            <v-dialog v-model="showSafeProofDialog" max-width="480" persistent>
                 <v-card class="rounded-xl">
                     <v-card-text class="pt-6 pb-2">
                         <div class="text-center mb-4">
@@ -978,35 +983,44 @@
                         <!-- Photo Section -->
                         <div class="mb-4">
                             <p class="text-subtitle-2 text-grey-darken-2 mb-2">
-                                <v-icon size="18" class="mr-1">mdi-camera</v-icon>
                                 Photo Proof <span class="text-error">*</span>
                             </p>
                             
                             <!-- Camera Preview -->
-                            <div v-if="isCaptureMode" class="camera-container rounded-lg overflow-hidden mb-2">
+                            <div v-if="isCaptureMode" class="camera-container rounded-lg overflow-hidden mb-2 position-relative" style="padding: 8px;">
                                 <video 
                                     ref="videoRef" 
                                     autoplay 
                                     playsinline 
                                     class="w-100"
-                                    style="max-height: 250px; object-fit: cover;"
+                                    style="max-height: 220px; object-fit: cover; border-radius: 8px;"
                                 ></video>
-                                <div class="d-flex justify-center gap-2 mt-2">
+                                
+                                <!-- Cancel X Button - Top Right -->
+                                <v-btn 
+                                    icon
+                                    size="small"
+                                    variant="flat"
+                                    color="rgba(0,0,0,0.6)"
+                                    class="position-absolute"
+                                    style="top: 16px; right: 16px; z-index: 10;"
+                                    @click="stopCamera"
+                                >
+                                    <v-icon color="white" size="18">mdi-close</v-icon>
+                                </v-btn>
+                                
+                                <!-- Capture Button - Centered -->
+                                <div class="d-flex justify-center mt-2">
                                     <v-btn 
-                                        color="success" 
+                                        icon
+                                        size="large"
                                         variant="flat" 
+                                        color="success"
                                         @click="capturePhoto"
-                                        class="rounded-lg"
+                                        class="capture-btn-icon"
+                                        elevation="4"
                                     >
-                                        <v-icon start>mdi-camera</v-icon>
-                                        Capture
-                                    </v-btn>
-                                    <v-btn 
-                                        variant="outlined" 
-                                        @click="stopCamera"
-                                        class="rounded-lg"
-                                    >
-                                        Cancel
+                                        <v-icon size="32" color="white">mdi-camera</v-icon>
                                     </v-btn>
                                 </div>
                             </div>
@@ -1032,24 +1046,28 @@
                             </div>
                             
                             <!-- Photo Buttons -->
-                            <div v-else class="d-flex gap-2">
+                            <div v-else class="d-flex gap-2 px-2">
                                 <v-btn 
                                     variant="outlined" 
                                     color="primary" 
                                     class="flex-grow-1 rounded-lg"
                                     @click="startCamera"
+                                    size="small"
+                                    style="font-size: 0.8rem;"
                                 >
-                                    <v-icon start>mdi-camera</v-icon>
-                                    Take Photo
+                                    <v-icon start size="16">mdi-camera</v-icon>
+                                    CAPTURE
                                 </v-btn>
                                 <v-btn 
                                     variant="outlined" 
                                     color="primary" 
                                     class="flex-grow-1 rounded-lg"
                                     @click="triggerFileInput"
+                                    size="small"
+                                    style="font-size: 0.8rem;"
                                 >
-                                    <v-icon start>mdi-image</v-icon>
-                                    Upload Photo
+                                    <v-icon start size="16">mdi-image</v-icon>
+                                    UPLOAD
                                 </v-btn>
                                 <input 
                                     ref="fileInputRef"
@@ -1073,26 +1091,32 @@
                             class="mt-1"
                         />
                     </v-card-text>
-                    <v-card-actions class="pa-4 pt-0">
-                        <v-btn
-                            variant="text"
-                            class="flex-grow-1 rounded-lg"
-                            :disabled="isSubmittingProof"
-                            @click="cancelSafeProof"
-                        >
-                            Cancel
-                        </v-btn>
-                        <v-btn
-                            color="success"
-                            variant="flat"
-                            class="flex-grow-1 rounded-lg"
-                            :disabled="!safeProofPhoto || !safeProofReason.trim() || isSubmittingProof"
-                            :loading="isSubmittingProof"
-                            @click="confirmSafeWithProof"
-                        >
-                            <v-icon start>mdi-check-circle</v-icon>
-                            Confirm Safe
-                        </v-btn>
+                    <v-card-actions class="pa-3 pt-0">
+                        <div class="d-flex flex-row gap-2 w-100">
+                            <v-btn
+                                variant="text"
+                                class="flex-grow-1 rounded-lg"
+                                :disabled="isSubmittingProof"
+                                @click="cancelSafeProof"
+                                size="small"
+                                style="min-height: 36px;"
+                            >
+                                <span class="text-overline text-sm-caption font-weight-medium">CANCEL</span>
+                            </v-btn>
+                            <v-btn
+                                color="success"
+                                variant="flat"
+                                class="flex-grow-1 rounded-lg"
+                                :disabled="!safeProofPhoto || !safeProofReason.trim() || isSubmittingProof"
+                                :loading="isSubmittingProof"
+                                @click="confirmSafeWithProof"
+                                size="small"
+                                style="min-height: 36px;"
+                            >
+                                <v-icon start size="14">mdi-check-circle</v-icon>
+                                <span class="text-overline text-sm-caption font-weight-medium">CONFIRM</span>
+                            </v-btn>
+                        </div>
                     </v-card-actions>
                 </v-card>
             </v-dialog>
@@ -1121,24 +1145,30 @@
                              
                         />
                     </v-card-text>
-                    <v-card-actions class="pa-4 pt-0">
-                        <v-btn
-                            variant="text"
-                            class="flex-grow-1 rounded-lg"
-                            @click="cancelSafeReason"
-                        >
-                            Cancel
-                        </v-btn>
-                        <v-btn
-                            color="success"
-                            variant="flat"
-                            class="flex-grow-1 rounded-lg"
-                            :disabled="!safeReason || safeReason.trim().length < 10"
-                            @click="confirmSafeWithReason"
-                        >
-                            <v-icon start>mdi-check-circle</v-icon>
-                            Confirm Safe
-                        </v-btn>
+                    <v-card-actions class="pa-3 pt-0">
+                        <div class="d-flex flex-row gap-2 w-100">
+                            <v-btn
+                                variant="text"
+                                class="flex-grow-1 rounded-lg"
+                                @click="cancelSafeReason"
+                                size="small"
+                                style="min-height: 36px;"
+                            >
+                                <span class="text-overline text-sm-caption font-weight-medium">Cancel</span>
+                            </v-btn>
+                            <v-btn
+                                color="success"
+                                variant="flat"
+                                class="flex-grow-1 rounded-lg"
+                                :disabled="!safeReason || !safeReason.trim()"
+                                @click="confirmSafeWithReason"
+                                size="small"
+                                style="min-height: 36px;"
+                            >
+                                <v-icon start size="14">mdi-check-circle</v-icon>
+                                <span class="text-overline text-sm-caption font-weight-medium">Confirm Safe</span>
+                            </v-btn>
+                        </div>
                     </v-card-actions>
                 </v-card>
             </v-dialog>
@@ -1147,115 +1177,106 @@
 
 
             <!-- Rescuer Profile Dialog -->
-            <v-dialog v-model="showRescuerProfile" max-width="400">
-                <v-card class="rounded-xl">
+            <v-dialog v-model="showRescuerProfile" max-width="420">
+                <v-card class="rounded-xl overflow-hidden" elevation="4">
+                    <!-- Header with gradient background -->
+                    <div style="background: linear-gradient(135deg, #3674B5 0%, #2E5B94 100%); padding: 16px 20px; color: white;">
+                        <div class="d-flex align-center justify-space-between">
+                            <div class="d-flex align-center">
+                                <v-icon size="22" color="white" class="mr-2">mdi-account-circle</v-icon>
+                                <span class="text-h6 font-weight-bold">Rescuer Profile</span>
+                            </div>
+                            <v-btn icon variant="text" size="small" @click="showRescuerProfile = false">
+                                <v-icon size="18" color="rgba(255,255,255,0.8)">mdi-close</v-icon>
+                            </v-btn>
+                        </div>
+                    </div>
+
                     <v-card-text class="text-center py-6">
                         <v-avatar 
                             size="100" 
                             color="success" 
-                            class="mb-4"
+                            class="mb-4 elevation-3"
                             :style="rescuerProfilePicture ? 'cursor: pointer' : ''"
                             @click="rescuerProfilePicture && openPhotoViewer(rescuerProfilePicture, getRescuerName())"
                         >
                             <v-img v-if="rescuerProfilePicture" :src="rescuerProfilePicture" cover />
                             <span v-else class="text-h4 text-white">{{ getRescuerInitials() }}</span>
                         </v-avatar>
-                        <h3 class="text-h5 font-weight-bold mb-1">{{ getRescuerName() }}</h3>
-                        <p class="text-grey mb-2">Certified Rescuer</p>
-                        
-                        <!-- Rescuer Status -->
-                        <div class="d-flex justify-center gap-2 mb-4">
-                            <v-chip 
-                                :color="getRescuerStatusColor()" 
-                                variant="flat" 
-                                size="small"
-                            >
-                                <v-icon start size="14">{{ getRescuerStatusIcon() }}</v-icon>
-                                {{ getRescuerStatusText() }}
-                            </v-chip>
-                            <v-chip 
-                                v-if="rescue?.status && rescue.status !== 'rescued' && rescue.status !== 'safe'"
-                                color="info" 
-                                variant="tonal" 
-                                size="small"
-                            >
-                                <v-icon start size="14">mdi-shield-account</v-icon>
-                                Assigned to you
-                            </v-chip>
-                        </div>
+                        <h3 class="text-h5 font-weight-bold mb-2">{{ getRescuerName() }}</h3>
+                        <v-chip color="success" variant="tonal" size="small" class="mb-4">
+                            <v-icon start size="14">mdi-shield-account</v-icon>
+                            Emergency Responder
+                        </v-chip>
                         
                         <v-divider class="mb-4" />
                         
-                        <div v-if="getRescuerContact()" class="d-flex align-center justify-center mb-3">
-                            <v-icon color="primary" class="mr-2">mdi-phone</v-icon>
-                            <span>{{ getRescuerContact() }}</span>
-                        </div>
-                        <div v-if="getRescuerEmail()" class="d-flex align-center justify-center">
-                            <v-icon color="primary" class="mr-2">mdi-email</v-icon>
-                            <span>{{ getRescuerEmail() }}</span>
-                        </div>
-                    </v-card-text>
-                    <v-card-actions class="pa-4 pt-0">
-                        <v-btn variant="text" block @click="showRescuerProfile = false">Close</v-btn>
-                    </v-card-actions>
-                </v-card>
-            </v-dialog>
-
-            <!-- Cancellation Reason Dialog -->
-            <v-dialog v-model="showCancelReasonDialog" max-width="450" persistent>
-                <v-card class="rounded-xl">
-                    <v-card-text class="pa-6">
-                        <div class="text-center mb-4">
-                            <v-avatar color="error" size="64" class="mb-3">
-                                <v-icon size="32" color="white">mdi-comment-alert</v-icon>
-                            </v-avatar>
-                            <h3 class="text-h6 mb-1">Reason for Cancellation</h3>
-                            <p class="text-grey text-body-2">Please provide a brief reason for cancelling your rescue request. This will be sent to admin for review.</p>
-                        </div>
-
-                        <!-- Reason Text Area -->
-                        <v-textarea
-                            v-model="cancellationReason"
-                            label="Cancellation Reason"
-                            placeholder="Please explain why you're cancelling the rescue request..."
-                            variant="outlined"
-                            rows="4"
-                            auto-grow
-                            max-rows="6"
-                            maxlength="500"
-                            counter="500"
-                            required
-                            class="mb-4"
-                            color="primary"
-                        />
-
-                        <!-- Action Buttons -->
-                        <div class="d-flex flex-column gap-3">
-                            <v-btn
-                                color="error"
-                                variant="flat"
-                                size="large"
-                                rounded="xl"
-                                block
-                                :loading="isCancelling"
-                                :disabled="!cancellationReason.trim()"
-                                @click="submitCancellationWithReason"
-                                style="color: white;"
+                        <!-- Contact Information -->
+                        <div class="contact-info">
+                            <!-- Phone Contact -->
+                            <v-card 
+                                v-if="getRescuerContact()" 
+                                variant="tonal" 
+                                color="primary" 
+                                class="mb-3 rounded-lg contact-card"
+                                style="cursor: pointer; transition: all 0.2s ease;"
+                                @click="$event.target.closest('.contact-card').querySelector('a').click()"
+                                hover
                             >
-                                <v-icon start>mdi-send</v-icon>
-                                Submit Cancellation
-                            </v-btn>
-                            <v-btn
-                                variant="outlined"
-                                size="large"
-                                rounded="xl"
-                                block
-                                @click="closeCancelReasonDialog"
+                                <v-card-text class="py-3 px-4">
+                                    <div class="d-flex align-center justify-center">
+                                        <v-icon color="primary" size="20" class="mr-3">mdi-phone</v-icon>
+                                        <div class="text-center">
+                                            <div class="text-caption text-grey-darken-1">Phone</div>
+                                            <a 
+                                                :href="`tel:${getRescuerContact()}`"
+                                                class="text-decoration-none text-primary font-weight-medium"
+                                                @click.stop=""
+                                            >
+                                                {{ getRescuerContact() }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </v-card-text>
+                            </v-card>
+
+                            <!-- Email Contact -->
+                            <v-card 
+                                v-if="getRescuerEmail()" 
+                                variant="tonal" 
+                                color="primary" 
+                                class="mb-2 rounded-lg contact-card"
+                                style="cursor: pointer; transition: all 0.2s ease;"
+                                @click="$event.target.closest('.contact-card').querySelector('a').click()"
+                                hover
                             >
-                                <v-icon start>mdi-arrow-left</v-icon>
-                                Go Back
-                            </v-btn>
+                                <v-card-text class="py-3 px-4">
+                                    <div class="d-flex align-center justify-center">
+                                        <v-icon color="primary" size="20" class="mr-3">mdi-email</v-icon>
+                                        <div class="text-center">
+                                            <div class="text-caption text-grey-darken-1">Email</div>
+                                            <a 
+                                                :href="`mailto:${getRescuerEmail()}`"
+                                                class="text-decoration-none text-primary font-weight-medium"
+                                                style="word-break: break-all;"
+                                                @click.stop=""
+                                            >
+                                                {{ getRescuerEmail() }}
+                                            </a>
+                                        </div>
+                                        <v-icon color="primary" size="16" class="ml-3">mdi-email-send</v-icon>
+                                    </div>
+                                </v-card-text>
+                            </v-card>
                         </div>
+
+                        <!-- Helpful tip -->
+                        <v-alert type="info" variant="tonal" density="compact" class="mt-3 rounded-lg text-left">
+                            <div class="text-caption">
+                                <v-icon size="14" class="mr-1">mdi-information</v-icon>
+                                Tap contact info to call or email directly
+                            </div>
+                        </v-alert>
                     </v-card-text>
                 </v-card>
             </v-dialog>
@@ -1289,30 +1310,31 @@
                         />
 
                         <!-- Action Buttons -->
-                        <div class="d-flex flex-column gap-3">
+                        <div class="d-flex flex-row gap-2">
                             <v-btn
                                 color="error"
                                 variant="flat"
-                                size="large"
+                                size="small"
                                 rounded="xl"
-                                block
+                                class="flex-grow-1"
                                 :loading="isCancelling"
                                 :disabled="!cancellationReason.trim()"
                                 @click="submitCancellationWithReason"
-                                style="color: white;"
+                                style="color: white; min-height: 36px;"
                             >
-                                <v-icon start>mdi-send</v-icon>
-                                Submit Cancellation
+                                <v-icon start size="14">mdi-send</v-icon>
+                                <span class="text-overline text-sm-caption font-weight-medium">Submit</span>
                             </v-btn>
                             <v-btn
                                 variant="outlined"
-                                size="large"
+                                size="small"
                                 rounded="xl"
-                                block
+                                class="flex-grow-1"
                                 @click="closeCancelReasonDialog"
+                                style="min-height: 36px;"
                             >
-                                <v-icon start>mdi-arrow-left</v-icon>
-                                Go Back
+                                <v-icon start size="14">mdi-arrow-left</v-icon>
+                                <span class="text-overline text-sm-caption font-weight-medium">Go Back</span>
                             </v-btn>
                         </div>
                     </v-card-text>
@@ -1509,15 +1531,16 @@
                             block
                             variant="flat"
                             color="#3674B5"
-                            size="large"
+                            size="small"
                             rounded="lg"
                             :loading="submittingFeedback"
                             :disabled="!feedbackForm.overall_rating"
                             class="feedback-submit-btn"
                             @click="submitFeedback"
+                            style="min-height: 36px;"
                         >
-                            <v-icon start>mdi-send</v-icon>
-                            Submit Rating
+                            <v-icon start size="14">mdi-send</v-icon>
+                            <span class="text-overline text-sm-caption font-weight-medium">Submit Rating</span>
                         </v-btn>
                     </div>
                 </v-card>
@@ -1526,6 +1549,8 @@
         
         <!-- Bottom Navigation for Mobile -->
         <UserBottomNav :notification-count="1" :message-count="unreadCount" />
+
+
     </v-app>
 </template>
 
@@ -1557,6 +1582,7 @@ import { useUnreadMessages } from '@/Composables/useUnreadMessages';
 import UserMenu from '@/Components/Pages/User/Menu/UserMenu.vue';
 import UserAppBar from '@/Components/Pages/User/Menu/UserAppBar.vue';
 import UserBottomNav from '@/Components/Pages/User/Menu/UserBottomNav.vue';
+
 import NotificationPopup from '@/Components/NotificationPopup.vue';
 
 // Props from Inertia
@@ -1681,6 +1707,21 @@ const isCancelBlockedByUrgency = computed(() => {
 const isCriticalUrgency = computed(() => {
     if (!rescue.value) return false;
     return (rescue.value.urgency_level || '').toLowerCase() === 'critical';
+});
+
+// Check if urgency is High or Critical (requires rescuer to accept before user can slide)
+const isHighOrCriticalUrgency = computed(() => {
+    if (!rescue.value) return false;
+    return ['high', 'critical'].includes((rescue.value.urgency_level || '').toLowerCase());
+});
+
+// Slide is locked for High/Critical urgency until a rescuer has accepted
+const isSlideLockedByUrgency = computed(() => {
+    if (!rescue.value) return false;
+    if (!isHighOrCriticalUrgency.value) return false;
+    // Unlock once a rescuer has been assigned (accepted the request)
+    if (rescue.value.assigned_rescuer || rescue.value.rescuer) return false;
+    return true;
 });
 
 // Whether a rescuer is currently assigned
@@ -3312,7 +3353,7 @@ const sendCancellationToAdmin = async (reason) => {
         const notificationData = {
             type: 'rescue_cancelled',
             title: 'Rescue Request Cancelled',
-            message: `Rescue request ${rescue.value.rescue_code} has been cancelled by the user.`,
+            message: `Rescue request ${rescue.value.rescue_code} has been cancelled by ${`${rescue.value.first_name || ''} ${rescue.value.last_name || ''}`.trim() || 'the user'}.`,
             data: {
                 rescue_id: rescue.value.id,
                 rescue_code: rescue.value.rescue_code,
@@ -3405,6 +3446,8 @@ const viewMap = () => {
 // Slide to confirm functions
 const startSlide = async (event) => {
     if (isMarkingSafe.value || isSlideComplete.value) return;
+    // Block sliding if locked by urgency level
+    if (isSlideLockedByUrgency.value) return;
     
     event.preventDefault();
     isSliding.value = true;
@@ -4822,6 +4865,38 @@ const handleGoBack = () => {
     cursor: grabbing;
 }
 
+/* Locked slide state */
+.slide-locked {
+    cursor: not-allowed !important;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.slide-track-locked {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+    border-color: #f59e0b !important;
+}
+
+.slide-thumb-locked {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4) !important;
+    position: absolute;
+    top: 50%;
+    left: 4px;
+    transform: translateY(-50%);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slide-locked-text {
+    color: #92400e !important;
+    font-weight: 600;
+}
+
 .slide-track {
     position: relative;
     width: 100%;
@@ -5046,7 +5121,7 @@ const handleGoBack = () => {
     .v-main {
         margin-left: 0 !important;
         min-height: 100vh !important;
-        overflow-y: auto !important;
+        overflow-y: visible !important;
         width: 100% !important;
     }
 
@@ -5102,7 +5177,7 @@ const handleGoBack = () => {
     }
     
     .content-area {
-        padding: 20px clamp(24px, 5vw, 80px) calc(env(safe-area-inset-bottom, 0px) + 180px) clamp(24px, 5vw, 80px) !important;
+        padding: 20px clamp(24px, 5vw, 80px) 0 clamp(24px, 5vw, 80px) !important;
         max-width: 1200px !important;
         margin: -20px auto 0 auto !important;
         width: 100% !important;
@@ -5322,6 +5397,65 @@ const handleGoBack = () => {
 
 .photo-preview {
     border: 2px solid #4CAF50;
+}
+
+/* Camera capture button styling */
+.capture-btn-icon {
+    border-radius: 50% !important;
+    width: 64px !important;
+    height: 64px !important;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4) !important;
+    border: 3px solid rgba(255, 255, 255, 0.8) !important;
+}
+
+.capture-btn-icon:hover {
+    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.5) !important;
+    transform: scale(1.05);
+    transition: all 0.2s ease;
+}
+
+/* Mobile-friendly safe proof dialog buttons */
+@media (max-width: 600px) {
+    .v-dialog .v-card-actions {
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px) !important;
+    }
+    
+    .camera-container .d-flex {
+        padding-bottom: 8px;
+        gap: 12px !important;
+    }
+    
+    .camera-container .v-btn {
+        min-height: 36px !important;
+        padding: 0 12px !important;
+    }
+    
+    /* Ensure buttons are fully visible */
+    .v-dialog .v-card {
+        margin-bottom: 20px;
+    }
+    
+    /* Safe proof dialog specific mobile adjustments */
+    .v-dialog[max-width="480"] .v-card-actions .v-btn {
+        font-size: 0.8rem !important;
+        min-height: 36px !important;
+        padding: 8px 16px !important;
+    }
+    
+    /* Make camera preview smaller on mobile */
+    .camera-container video {
+        max-height: 180px !important;
+    }
+    
+    /* Mobile capture button adjustments */
+    .capture-btn-icon {
+        width: 56px !important;
+        height: 56px !important;
+    }
+    
+    .capture-btn-icon .v-icon {
+        font-size: 28px !important;
+    }
 }
 
 /* ===================================================================
