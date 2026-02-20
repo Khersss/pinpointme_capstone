@@ -1465,7 +1465,7 @@ const fetchRescueDetails = async () => {
         const id = props.rescueId || localStorage.getItem('lastRescueRequestId');
         if (!id) {
             showSnackbar('No rescue ID found', 'error');
-            setTimeout(() => router.visit('/rescuer/dashboard'), 2000);
+            setTimeout(() => router.visit('/rescuer/dashboard'), 500);
             return;
         }
 
@@ -1795,7 +1795,7 @@ const cancelRescue = async () => {
                     stored.status = 'available';
                     localStorage.setItem('userData', JSON.stringify(stored));
                 } catch (e) { /* ignore */ }
-                setTimeout(() => router.visit('/rescuer/dashboard'), 1500);
+                setTimeout(() => router.visit('/rescuer/dashboard'), 500);
             }
         } else {
             // Valid cancel — return request back to pending so other rescuers can pick it up
@@ -1820,7 +1820,7 @@ const cancelRescue = async () => {
                     stored.status = 'available';
                     localStorage.setItem('userData', JSON.stringify(stored));
                 } catch (e) { /* ignore */ }
-                setTimeout(() => router.visit('/rescuer/dashboard'), 1500);
+                setTimeout(() => router.visit('/rescuer/dashboard'), 500);
             }
         }
     } catch (error) {
@@ -2089,7 +2089,7 @@ const handleApproveSafeRequest = async () => {
         // Redirect to dashboard after a short delay
         setTimeout(() => {
             router.visit('/rescuer/dashboard');
-        }, 2000);
+        }, 500);
     } catch (error) {
         console.error('Failed to approve safe request:', error);
         showSnackbar('Failed to approve safe request. Please try again.', 'error');
@@ -2157,7 +2157,7 @@ const handleApproveCancelRequest = async () => {
             // Redirect to dashboard after successful approval
             setTimeout(() => {
                 router.visit('/rescuer/dashboard');
-            }, 1500);
+            }, 500);
         }
     } catch (error) {
         console.error('Error approving cancel request:', error);

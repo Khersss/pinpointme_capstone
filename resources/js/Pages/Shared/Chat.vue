@@ -114,9 +114,8 @@
                                     <v-btn
                                         variant="tonal"
                                         :color="isOwnMessage(message) ? 'white' : 'primary'"
-                                        :href="getAttachmentUrl(message.attachment_url)"
-                                        target="_blank"
                                         size="small"
+                                        @click="openFileAttachment(message.attachment_url, message.attachment_name)"
                                     >
                                         <v-icon start>mdi-file-download</v-icon>
                                         {{ message.attachment_name || 'Download' }}
@@ -1212,6 +1211,11 @@ const goBack = () => {
         return;
     }
     
+    if (from === 'help-coming' && rescueRequest.value?.rescue_code) {
+        router.visit(`/user/help-coming/${rescueRequest.value.rescue_code}`);
+        return;
+    }
+    
     // Try browser history as fallback if from parameter exists but no specific handler
     if (from && window.history.length > 1) {
         const referrer = document.referrer;
@@ -1290,6 +1294,20 @@ const getAttachmentUrl = (url) => {
     // Ensure proper URL construction
     const cleanUrl = url.startsWith('/') ? url : `/${url}`;
     return `${baseUrl}${cleanUrl}`;
+};
+
+const openFileAttachment = (url, fileName) => {
+    const fullUrl = getAttachmentUrl(url);
+    // Create a temporary <a> element to trigger download/open
+    // This works in both browser and Capacitor WebView
+    const a = document.createElement('a');
+    a.href = fullUrl;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    if (fileName) a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 };
 
 const getEmergencyColor = (type) => {

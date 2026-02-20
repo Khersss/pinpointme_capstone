@@ -930,12 +930,13 @@ const pollForNewRequests = async () => {
             ? `/api/rescue-requests/rescuer/${rescuerId.value}`
             : '/api/rescue-requests';
         
-        const response = await apiFetch(endpoint, { method: 'GET' });
+        // Parallelize: fetch requests and rescuer status simultaneously
+        const [response] = await Promise.all([
+            apiFetch(endpoint, { method: 'GET' }),
+            refreshRescuerStatus()
+        ]);
         const data = response?.data || response;
         rescueRequests.value = Array.isArray(data) ? data : [];
-
-        // Refresh rescuer status for eligibility check
-        await refreshRescuerStatus();
         
         // Check for new pending requests
         const currentPending = pendingRequests.value;
@@ -1232,7 +1233,7 @@ const acceptRescue = async (request) => {
         stopForceAlert();
         popupAlert.value.show = false;
         showNotification('Rescue accepted!', 'success');
-        await fetchRescueRequests();
+        // Navigate immediately — no redundant refetch needed
         router.visit(`/rescuer/active/${request.id}`);
     } catch (error) {
         console.error('Failed to accept rescue:', error);

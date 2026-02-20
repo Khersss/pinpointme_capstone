@@ -31,8 +31,11 @@ export async function apiFetch(path, options = {}) {
         headers['X-CSRF-TOKEN'] = csrfToken;
     }
 
-    // Add timeout via AbortController (default 15s, configurable)
-    const timeout = options.timeout || 15000;
+    // Add timeout via AbortController
+    // Use shorter timeout for mutations (8s) vs reads (15s) for responsive emergency actions
+    const method = (options.method || 'GET').toUpperCase();
+    const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+    const timeout = options.timeout || (isMutation ? 8000 : 15000);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
     

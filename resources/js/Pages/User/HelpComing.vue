@@ -2299,7 +2299,7 @@ const fetchRescueData = async (silent = false) => {
             // Redirect to scanner after a short delay
             setTimeout(() => {
                 router.visit('/user/scanner');
-            }, 2500);
+            }, 500);
         } else if (oldApprovalStatus === 'pending' && newApprovalStatus === 'denied') {
             // Approval denied
             showNotification({
@@ -2336,7 +2336,7 @@ const fetchRescueData = async (silent = false) => {
             // Redirect after delay
             setTimeout(() => {
                 router.visit('/user/scanner');
-            }, 2500);
+            }, 500);
         } else if (oldCancelApprovalStatus === 'pending' && newCancelApprovalStatus === 'denied') {
             // Cancel denied
             showNotification({
@@ -2424,7 +2424,7 @@ const fetchRescueData = async (silent = false) => {
             // Redirect to scanner after a short delay
             setTimeout(() => {
                 router.visit('/user/scanner');
-            }, 3000);
+            }, 1000);
             
             return; // Don't set error state, let the notification handle it
         }
@@ -2877,7 +2877,7 @@ const markAsSafe = async (proofData = null) => {
 
         setTimeout(() => {
             router.visit('/user/scanner');
-        }, 2000);
+        }, 500);
     } catch (err) {
         console.error('Failed to mark as safe:', err);
         
@@ -3237,7 +3237,7 @@ const submitCancellationWithReason = async () => {
             // Redirect to dashboard after short delay
             setTimeout(() => {
                 router.visit('/user/scanner');
-            }, 2000);
+            }, 500);
         } else {
             // Direct cancellation successful
             rescue.value = { ...rescue.value, ...data };
@@ -3260,7 +3260,7 @@ const submitCancellationWithReason = async () => {
             // Redirect to dashboard after short delay
             setTimeout(() => {
                 router.visit('/user/scanner');
-            }, 2000);
+            }, 500);
         }
         
     } catch (err) {
@@ -3450,7 +3450,7 @@ const handleTranslate = async () => {
 const openChat = () => {
     if (rescue.value?.assigned_rescuer || rescue.value?.rescuer_id) {
         // Use rescue-chat route which will get or create conversation
-        router.visit(`/user/rescue-chat/${rescue.value.id}`);
+        router.visit(`/user/rescue-chat/${rescue.value.id}?from=help-coming`);
     } else {
         toastMessage.value = 'No rescuer assigned yet';
         toastColor.value = 'warning';
