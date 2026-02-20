@@ -7,7 +7,6 @@ use App\Models\Message;
 use App\Models\User;
 use App\Services\PushNotificationService;
 use App\Services\FirebaseNotificationService;
-use App\Services\FirebaseNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
