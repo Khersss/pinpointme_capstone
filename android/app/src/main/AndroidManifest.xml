@@ -23,6 +23,25 @@
 <uses-feature android:name="android.hardware.camera" android:required="false" />
 <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
+<!-- Package visibility for Android 11+ (API 30+) file chooser / camera intents -->
+<queries>
+    <intent>
+        <action android:name="android.media.action.IMAGE_CAPTURE" />
+    </intent>
+    <intent>
+        <action android:name="android.media.action.VIDEO_CAPTURE" />
+    </intent>
+    <intent>
+        <action android:name="android.intent.action.GET_CONTENT" />
+    </intent>
+    <intent>
+        <action android:name="android.intent.action.OPEN_DOCUMENT" />
+    </intent>
+    <intent>
+        <action android:name="android.intent.action.PICK" />
+    </intent>
+</queries>
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"

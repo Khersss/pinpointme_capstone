@@ -661,7 +661,7 @@ const popupAlert = ref({
 
 // Polling
 let pollingInterval = null;
-const POLLING_INTERVAL = 8000; // 8 seconds for rescuer - faster updates
+const POLLING_INTERVAL = 3000; // 3 seconds for real-time rescue updates
 const previousPendingCount = ref(0);
 const previousPendingIds = ref([]);
 

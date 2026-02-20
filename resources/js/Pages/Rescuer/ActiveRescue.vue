@@ -2358,11 +2358,11 @@ onMounted(async () => {
         Notification.requestPermission();
     }
     
-    // Poll for updates every 10 seconds
+    // Poll for updates every 3 seconds for real-time rescue responsiveness
     pollingInterval.value = setInterval(async () => {
         fetchRescueDetails();
         await fetchUnreadMessageCount();
-    }, 10000);
+    }, 3000);
 });
 
 onUnmounted(() => {

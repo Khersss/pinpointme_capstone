@@ -1421,7 +1421,7 @@ onUnmounted(() => {
 // Watch for conversation changes to start polling
 watch(() => conversation.value?.id, (newId) => {
     if (newId && !pollingInterval.value) {
-        pollingInterval.value = setInterval(() => fetchMessages(), 5000);
+        pollingInterval.value = setInterval(() => fetchMessages(), 3000);
     }
 });
 </script>

@@ -2189,7 +2189,7 @@ onMounted(async () => {
                 }
             }
         }
-    }, 5000); // Poll every 5 seconds for faster updates
+    }, 3000); // Poll every 3 seconds for real-time rescue updates
 });
 
 // Cleanup on unmount

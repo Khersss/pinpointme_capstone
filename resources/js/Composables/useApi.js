@@ -5,7 +5,7 @@ import { ref } from 'vue';
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 /**
- * Generic API fetch function
+ * Generic API fetch function with timeout support
  */
 export async function apiFetch(path, options = {}) {
     const url = `${API_BASE}${path.startsWith('/') ? path : '/' + path}`;
@@ -31,33 +31,60 @@ export async function apiFetch(path, options = {}) {
         headers['X-CSRF-TOKEN'] = csrfToken;
     }
 
-    const resp = await fetch(url, { credentials: 'include', ...options, headers });
-
-    if (!resp.ok) {
-        let text;
-        let jsonData = null;
-        try {
-            text = await resp.text();
-            // Try to parse as JSON to get structured error data
-            try {
-                jsonData = JSON.parse(text);
-            } catch {
-                // Not JSON, use text
-            }
-        } catch {
-            /* ignore */
-        }
-        let message = `HTTP ${resp.status}`;
-        if (text) message += `: ${text.slice(0, 300)}`;
-        const error = new Error(message);
-        error.status = resp.status;
-        error.data = jsonData;
-        throw error;
+    // Add timeout via AbortController (default 15s, configurable)
+    const timeout = options.timeout || 15000;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    // Allow caller to pass their own signal (for cancellation)
+    if (options.signal) {
+        options.signal.addEventListener('abort', () => controller.abort());
     }
 
-    const ct = resp.headers.get('content-type') || '';
-    if (ct.includes('application/json')) return resp.json();
-    return resp.text();
+    try {
+        const resp = await fetch(url, { 
+            credentials: 'include', 
+            ...options, 
+            headers,
+            signal: controller.signal 
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!resp.ok) {
+            let text;
+            let jsonData = null;
+            try {
+                text = await resp.text();
+                try {
+                    jsonData = JSON.parse(text);
+                } catch {
+                    // Not JSON, use text
+                }
+            } catch {
+                /* ignore */
+            }
+            let message = `HTTP ${resp.status}`;
+            if (text) message += `: ${text.slice(0, 300)}`;
+            const error = new Error(message);
+            error.status = resp.status;
+            error.data = jsonData;
+            throw error;
+        }
+
+        const ct = resp.headers.get('content-type') || '';
+        if (ct.includes('application/json')) return resp.json();
+        return resp.text();
+    } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+            const timeoutError = new Error(`Request timeout after ${timeout}ms: ${path}`);
+            timeoutError.status = 408;
+            timeoutError.isTimeout = true;
+            throw timeoutError;
+        }
+        throw error;
+    }
 }
 
 /**

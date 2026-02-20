@@ -58,12 +58,21 @@ public class MainActivity extends BridgeActivity {
 
                 Uri[] results = null;
                 if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    String dataString = result.getData().getDataString();
-                    if (dataString != null) {
-                        results = new Uri[]{Uri.parse(dataString)};
+                    // Check for multiple files via ClipData first
+                    if (result.getData().getClipData() != null) {
+                        int count = result.getData().getClipData().getItemCount();
+                        results = new Uri[count];
+                        for (int i = 0; i < count; i++) {
+                            results[i] = result.getData().getClipData().getItemAt(i).getUri();
+                        }
+                    } else if (result.getData().getDataString() != null) {
+                        // Single file selection
+                        results = new Uri[]{Uri.parse(result.getData().getDataString())};
                     }
-                } else if (result.getResultCode() == RESULT_OK && cameraPhotoPath != null) {
-                    // Camera capture result
+                }
+                
+                // If no result from file picker, check camera capture
+                if (results == null && result.getResultCode() == RESULT_OK && cameraPhotoPath != null) {
                     results = new Uri[]{Uri.parse(cameraPhotoPath)};
                 }
 
@@ -114,34 +123,37 @@ public class MainActivity extends BridgeActivity {
                 // Camera intent for image capture
                 boolean acceptsImages = acceptsType(acceptTypes, "image");
                 boolean acceptsVideo = acceptsType(acceptTypes, "video");
+                boolean acceptsAll = acceptTypes == null || acceptTypes.length == 0 || (acceptTypes.length == 1 && acceptTypes[0].isEmpty()) || acceptsType(acceptTypes, "*/*");
 
-                if (acceptsImages || acceptTypes == null || acceptTypes.length == 0 || (acceptTypes.length == 1 && acceptTypes[0].isEmpty())) {
+                if (acceptsImages || acceptsAll) {
+                    // Camera capture intent
                     Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-                        File photoFile = null;
-                        try {
-                            photoFile = createImageFile();
-                        } catch (IOException ex) {
-                            Log.e(TAG, "Error creating image file", ex);
-                        }
-                        if (photoFile != null) {
-                            cameraPhotoPath = "file:" + photoFile.getAbsolutePath();
-                            Uri photoURI = FileProvider.getUriForFile(
-                                MainActivity.this,
-                                getApplicationContext().getPackageName() + ".fileprovider",
-                                photoFile
-                            );
-                            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                            intentList.add(takePictureIntent);
-                        }
+                    File photoFile = null;
+                    try {
+                        photoFile = createImageFile();
+                    } catch (IOException ex) {
+                        Log.e(TAG, "Error creating image file", ex);
                     }
+                    if (photoFile != null) {
+                        cameraPhotoPath = "file:" + photoFile.getAbsolutePath();
+                        Uri photoURI = FileProvider.getUriForFile(
+                            MainActivity.this,
+                            getApplicationContext().getPackageName() + ".fileprovider",
+                            photoFile
+                        );
+                        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                        intentList.add(takePictureIntent);
+                    }
+                    
+                    // Gallery picker intent (explicit for better Android 11+ support)
+                    Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    galleryIntent.setType("image/*");
+                    intentList.add(galleryIntent);
                 }
 
-                if (acceptsVideo) {
+                if (acceptsVideo || acceptsAll) {
                     Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
-                    if (takeVideoIntent.resolveActivity(getPackageManager()) != null) {
-                        intentList.add(takeVideoIntent);
-                    }
+                    intentList.add(takeVideoIntent);
                 }
 
                 // If capture is explicitly requested, use camera directly

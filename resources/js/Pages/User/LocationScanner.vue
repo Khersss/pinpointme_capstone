@@ -1886,7 +1886,12 @@ const setupZoomCapabilities = async () => {
         // Get the video element from html5-qrcode
         const videoElement = document.querySelector('#qr-reader video');
         if (!videoElement || !videoElement.srcObject) {
-            console.log('Video element not ready');
+            console.log('Video element not ready, enabling CSS zoom fallback');
+            // Enable zoom controls even without native support (CSS fallback)
+            zoomSupported.value = true;
+            minZoom.value = 1;
+            maxZoom.value = 4;
+            currentZoom.value = 1;
             return;
         }
         
@@ -1894,14 +1899,16 @@ const setupZoomCapabilities = async () => {
         const tracks = stream.getVideoTracks();
         
         if (tracks.length === 0) {
-            console.log('No video tracks found');
+            console.log('No video tracks found, enabling CSS zoom fallback');
+            zoomSupported.value = true;
+            minZoom.value = 1;
+            maxZoom.value = 4;
+            currentZoom.value = 1;
             return;
         }
         
         videoTrack = tracks[0];
         const capabilities = videoTrack.getCapabilities();
-        
-        // Camera capabilities retrieved
         
         // Check zoom support
         if (capabilities.zoom) {
@@ -1909,10 +1916,13 @@ const setupZoomCapabilities = async () => {
             minZoom.value = capabilities.zoom.min || 1;
             maxZoom.value = capabilities.zoom.max || 4;
             currentZoom.value = capabilities.zoom.min || 1;
-            // Zoom level support checked
         } else {
-            console.log('Zoom not supported by this camera');
-            zoomSupported.value = false;
+            console.log('Native zoom not supported, enabling CSS zoom fallback');
+            // Enable CSS fallback zoom even if native zoom not supported
+            zoomSupported.value = true;
+            minZoom.value = 1;
+            maxZoom.value = 4;
+            currentZoom.value = 1;
         }
         
         // Check flash/torch support
@@ -1932,15 +1942,29 @@ const setupZoomCapabilities = async () => {
 
 // Apply zoom level
 const applyZoom = async (zoomLevel) => {
-    if (!videoTrack || !zoomSupported.value) return;
-    
     try {
-        await videoTrack.applyConstraints({
-            advanced: [{ zoom: zoomLevel }]
-        });
-        console.log('Zoom applied:', zoomLevel);
+        // Method 1: Native zoom constraint (works in Chrome browser)
+        if (videoTrack && zoomSupported.value) {
+            await videoTrack.applyConstraints({
+                advanced: [{ zoom: zoomLevel }]
+            });
+            console.log('Native zoom applied:', zoomLevel);
+            return;
+        }
     } catch (error) {
-        console.error('Error applying zoom:', error);
+        console.warn('Native zoom failed, using CSS fallback:', error);
+    }
+    
+    // Method 2: CSS transform fallback (works in Capacitor WebView / APK)
+    try {
+        const videoElement = document.querySelector('#qr-reader video');
+        if (videoElement) {
+            videoElement.style.transform = `scale(${zoomLevel})`;
+            videoElement.style.transformOrigin = 'center center';
+            console.log('CSS zoom fallback applied:', zoomLevel);
+        }
+    } catch (fallbackError) {
+        console.error('CSS zoom fallback also failed:', fallbackError);
     }
 };
 
