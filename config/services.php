@@ -51,4 +51,11 @@ return [
         'subject' => env('VAPID_SUBJECT', env('APP_URL')),
     ],
 
+    // Firebase Configuration
+    'firebase' => [
+        'project_id' => env('FIREBASE_PROJECT_ID', 'pinpointme-app'),
+        'web_api_key' => env('FIREBASE_WEB_API_KEY', 'AIzaSyDkmwtQXOeidJIJSLqA8YgQ3ZF5_ebok4Y'),
+        'messaging_sender_id' => env('FIREBASE_MESSAGING_SENDER_ID', '912018324129'),
+    ],
+
 ];

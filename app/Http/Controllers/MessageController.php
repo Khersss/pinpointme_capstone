@@ -5,10 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\PushNotificationService;
+use App\Services\FirebaseNotificationService;
+use App\Services\FirebaseNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class MessageController extends Controller
 {
@@ -126,9 +130,75 @@ class MessageController extends Controller
         ]);
 
         // Increment unread count for other participants
-        $conversation->participants()
+        $otherParticipants = $conversation->participants()
             ->where('user_id', '!=', $senderId)
-            ->increment('unread_count');
+            ->get();
+            
+        $otherParticipants->each(function ($participant) {
+            $participant->increment('unread_count');
+        });
+
+        // Send push notifications to other participants (CRITICAL FIX)
+        try {
+            $pushService = new PushNotificationService();
+            $firebaseService = new FirebaseNotificationService();
+            $otherUserIds = $otherParticipants->pluck('user_id')->toArray();
+            
+            if (!empty($otherUserIds)) {
+                // Prepare notification content
+                $notificationBody = $this->getNotificationPreview($data['content'], $attachmentMeta);
+                
+                // Send via Laravel PushNotificationService (web push only)
+                $webPayload = [
+                    'title' => "💬 New message from {$senderName}",
+                    'body' => $notificationBody,
+                    'icon' => '/images/logos/pinpointme.png',
+                    'badge' => '/images/logos/pinpointme.png',
+                    'tag' => 'message-' . $conversation->id,
+                    'type' => 'message',
+                    'data' => [
+                        'type' => 'message',
+                        'conversation_id' => $conversation->id,
+                        'message_id' => $message->id,
+                        'sender_id' => $senderId,
+                        'sender_name' => $senderName,
+                        'click_action' => '/user/chat/' . $conversation->id,
+                        'timestamp' => now()->toIso8601String(),
+                    ]
+                ];
+                
+                Log::info('Sending message push notifications', [
+                    'conversation_id' => $conversation->id,
+                    'sender_id' => $senderId,
+                    'recipients' => $otherUserIds,
+                    'message_preview' => $notificationBody
+                ]);
+                
+                // Send web push notifications (VAPID)
+                $webResult = $pushService->sendToUsers($otherUserIds, $webPayload);
+                
+                // Send native push notifications via Firebase Cloud Functions
+                $firebaseResult = $firebaseService->sendMessageNotification(
+                    $otherUserIds,
+                    $senderName,
+                    $notificationBody,
+                    $conversation->id,
+                    $message->id,
+                    $senderId
+                );
+                
+                Log::info('Message push notification results', [
+                    'web_push' => $webResult,
+                    'firebase_native' => $firebaseResult
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to send message push notification', [
+                'error' => $e->getMessage(),
+                'conversation_id' => $conversation->id,
+                'sender_id' => $senderId,
+            ]);
+        }
 
         $message->load('sender:id,first_name,last_name,email,profile_picture');
 
@@ -137,6 +207,24 @@ class MessageController extends Controller
         }
 
         return redirect()->back()->with('success', 'Message sent successfully');
+    }
+
+    /**
+     * Generate notification preview text
+     */
+    private function getNotificationPreview($content, $attachmentMeta = [])
+    {
+        if (!empty($attachmentMeta['attachment_type'])) {
+            if (strpos($attachmentMeta['attachment_type'], 'audio') !== false) {
+                return '🎤 Voice message';
+            }
+            if (strpos($attachmentMeta['attachment_type'], 'image') !== false) {
+                return '📷 Image';
+            }
+            return '📎 Attachment: ' . ($attachmentMeta['attachment_name'] ?? 'File');
+        }
+        
+        return strlen($content) > 50 ? substr($content, 0, 50) . '...' : $content;
     }
 
     /**

@@ -142,8 +142,8 @@ const handleNotificationClick = () => {
 onMounted(async () => {
     await fetchChats(true);
     
-    // Poll for new messages every 10 seconds
-    pollingInterval.value = setInterval(() => fetchChats(false), 10000);
+    // Poll for new messages every 5 seconds (improved responsiveness)
+    pollingInterval.value = setInterval(() => fetchChats(false), 5000);
     
     // Refresh chats when page becomes visible
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -151,7 +151,14 @@ onMounted(async () => {
 
 const handleVisibilityChange = () => {
     if (!document.hidden) {
+        // Immediate refresh when returning to page
         fetchChats(false);
+        
+        // Reset polling interval for responsiveness
+        if (pollingInterval.value) {
+            clearInterval(pollingInterval.value);
+            pollingInterval.value = setInterval(() => fetchChats(false), 5000);
+        }
     }
 };
 

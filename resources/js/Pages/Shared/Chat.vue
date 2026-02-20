@@ -817,6 +817,9 @@ const sendTextMessage = async () => {
             messages.value[index] = data;
         }
 
+        // Immediately refresh messages for responsiveness
+        setTimeout(() => fetchMessages(), 100);
+
         // Notify the recipient if they're inactive
         await notifyRecipientIfNeeded(tempContent, 'text');
     } catch (error) {
@@ -915,6 +918,9 @@ const sendAudioMessage = async (audioBlob) => {
         messages.value.push(data);
         await nextTick();
         scrollToBottom();
+
+        // Immediately refresh messages to get latest state (improved responsiveness)
+        setTimeout(() => fetchMessages(), 100);
 
         // Notify the recipient if they're inactive
         await notifyRecipientIfNeeded('🎤 Voice message', 'audio');
@@ -1047,6 +1053,9 @@ const uploadFile = async (file) => {
         messages.value.push(data);
         await nextTick();
         scrollToBottom();
+
+        // Immediately refresh messages for responsiveness
+        setTimeout(() => fetchMessages(), 100);
 
         // Notify the recipient if they're inactive
         const fileType = file.type?.startsWith('image/') ? 'image' : 'file';
@@ -1352,9 +1361,9 @@ const showSnackbar = (message, color = 'success') => {
 onMounted(async () => {
     await initializeChat();
     
-    // Poll for new messages every 5 seconds
+    // Poll for new messages every 3 seconds for better responsiveness
     if (conversation.value?.id) {
-        pollingInterval.value = setInterval(() => fetchMessages(), 5000);
+        pollingInterval.value = setInterval(() => fetchMessages(), 3000);
     }
     
     // Add visibility change listener to mark messages as read when user returns to tab
