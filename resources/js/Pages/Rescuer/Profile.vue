@@ -274,42 +274,6 @@
                                             </v-btn>
                                         </template>
                                     </v-list-item>
-                                    <v-list-item class="px-2 py-3 rounded-lg mb-2 setting-item">
-                                        <template v-slot:prepend>
-                                            <v-avatar color="primary" variant="tonal" size="36" class="mr-3">
-                                                <v-icon size="20">mdi-bell-outline</v-icon>
-                                            </v-avatar>
-                                        </template>
-                                        <v-list-item-title class="text-body-2 font-weight-medium">Push Notifications</v-list-item-title>
-                                        <v-list-item-subtitle class="text-caption">Receive alerts for rescue requests</v-list-item-subtitle>
-                                        <template v-slot:append>
-                                            <v-switch
-                                                v-model="settings.notifications"
-                                                color="primary"
-                                                hide-details
-                                                inset
-                                                @change="updateSetting('Notifications')"
-                                            />
-                                        </template>
-                                    </v-list-item>
-                                    <v-list-item class="px-2 py-3 rounded-lg mb-2 setting-item">
-                                        <template v-slot:prepend>
-                                            <v-avatar color="orange" variant="tonal" size="36" class="mr-3">
-                                                <v-icon size="20">mdi-volume-high</v-icon>
-                                            </v-avatar>
-                                        </template>
-                                        <v-list-item-title class="text-body-2 font-weight-medium">Sound Alerts</v-list-item-title>
-                                        <v-list-item-subtitle class="text-caption">Play sounds for notifications</v-list-item-subtitle>
-                                        <template v-slot:append>
-                                            <v-switch
-                                                v-model="settings.sound"
-                                                color="primary"
-                                                hide-details
-                                                inset
-                                                @change="updateSetting('Sound')"
-                                            />
-                                        </template>
-                                    </v-list-item>
                                     <v-list-item class="px-2 py-3 rounded-lg setting-item">
                                         <template v-slot:prepend>
                                             <v-avatar color="grey-darken-1" variant="tonal" size="36" class="mr-3">

@@ -462,24 +462,6 @@
                                             </v-btn>
                                         </template>
                                     </v-list-item>
-                                    <v-list-item class="px-2 py-3 rounded-lg mb-2 setting-item">
-                                        <template v-slot:prepend>
-                                            <v-avatar color="primary" variant="tonal" size="36" class="mr-3">
-                                                <v-icon size="20">mdi-bell-outline</v-icon>
-                                            </v-avatar>
-                                        </template>
-                                        <v-list-item-title class="text-body-2 font-weight-medium">Push Notifications</v-list-item-title>
-                                        <v-list-item-subtitle class="text-caption">Receive alerts for emergencies</v-list-item-subtitle>
-                                        <template v-slot:append>
-                                            <v-switch
-                                                v-model="settings.pushNotifications"
-                                                color="primary"
-                                                hide-details
-                                                inset
-                                                @change="updateSetting('Notifications')"
-                                            />
-                                        </template>
-                                    </v-list-item>
                                     <v-list-item class="px-2 py-3 rounded-lg setting-item">
                                         <template v-slot:prepend>
                                             <v-avatar color="grey-darken-1" variant="tonal" size="36" class="mr-3">
