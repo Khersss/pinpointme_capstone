@@ -1850,12 +1850,18 @@ const startQrScan = async () => {
         const qrBoxSize = Math.min(screenWidth * 0.7, 300); // 70% of screen width, max 300px
         
         await html5QrCode.start(
-            { facingMode: 'environment' },
+            { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
             {
                 fps: 15, // Higher FPS for faster detection
                 qrbox: { width: qrBoxSize, height: qrBoxSize }, // Larger, responsive scan area
                 aspectRatio: 1.0,
                 disableFlip: false, // Allow flipped QR codes
+                videoConstraints: {
+                    facingMode: 'environment',
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 },
+                    focusMode: { ideal: 'continuous' }
+                },
                 experimentalFeatures: {
                     useBarCodeDetectorIfSupported: true // Use native detector if available
                 },
@@ -1909,6 +1915,16 @@ const setupZoomCapabilities = async () => {
         
         videoTrack = tracks[0];
         const capabilities = videoTrack.getCapabilities();
+        
+        // Enable continuous autofocus for sharp QR code scanning
+        if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+            try {
+                await videoTrack.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+                console.log('Continuous autofocus enabled');
+            } catch (e) {
+                console.log('Could not set continuous focus:', e);
+            }
+        }
         
         // Check zoom support
         if (capabilities.zoom) {
@@ -2032,12 +2048,18 @@ const startQrScanWithFacingMode = async (facingMode) => {
         const qrBoxSize = Math.min(screenWidth * 0.7, 300);
         
         await html5QrCode.start(
-            { facingMode: facingMode },
+            { facingMode: facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
             {
                 fps: 15,
                 qrbox: { width: qrBoxSize, height: qrBoxSize },
                 aspectRatio: 1.0,
                 disableFlip: false,
+                videoConstraints: {
+                    facingMode: facingMode,
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 },
+                    focusMode: { ideal: 'continuous' }
+                },
                 experimentalFeatures: {
                     useBarCodeDetectorIfSupported: true
                 },

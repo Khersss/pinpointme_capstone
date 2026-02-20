@@ -2225,9 +2225,14 @@ watch(cancelHoldActive, async (newValue) => {
             await setCancelInProgress(rescue.value.id);
             console.log('Cancel-in-progress status set (hold started)');
         } else {
-            // Clear cancel-in-progress immediately when user releases the hold button
-            await clearCancelInProgress(rescue.value.id);
-            console.log('Cancel-in-progress status cleared (hold released)');
+            // Only clear cancel-in-progress if the cancel dialog is NOT open
+            // (user may have released the hold button but the reason/proof dialog is still active)
+            if (!showCancelReasonDialog.value && !showCancelConfirmModal.value) {
+                await clearCancelInProgress(rescue.value.id);
+                console.log('Cancel-in-progress status cleared (hold released, no dialog open)');
+            } else {
+                console.log('Cancel hold released but dialog still open — keeping cancel-in-progress');
+            }
         }
     } catch (err) {
         console.warn('Failed to update cancel-in-progress status:', err);

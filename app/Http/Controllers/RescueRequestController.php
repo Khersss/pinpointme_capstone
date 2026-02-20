@@ -584,17 +584,21 @@ class RescueRequestController extends Controller
      */
     public function rescuerFeed($rescuerId)
     {
-        // Auto-expire stale "considering" states (older than 30 seconds)
-        // This handles cases where the frontend fails to clear the state (e.g., APK WebView touch issues)
-        $staleThreshold = now()->subSeconds(30);
-        RescueRequest::where(function($q) use ($staleThreshold) {
-            $q->where('cancel_in_progress_at', '<', $staleThreshold)
-              ->orWhere('marking_safe_in_progress_at', '<', $staleThreshold);
-        })->whereIn('status', ['pending', 'assigned', 'in_progress'])
-          ->update([
-              'cancel_in_progress_at' => \DB::raw("CASE WHEN cancel_in_progress_at < '{$staleThreshold}' THEN NULL ELSE cancel_in_progress_at END"),
-              'marking_safe_in_progress_at' => \DB::raw("CASE WHEN marking_safe_in_progress_at < '{$staleThreshold}' THEN NULL ELSE marking_safe_in_progress_at END"),
-          ]);
+        // Auto-expire stale "considering" states
+        // cancel_in_progress: 3 minutes (user needs time to type reason + upload proof photo)
+        // marking_safe_in_progress: 30 seconds (just a slide gesture)
+        $cancelStaleThreshold = now()->subMinutes(3);
+        $safeStaleThreshold = now()->subSeconds(30);
+        
+        // Clear stale cancel-in-progress states
+        RescueRequest::where('cancel_in_progress_at', '<', $cancelStaleThreshold)
+            ->whereIn('status', ['pending', 'assigned', 'in_progress'])
+            ->update(['cancel_in_progress_at' => null]);
+        
+        // Clear stale marking-safe-in-progress states
+        RescueRequest::where('marking_safe_in_progress_at', '<', $safeStaleThreshold)
+            ->whereIn('status', ['pending', 'assigned', 'in_progress'])
+            ->update(['marking_safe_in_progress_at' => null]);
 
         $rescueRequests = RescueRequest::with(['building', 'floor', 'room', 'requester', 'rescuer'])
             ->where(function($query) use ($rescuerId) {
