@@ -44,15 +44,6 @@
                             <span class="pm-stat-label">Categories</span>
                         </div>
                     </div>
-                    <div class="pm-stat-card">
-                        <div class="pm-stat-icon" style="background: linear-gradient(135deg, #2E7D32, #4CAF50);">
-                            <v-icon size="20" color="white">mdi-check-circle</v-icon>
-                        </div>
-                        <div class="pm-stat-info">
-                            <span class="pm-stat-value">{{ measuresList.filter(m => m.is_published).length }}</span>
-                            <span class="pm-stat-label">Visible to Users</span>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Category Filter Pills -->
@@ -84,14 +75,6 @@
                         Refresh
                     </v-btn>
                 </div>
-
-                <!-- Info Alert -->
-                <v-alert v-if="measuresList.length > 0" type="info" variant="tonal" density="compact" class="mb-4" rounded="lg">
-                    <div class="text-caption">
-                        <v-icon size="14" class="mr-1">mdi-information-outline</v-icon>
-                        <strong>Video Visibility:</strong> Hidden videos are not deleted — they're just invisible to users. Toggle visibility anytime.
-                    </div>
-                </v-alert>
 
                 <!-- Videos Grid -->
                 <div class="pm-grid">
@@ -133,12 +116,6 @@
                                 <!-- Duration Badge -->
                                 <div v-if="measure.duration" class="pm-duration-badge">
                                     {{ measure.duration }}
-                                </div>
-                                
-                                <!-- Status Badge -->
-                                <div class="pm-status-badge" :class="measure.is_published ? 'published' : 'draft'">
-                                    <div class="pm-status-dot"></div>
-                                    <span>{{ measure.is_published ? 'Visible' : 'Hidden' }}</span>
                                 </div>
                                 
                                 <!-- Category Badge -->
@@ -201,20 +178,6 @@
                                     </v-btn>
                                     
                                     <div class="pm-quick-actions">
-                                        <v-btn 
-                                            icon 
-                                            size="small" 
-                                            variant="text" 
-                                            :color="measure.is_published ? 'warning' : 'success'"
-                                            @click="togglePublish(measure)"
-                                            class="pm-toggle-btn"
-                                        >
-                                            <v-icon size="16">{{ measure.is_published ? 'mdi-eye-off-outline' : 'mdi-eye-outline' }}</v-icon>
-                                            <v-tooltip activator="parent" location="top">
-                                                {{ measure.is_published ? 'Hide from users' : 'Show to users' }}
-                                            </v-tooltip>
-                                        </v-btn>
-                                        
                                         <v-btn 
                                             icon 
                                             size="small" 
@@ -387,14 +350,6 @@
                             cover
                         />
 
-                        <v-switch
-                            v-model="formData.is_published"
-                            label="Visible to Users"
-                            color="success"
-                            density="compact"
-                            hide-details
-                        />
-                        <p class="text-caption text-grey mt-1 mb-0">When enabled, users can view this video. When disabled, video is hidden but not deleted.</p>
                     </v-form>
                 </v-card-text>
             </v-card>
@@ -502,16 +457,6 @@
                         >
                             <v-icon start>mdi-pencil</v-icon>
                             Edit Video
-                        </v-btn>
-                        <v-btn 
-                            variant="outlined" 
-                            :color="previewMeasure.is_published ? 'warning' : 'success'"
-                            rounded="lg"
-                            @click="togglePublish(previewMeasure); previewDialog = false"
-                            class="pm-preview-toggle"
-                        >
-                            <v-icon start>{{ previewMeasure.is_published ? 'mdi-eye-off-outline' : 'mdi-eye-outline' }}</v-icon>
-                            {{ previewMeasure.is_published ? 'Hide from Users' : 'Show to Users' }}
                         </v-btn>
                     </div>
                 </div>
@@ -747,7 +692,7 @@ const saveMeasure = async () => {
         submitData.append('description', formData.value.description || '');
         submitData.append('author', formData.value.author || '');
         submitData.append('category', formData.value.category);
-        submitData.append('is_active', formData.value.is_published ? '1' : '0');
+        submitData.append('is_active', '1');
         
         if (videoSourceType.value === 'upload' && videoFile.value) {
             submitData.append('video', videoFile.value);
@@ -783,27 +728,6 @@ const saveMeasure = async () => {
             thumbnailPreviewUrl.value = '';
             videoFileError.value = '';
             
-            // Auto-publish the video (set to visible)
-            if (data.id || data.data?.id) {
-                const videoId = data.id || data.data.id;
-                // Auto-publish after creation/editing
-                setTimeout(async () => {
-                    try {
-                        await fetch(`/preventive-measures/${videoId}`, {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
-                            },
-                            body: JSON.stringify({ is_published: true })
-                        });
-                    } catch (error) {
-                        console.log('Auto-publish error:', error);
-                    }
-                }, 500);
-            }
-            
             fetchMeasures();
         } else {
             let errorMessage = 'Error saving video';
@@ -833,30 +757,6 @@ const saveMeasure = async () => {
     }
 };
 
-const togglePublish = async (measure) => {
-    try {
-        const response = await fetch(`/preventive-measures/${measure.id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
-            },
-            body: JSON.stringify({ is_published: !measure.is_published })
-        });
-        
-        if (response.ok) {
-            const action = measure.is_published ? 'hidden from users' : 'published to users';
-            showSnackbar(`Video ${action} successfully`, 'success');
-            fetchMeasures();
-        } else {
-            throw new Error('Failed to update video visibility');
-        }
-    } catch (error) {
-        console.error('Error toggling publish:', error);
-        showSnackbar('Error updating video visibility', 'error');
-    }
-};
 
 const confirmDelete = (measure) => {
     selectedMeasure.value = measure;
@@ -1208,40 +1108,6 @@ onMounted(() => {
     font-weight: 600;
     border-radius: 6px;
     backdrop-filter: blur(4px);
-}
-
-.pm-status-badge {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-    border-radius: 20px;
-    font-size: 0.6rem;
-    font-weight: 700;
-    color: white;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    backdrop-filter: blur(4px);
-    animation: statusPulse 2s ease-in-out infinite;
-}
-
-.pm-status-badge.published {
-    background: rgba(46, 125, 50, 0.9);
-}
-
-.pm-status-badge.draft {
-    background: rgba(117, 117, 117, 0.8);
-}
-
-.pm-status-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-    animation: dotBlink 1.5s ease-in-out infinite;
 }
 
 .pm-cat-badge {

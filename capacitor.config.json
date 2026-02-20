@@ -10,6 +10,11 @@
     },
     "PushNotifications": {
       "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "SplashScreen": {
+      "launchShowDuration": 100,
+      "launchAutoHide": true,
+      "launchFadeOutDuration": 100
     }
   },
   "server": {

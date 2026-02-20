@@ -322,6 +322,7 @@
         <input
             ref="fileInput"
             type="file"
+            accept="*/*"
             style="display: none"
             @change="handleFileUpload"
         />

@@ -128,6 +128,9 @@ class PreventiveMeasureController extends Controller
             unset($validated['is_published']);
         }
 
+        // Always auto-publish videos
+        $validated['is_active'] = true;
+
         // Handle thumbnail upload
         if ($request->hasFile('thumbnail')) {
             $validated['thumbnail'] = $request->file('thumbnail')->store('preventive-measures/thumbnails', 'public');
@@ -206,6 +209,9 @@ class PreventiveMeasureController extends Controller
             $validated['is_active'] = $request->boolean('is_published');
             unset($validated['is_published']);
         }
+
+        // Always auto-publish videos
+        $validated['is_active'] = true;
 
         // Handle thumbnail upload
         if ($request->hasFile('thumbnail')) {

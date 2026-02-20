@@ -150,7 +150,7 @@ public class MainActivity extends BridgeActivity {
                     return true;
                 }
 
-                // File picker intent
+                // File picker intent (ACTION_GET_CONTENT for broad file access)
                 Intent contentSelectionIntent = new Intent(Intent.ACTION_GET_CONTENT);
                 contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE);
 
@@ -163,8 +163,28 @@ public class MainActivity extends BridgeActivity {
                     contentSelectionIntent.setType("*/*");
                 }
 
-                // Create chooser with camera intents
-                Intent chooserIntent = Intent.createChooser(contentSelectionIntent, "Select");
+                // Also add ACTION_OPEN_DOCUMENT intent for document browser access
+                Intent openDocumentIntent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                openDocumentIntent.addCategory(Intent.CATEGORY_OPENABLE);
+                openDocumentIntent.setType("*/*");
+                openDocumentIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
+                    "application/pdf",
+                    "application/msword",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "application/vnd.ms-excel",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "application/vnd.ms-powerpoint",
+                    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                    "text/plain",
+                    "application/zip",
+                    "image/*",
+                    "video/*",
+                    "audio/*"
+                });
+                intentList.add(openDocumentIntent);
+
+                // Create chooser with camera + document browser intents
+                Intent chooserIntent = Intent.createChooser(contentSelectionIntent, "Select File");
                 if (!intentList.isEmpty()) {
                     chooserIntent.putExtra(
                         Intent.EXTRA_INITIAL_INTENTS,
