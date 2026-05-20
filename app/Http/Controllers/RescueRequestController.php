@@ -6,12 +6,15 @@ use App\Models\Building;
 use App\Models\Floor;
 use App\Models\Room;
 use App\Models\RescueRequest;
+use App\Notifications\EmergencyAlert;
 use App\Services\PushNotificationService;
 use App\Services\TranslationService;
+use App\Support\VonagePhone;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -143,6 +146,7 @@ class RescueRequestController extends Controller
 
         // Send push notification to all rescuers
         $this->notifyRescuers($rescueRequest);
+        $this->notifyEmergencyContact($rescueRequest);
 
         // Handle API requests differently
         if ($request->expectsJson() || $request->is('api/*')) {
@@ -219,6 +223,44 @@ class RescueRequestController extends Controller
             \Illuminate\Support\Facades\Log::error('Failed to send push notifications to rescuers', [
                 'rescue_code' => $rescueRequest->rescue_code,
                 'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Send SMS alert to requester's emergency contact via Vonage.
+     */
+    protected function notifyEmergencyContact(RescueRequest $rescueRequest): void
+    {
+        try {
+            $requester = $rescueRequest->requester()->first();
+
+            if (!$requester || empty($requester->emergency_contact_phone)) {
+                return;
+            }
+
+            if (empty(config('services.vonage.key')) || empty(config('services.vonage.secret'))) {
+                Log::error('Vonage credentials are missing; SMS not sent.', [
+                    'rescue_code' => $rescueRequest->rescue_code,
+                ]);
+                return;
+            }
+
+            $normalizedPhone = VonagePhone::normalizeToE164($requester->emergency_contact_phone);
+            if (!$normalizedPhone) {
+                Log::error('Invalid emergency contact phone number for Vonage SMS.', [
+                    'rescue_code' => $rescueRequest->rescue_code,
+                    'phone' => $requester->emergency_contact_phone,
+                ]);
+                return;
+            }
+
+            Notification::route('vonage', $normalizedPhone)
+                ->notify(new EmergencyAlert($requester, $rescueRequest));
+        } catch (\Exception $e) {
+            Log::error('Failed to send emergency contact SMS', [
+                'rescue_code' => $rescueRequest->rescue_code,
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -1716,7 +1758,10 @@ class RescueRequestController extends Controller
             'phone',
             'emergency_contact_name',
             'emergency_contact_phone',
-            'allergies'
+            'allergies',
+            'gender',
+            'date_of_birth',
+            'group',
         ];
 
         foreach ($requiredFields as $field) {

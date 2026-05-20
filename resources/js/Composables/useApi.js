@@ -586,13 +586,18 @@ export async function deleteProfilePicture(userId) {
     });
 }
 
-export function getProfilePictureUrl(path) {
+export function getProfilePictureUrl(path, version = null) {
     if (!path) return null;
     if (path.startsWith('http') || path.startsWith('data:')) return path;
     // Use window.location.origin so static storage files resolve correctly
     // (Vite dev server proxies API calls but not /storage paths)
     const base = API_BASE || window.location.origin;
-    return `${base}/storage/${path}`;
+    let url = `${base}/storage/${path}`;
+    if (version) {
+        const separator = url.includes('?') ? '&' : '?';
+        url = `${url}${separator}v=${encodeURIComponent(version)}`;
+    }
+    return url;
 }
 
 export async function registerUser(userData) {

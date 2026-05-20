@@ -176,8 +176,13 @@ export async function requestNotificationPermission() {
 export async function getVapidPublicKey() {
     try {
         const response = await fetch('/api/push/vapid-public-key');
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            console.warn('[Push] VAPID key unavailable:', data.message || response.statusText);
+            return null;
+        }
         const data = await response.json();
-        return data.publicKey;
+        return data.publicKey || null;
     } catch (error) {
         console.error('[Push] Error fetching VAPID public key:', error);
         return null;

@@ -51,6 +51,12 @@ return [
         'subject' => env('VAPID_SUBJECT', env('APP_URL')),
     ],
 
+    'vonage' => [
+        'key' => env('VONAGE_KEY'),
+        'secret' => env('VONAGE_SECRET'),
+        'sms_from' => env('VONAGE_SMS_FROM', 'PinPointMe'),
+    ],
+
     // Firebase Configuration
     'firebase' => [
         'project_id' => env('FIREBASE_PROJECT_ID', 'pinpointme-app'),

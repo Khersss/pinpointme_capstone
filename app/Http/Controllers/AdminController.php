@@ -101,14 +101,76 @@ class AdminController extends Controller
             ]
         ];
 
+        $usersForStats = User::whereNotIn('role', ['admin', 'rescuer'])
+            ->get(['id', 'gender', 'date_of_birth']);
+
+        $normalizeLabel = function ($value, string $fallback) {
+            $normalized = is_string($value) ? trim($value) : $value;
+            return filled($normalized) ? 
+                ucwords(strtolower((string) $normalized)) : $fallback;
+        };
+
+        $genderStats = $usersForStats
+            ->groupBy(fn($user) => $normalizeLabel($user->gender, 'Unspecified'))
+            ->map(fn($group, $label) => [
+                'label' => $label,
+                'count' => $group->count(),
+            ])
+            ->values();
+
+        $ageGroupCounts = [
+            'Under 18' => 0,
+            '18-24' => 0,
+            '25-34' => 0,
+            '35-44' => 0,
+            '45-54' => 0,
+            '55+' => 0,
+            'Unknown' => 0,
+        ];
+
+        foreach ($usersForStats as $user) {
+            if (empty($user->date_of_birth)) {
+                $ageGroupCounts['Unknown']++;
+                continue;
+            }
+
+            try {
+                $age = Carbon::parse($user->date_of_birth)->age;
+            } catch (\Exception $e) {
+                $ageGroupCounts['Unknown']++;
+                continue;
+            }
+
+            if ($age < 18) {
+                $ageGroupCounts['Under 18']++;
+            } elseif ($age < 25) {
+                $ageGroupCounts['18-24']++;
+            } elseif ($age < 35) {
+                $ageGroupCounts['25-34']++;
+            } elseif ($age < 45) {
+                $ageGroupCounts['35-44']++;
+            } elseif ($age < 55) {
+                $ageGroupCounts['45-54']++;
+            } else {
+                $ageGroupCounts['55+']++;
+            }
+        }
+
+        $ageGroupStats = collect($ageGroupCounts)
+            ->map(fn($count, $label) => [
+                'label' => $label,
+                'count' => $count,
+            ])
+            ->values();
+
         if ($request->expectsJson() || $request->is('api/*')) {
             return response()->json([
                 'success' => true,
-                'data' => compact('statusCounts', 'rescuesByBuilding', 'rescuerStats', 'recentAlerts', 'userStats')
+                'data' => compact('statusCounts', 'rescuesByBuilding', 'rescuerStats', 'recentAlerts', 'userStats', 'genderStats', 'ageGroupStats')
             ]);
         }
 
-        return Inertia::render('Admin/Dashboard', compact('statusCounts', 'rescuesByBuilding', 'rescuerStats', 'recentAlerts', 'userStats'));
+        return Inertia::render('Admin/Dashboard', compact('statusCounts', 'rescuesByBuilding', 'rescuerStats', 'recentAlerts', 'userStats', 'genderStats', 'ageGroupStats'));
     }
 
     /**

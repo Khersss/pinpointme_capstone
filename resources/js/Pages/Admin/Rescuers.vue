@@ -219,7 +219,7 @@
                         <template v-slot:item.name="{ item }">
                             <div class="d-flex align-center py-2">
                                 <v-avatar :color="getStatusColor(item.status)" size="36" class="mr-3">
-                                    <v-img v-if="item.profile_picture" :src="getProfilePictureUrl(item.profile_picture)" cover />
+                                    <v-img v-if="item.profile_picture" :src="getProfilePictureUrl(item.profile_picture, item.updated_at)" cover />
                                     <span v-else class="text-white font-weight-medium text-caption">{{ getInitials(item) }}</span>
                                 </v-avatar>
                                 <span class="font-weight-medium">{{ item.first_name }} {{ item.last_name }}</span>
@@ -569,7 +569,7 @@
                 <v-card-text class="pa-4">
                     <div class="text-center mb-4">
                         <v-avatar :color="getStatusColor(viewingRescuer.status)" size="80">
-                            <v-img v-if="viewingRescuer.profile_picture" :src="getProfilePictureUrl(viewingRescuer.profile_picture)" cover />
+                            <v-img v-if="viewingRescuer.profile_picture" :src="getProfilePictureUrl(viewingRescuer.profile_picture, viewingRescuer.updated_at)" cover />
                             <span v-else class="text-h4 text-white">{{ getInitials(viewingRescuer) }}</span>
                         </v-avatar>
                         <h3 class="mt-3 text-h6">{{ viewingRescuer.first_name }} {{ viewingRescuer.last_name }}</h3>

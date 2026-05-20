@@ -285,6 +285,70 @@
                     </v-col>
                 </v-row>
 
+                <!-- Demographics Overview -->
+                <v-row class="mt-4">
+                    <v-col cols="12" md="6">
+                        <v-card rounded="lg" height="100%" elevation="2">
+                            <v-card-title class="d-flex align-center pa-4">
+                                <v-avatar color="deep-purple" size="40" class="mr-3">
+                                    <v-icon color="white">mdi-gender-male-female</v-icon>
+                                </v-avatar>
+                                <span class="font-weight-bold">Gender Distribution</span>
+                            </v-card-title>
+                            <v-divider></v-divider>
+                            <v-card-text class="pa-4">
+                                <div v-if="genderStats.length > 0" class="d-flex flex-column gap-3">
+                                    <div v-for="(item, index) in genderStats" :key="item.label">
+                                        <div class="d-flex justify-space-between mb-1">
+                                            <span class="text-caption">{{ item.label }}</span>
+                                            <span class="text-caption font-weight-medium">{{ item.count }} ({{ getPercent(item.count, genderTotal) }}%)</span>
+                                        </div>
+                                        <v-progress-linear
+                                            :model-value="getPercent(item.count, genderTotal)"
+                                            :color="getDemoColor(index)"
+                                            height="8"
+                                            rounded
+                                        />
+                                    </div>
+                                </div>
+                                <v-alert v-else type="info" variant="tonal" rounded="lg">
+                                     No demographic data available.
+                                </v-alert>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                        <v-card rounded="lg" height="100%" elevation="2">
+                            <v-card-title class="d-flex align-center pa-4">
+                                <v-avatar color="indigo" size="40" class="mr-3">
+                                    <v-icon color="white">mdi-account-clock-outline</v-icon>
+                                </v-avatar>
+                                <span class="font-weight-bold">Age Groups</span>
+                            </v-card-title>
+                            <v-divider></v-divider>
+                            <v-card-text class="pa-4">
+                                <div v-if="ageGroupStats.length > 0" class="d-flex flex-column gap-3">
+                                    <div v-for="(item, index) in ageGroupStats" :key="item.label">
+                                        <div class="d-flex justify-space-between mb-1">
+                                            <span class="text-caption">{{ item.label }}</span>
+                                            <span class="text-caption font-weight-medium">{{ item.count }} ({{ getPercent(item.count, ageGroupTotal) }}%)</span>
+                                        </div>
+                                        <v-progress-linear
+                                            :model-value="getPercent(item.count, ageGroupTotal)"
+                                            :color="getDemoColor(index)"
+                                            height="8"
+                                            rounded
+                                        />
+                                    </div>
+                                </div>
+                                <v-alert v-else type="info" variant="tonal" rounded="lg">
+                                     No demographic data available.
+                                </v-alert>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+                </v-row>
+
                 <!-- Recent Alerts -->
                 <v-row class="mt-4">
                     <v-col cols="12">
@@ -456,7 +520,15 @@ const props = defineProps({
     userStats: {
         type: Object,
         default: () => ({ total: 0, by_role: { student: 0, faculty: 0, staff: 0 } })
-    }
+    },
+    genderStats: {
+        type: Array,
+        default: () => []
+    },
+    ageGroupStats: {
+        type: Array,
+        default: () => []
+    },
 });
 
 const timeFilter = ref('week');
@@ -482,6 +554,11 @@ const rescuesByBuilding = ref(props.rescuesByBuilding);
 const rescuerStats = ref(props.rescuerStats);
 const recentAlerts = ref(props.recentAlerts);
 const userStats = ref(props.userStats);
+const genderStats = ref(props.genderStats);
+const ageGroupStats = ref(props.ageGroupStats);
+
+const genderTotal = computed(() => genderStats.value.reduce((sum, item) => sum + (item.count || 0), 0));
+const ageGroupTotal = computed(() => ageGroupStats.value.reduce((sum, item) => sum + (item.count || 0), 0));
 
 // Refresh data on mount to ensure fresh stats
 onMounted(() => {
@@ -500,6 +577,8 @@ const refreshData = async () => {
             rescuerStats.value = data.data.rescuerStats;
             recentAlerts.value = data.data.recentAlerts;
             userStats.value = data.data.userStats;
+            genderStats.value = data.data.genderStats || [];
+            ageGroupStats.value = data.data.ageGroupStats || [];
         }
     } catch (error) {
         console.error('Error refreshing data:', error);
@@ -564,11 +643,11 @@ const openStatDialog = async (type) => {
             .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
             .map(r => ({
                 id: r.id,
-                rescue_code: r.rescue_code || '—',
+                rescue_code: r.rescue_code || 'ï¿½',
                 status: r.status,
                 urgency_level: r.urgency_level,
                 requester_name: r.firstName ? `${r.firstName} ${r.lastName || ''}`.trim() : 'Anonymous',
-                location: [r.building?.name, r.floor?.floor_name, r.room?.room_name].filter(Boolean).join(' › ') || 'Unknown',
+                location: [r.building?.name, r.floor?.floor_name, r.room?.room_name].filter(Boolean).join(' ï¿½ ') || 'Unknown',
                 rescuer_name: r.rescuer ? `${r.rescuer.first_name || ''} ${r.rescuer.last_name || ''}`.trim() : null,
                 created_at: r.created_at,
                 cancellation_reason: r.cancellation_reason || null,
@@ -612,6 +691,16 @@ const getUrgencyColor = (urgency) => {
 const getBuildingColor = (index) => {
     const colors = ['primary', 'info', 'success', 'warning', 'purple', 'teal', 'orange', 'pink'];
     return colors[index % colors.length];
+};
+
+const getDemoColor = (index) => {
+    const colors = ['primary', 'info', 'success', 'warning', 'purple', 'teal', 'orange'];
+    return colors[index % colors.length];
+};
+
+const getPercent = (count, total) => {
+    if (!total) return 0;
+    return Math.round((count / total) * 100);
 };
 
 const formatDate = (dateString) => {

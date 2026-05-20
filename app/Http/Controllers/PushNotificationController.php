@@ -22,6 +22,13 @@ class PushNotificationController extends Controller
             'key_length' => strlen($publicKey ?? '')
         ]);
 
+        if (empty($publicKey)) {
+            return response()->json([
+                'publicKey' => null,
+                'message' => 'Push notifications are not configured yet.'
+            ], 503);
+        }
+
         return response()->json([
             'publicKey' => $publicKey
         ]);

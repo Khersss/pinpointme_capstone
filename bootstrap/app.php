@@ -4,6 +4,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\CheckPasswordChange;
 use App\Http\Middleware\CheckTermsAcceptance;
 use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\CheckProfileCompletion;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             EnsureUserIsActive::class,
             CheckPasswordChange::class,
             CheckTermsAcceptance::class,
+            CheckProfileCompletion::class,
         ]);
         
         // Also check inactive status on API routes

@@ -50,6 +50,9 @@ class User extends Authenticatable
         'blood_type',
         'allergies',
         'medical_conditions',
+        'gender',
+        'date_of_birth',
+        'group',
         'must_update_profile',
         'google_id',
         'google_token',
@@ -94,6 +97,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'terms_accepted_at' => 'datetime',
+            'date_of_birth' => 'date',
         ];
     }
 

@@ -90,6 +90,7 @@
                                 <v-col cols="12" sm="6">
                                     <v-text-field
                                         v-model="editData.first_name"
+                                        :class="{ 'required-error': missingMap.first_name }"
                                         label="First Name *"
                                         :rules="[rules.requiredField('First Name'), rules.nameOnly]"
                                         variant="outlined"
@@ -97,13 +98,14 @@
                                         hide-details="auto"
                                         class="mb-3 mobile-input"
                                         @keypress="preventInvalidNameChars"
-                                        @input="sanitizeNameField('first_name')"
+                                        @input="(e) => { sanitizeNameField('first_name'); onFieldInput('first_name'); }"
                                         required
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="12" sm="6">
                                     <v-text-field
                                         v-model="editData.last_name"
+                                        :class="{ 'required-error': missingMap.last_name }"
                                         label="Last Name *"
                                         :rules="[rules.requiredField('Last Name'), rules.nameOnly]"
                                         variant="outlined"
@@ -111,7 +113,7 @@
                                         hide-details="auto"
                                         class="mb-3 mobile-input"
                                         @keypress="preventInvalidNameChars"
-                                        @input="sanitizeNameField('last_name')"
+                                        @input="(e) => { sanitizeNameField('last_name'); onFieldInput('last_name'); }"
                                         required
                                     ></v-text-field>
                                 </v-col>
@@ -132,6 +134,7 @@
                                 <v-col cols="12">
                                     <v-text-field
                                         v-model="editData.phone_number"
+                                        :class="{ 'required-error': missingMap.phone_number }"
                                         label="Phone Number *"
                                         :rules="[rules.requiredField('Phone Number'), rules.phoneNumber]"
                                         variant="outlined"
@@ -142,13 +145,14 @@
                                         placeholder="09171234567"
                                         hint="Mobile number (e.g., 09171234567)"
                                         persistent-hint
-                                        @input="formatPhoneNumber('phone_number')"
+                                        @input="(e) => { formatPhoneNumber('phone_number'); onFieldInput('phone_number'); }"
                                         required
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="12">
                                     <v-text-field
                                         v-model="editData.id_number"
+                                        :class="{ 'required-error': missingMap.id_number }"
                                         label="ID Number *"
                                         :rules="[rules.requiredField('ID Number'), rules.idNumber]"
                                         variant="outlined"
@@ -160,10 +164,41 @@
                                         :hint="isValidIdNumber ? (editData.id_number.startsWith('20') ? '✓ Student ID detected' : '✓ Faculty/Staff ID detected') : '9-digit ID number'"
                                         persistent-hint
                                         maxlength="9"
-                                        @input="formatIdNumber"
+                                        @input="(e) => { formatIdNumber(); onFieldInput('id_number'); }"
                                         required
                                     ></v-text-field>
-                                   
+                                </v-col>
+                                <v-col cols="12" sm="6">
+                                    <v-select
+                                        v-model="editData.gender"
+                                        :class="{ 'required-error': missingMap.gender }"
+                                        label="Gender *"
+                                        :items="genderOptions"
+                                        :rules="[rules.requiredField('Gender')]"
+                                        variant="outlined"
+                                        density="comfortable"
+                                        hide-details="auto"
+                                        class="mb-3 mobile-input"
+                                        prepend-inner-icon="mdi-gender-male-female"
+                                        @update:modelValue="() => onFieldInput('gender')"
+                                        required
+                                    ></v-select>
+                                </v-col>
+                                <v-col cols="12" sm="6">
+                                    <v-text-field
+                                        v-model="editData.date_of_birth"
+                                        :class="{ 'required-error': missingMap.date_of_birth }"
+                                        label="Date of Birth *"
+                                        type="date"
+                                        :rules="[rules.dateOfBirth]"
+                                        variant="outlined"
+                                        density="comfortable"
+                                        hide-details="auto"
+                                        class="mb-3 mobile-input"
+                                        prepend-inner-icon="mdi-calendar"
+                                        @input="() => onFieldInput('date_of_birth')"
+                                        required
+                                    ></v-text-field>
                                 </v-col>
                             </v-row>
                         </v-form>
@@ -1149,6 +1184,8 @@ const sfAreaOptions = [
     { label: 'Other', value: 'Other' },
 ];
 
+const genderOptions = ['Male', 'Female', 'Other', 'Prefer not to say'];
+
 const getSfAreaIcon = (area) => {
     const icons = {
         'Scanner': 'mdi-qrcode-scan',
@@ -1292,6 +1329,8 @@ const user = ref({
     blood_type: '',
     allergies: '',
     medical_conditions: '',
+    gender: '',
+    date_of_birth: '',
     is_verified: false,
     created_at: null,
 });
@@ -1308,6 +1347,8 @@ const editData = reactive({
     blood_type: '',
     allergies: '',
     medical_conditions: '',
+    gender: '',
+    date_of_birth: '',
 });
 
 // Password data
@@ -1339,6 +1380,63 @@ const snackbar = ref({
     color: 'success',
 });
 
+// Missing-fields UX helpers
+const missingFields = ref([]);
+const missingMap = reactive({
+    first_name: false,
+    last_name: false,
+    phone_number: false,
+    id_number: false,
+    gender: false,
+    date_of_birth: false,
+});
+
+const requiredFieldLabels = {
+    first_name: 'First Name',
+    last_name: 'Last Name',
+    phone_number: 'Phone Number',
+    id_number: 'ID Number',
+    gender: 'Gender',
+    date_of_birth: 'Date of Birth',
+};
+
+const computeMissingFields = () => {
+    const list = [];
+    Object.keys(requiredFieldLabels).forEach((k) => {
+        const val = (editData[k] ?? user.value[k] ?? '').toString().trim();
+        if (!val) list.push(requiredFieldLabels[k]);
+    });
+    missingFields.value = list;
+    return list;
+};
+
+const markMissingFields = (labels) => {
+    Object.keys(missingMap).forEach(k => missingMap[k] = false);
+    labels.forEach(label => {
+        const key = Object.keys(requiredFieldLabels).find(k => requiredFieldLabels[k] === label);
+        if (key) missingMap[key] = true;
+    });
+};
+
+const onFieldInput = (field) => {
+    if (missingMap[field]) missingMap[field] = false;
+    // remove label from missingFields if present
+    missingFields.value = missingFields.value.filter(l => l !== requiredFieldLabels[field]);
+};
+
+const showMissingFieldsToast = (origin = 'save') => {
+    const list = computeMissingFields();
+    if (!list.length) return;
+    const msg = `Please complete required fields: ${list.join(', ')}`;
+    showSnackbar(msg, 'warning');
+    markMissingFields(list);
+    // Scroll to first missing element (uses class applied to inputs)
+    setTimeout(() => {
+        const el = document.querySelector('.required-error');
+        if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 150);
+};
+
 // Validation rules
 const rules = {
     required: (v) => !!v || 'Required',
@@ -1349,6 +1447,15 @@ const rules = {
     hasNumber: (v) => /[0-9]/.test(v) || 'Must contain a number',
     hasSpecial: (v) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(v) || 'Must contain special character',
     passwordMatch: (v) => v === passwordData.new_password || 'Passwords do not match',
+    dateOfBirth: (v) => {
+        if (!v) return 'Date of birth is required';
+        const date = new Date(v);
+        if (Number.isNaN(date.getTime())) return 'Invalid date';
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (date >= today) return 'Date of birth must be in the past';
+        return true;
+    },
     // Name validation - only letters and spaces allowed (no numbers, special chars, emojis)
     nameOnly: (v) => {
         if (!v) return true; // Optional field
@@ -1508,7 +1615,9 @@ const hasPersonalChanges = computed(() => {
         editData.first_name !== (user.value.first_name || '') ||
         editData.last_name !== (user.value.last_name || '') ||
         editData.phone_number !== (user.value.phone_number || '') ||
-        editData.id_number !== (user.value.id_number || '')
+        editData.id_number !== (user.value.id_number || '') ||
+        editData.gender !== (user.value.gender || '') ||
+        editData.date_of_birth !== normalizeDateInput(user.value.date_of_birth)
     );
 });
 
@@ -1587,6 +1696,8 @@ const loadUser = async () => {
             blood_type: inertiaUser.blood_type || '',
             allergies: inertiaUser.allergies || '',
             medical_conditions: inertiaUser.medical_conditions || '',
+            gender: inertiaUser.gender || '',
+            date_of_birth: normalizeDateInput(inertiaUser.date_of_birth),
             is_verified: inertiaUser.is_verified || false,
             created_at: inertiaUser.created_at || null,
         };
@@ -1626,6 +1737,8 @@ const syncEditData = () => {
     editData.blood_type = user.value.blood_type || '';
     editData.allergies = user.value.allergies || '';
     editData.medical_conditions = user.value.medical_conditions || '';
+    editData.gender = user.value.gender || '';
+    editData.date_of_birth = normalizeDateInput(user.value.date_of_birth);
 };
 
 // Format ID number input to only allow digits
@@ -1716,6 +1829,17 @@ const formatDate = (date) => {
     });
 };
 
+const normalizeDateInput = (value) => {
+    if (!value) return '';
+    if (typeof value === 'string') {
+        const match = value.match(/^\d{4}-\d{2}-\d{2}/);
+        if (match) return match[0];
+    }
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return parsed.toISOString().slice(0, 10);
+};
+
 const formatHistoryDate = (dateString) => {
     if (!dateString) return 'Unknown';
     const date = new Date(dateString);
@@ -1771,9 +1895,18 @@ const cancelEdit = () => {
     editData.last_name = user.value.last_name || '';
     editData.phone_number = user.value.phone_number || '';
     editData.id_number = user.value.id_number || '';
+    editData.gender = user.value.gender || '';
+    editData.date_of_birth = normalizeDateInput(user.value.date_of_birth);
 };
 
 const saveProfile = async () => {
+    // First, compute missing required fields and show toast/highlight if any
+    const missing = computeMissingFields();
+    if (missing.length) {
+        showMissingFieldsToast('save');
+        return;
+    }
+
     if (!formValid.value) return;
 
     // Validate phone number before saving
@@ -1802,6 +1935,8 @@ const saveProfile = async () => {
             last_name: editData.last_name,
             phone_number: editData.phone_number,
             id_number: editData.id_number,
+            gender: editData.gender,
+            date_of_birth: editData.date_of_birth,
         };
 
         // Include role determination based on ID number
@@ -1812,12 +1947,20 @@ const saveProfile = async () => {
         console.log('Updating personal info with data:', updateData);
         
         const updatedUser = await updateUser(user.value.id, updateData);
-        
-        // Update local user state to sync with editData (hides save button)
-        user.value.first_name = editData.first_name;
-        user.value.last_name = editData.last_name;
-        user.value.phone_number = editData.phone_number;
-        user.value.id_number = editData.id_number;
+        const savedUser = updatedUser?.data || updatedUser || {};
+
+        // Update local user state from the server response so the saved values persist immediately
+        user.value = {
+            ...user.value,
+            ...savedUser,
+            first_name: savedUser.first_name ?? editData.first_name,
+            last_name: savedUser.last_name ?? editData.last_name,
+            phone_number: savedUser.phone_number ?? savedUser.phone ?? editData.phone_number,
+            id_number: savedUser.id_number ?? editData.id_number,
+            gender: savedUser.gender ?? editData.gender,
+            date_of_birth: normalizeDateInput(savedUser.date_of_birth ?? editData.date_of_birth),
+        };
+        syncEditData();
         
         // Update localStorage
         localStorage.setItem('userData', JSON.stringify(user.value));
@@ -2275,6 +2418,18 @@ const showSnackbar = (message, color = 'success') => {
 onMounted(async () => {
     loadSettings();
     await loadUser();
+    // If middleware redirected user here due to incomplete profile, show a toast once
+    try {
+        const userId = user.value?.id;
+        const shownKey = userId ? `profile_incomplete_toast_shown_${userId}` : 'profile_incomplete_toast_shown';
+        const mustUpdate = authUser.value?.must_update_profile || user.value?.must_update_profile;
+        if (mustUpdate && !sessionStorage.getItem(shownKey)) {
+            showMissingFieldsToast('mount');
+            sessionStorage.setItem(shownKey, '1');
+        }
+    } catch (e) {
+        // ignore
+    }
     await fetchLocationHistory();
     await loadUserSystemFeedbacks();
 });
@@ -2427,6 +2582,15 @@ onMounted(async () => {
     padding-top: 12px !important;
     padding-bottom: 12px !important;
     font-size: 0.9375rem !important;
+}
+
+/* Highlight required missing fields */
+.required-error :deep(.v-field) {
+    border-color: #e53935 !important;
+    box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.06) !important;
+}
+.required-error :deep(.v-field__input) {
+    background-color: #fff6f6 !important;
 }
 
 /* Mobile buttons - better touch targets */

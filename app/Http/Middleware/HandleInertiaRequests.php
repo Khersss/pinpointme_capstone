@@ -69,6 +69,8 @@ class HandleInertiaRequests extends Middleware
                         'blood_type' => Auth::user()->blood_type ?? '',
                         'allergies' => Auth::user()->allergies ?? '',
                         'medical_conditions' => Auth::user()->medical_conditions ?? '',
+                        'gender' => Auth::user()->gender ?? '',
+                        'date_of_birth' => Auth::user()->date_of_birth ?? null,
                         'status' => Auth::user()->status ?? 'active',
                     ]
                 ] : null,

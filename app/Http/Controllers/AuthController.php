@@ -764,6 +764,8 @@ class AuthController extends Controller
                 'status' => $user->status ?? 'available',
                 'role' => $user->role,
                 'is_verified' => $user->is_verified,
+                'gender' => $user->gender,
+                'date_of_birth' => $user->date_of_birth,
             ]
         ]);
     }
@@ -883,6 +885,8 @@ class AuthController extends Controller
             'blood_type' => 'sometimes|nullable|string|in:A+,A-,B+,B-,AB+,AB-,O+,O-,Unknown',
             'allergies' => 'sometimes|nullable|string',
             'medical_conditions' => 'sometimes|nullable|string',
+            'gender' => 'sometimes|nullable|in:Male,Female,Other,Prefer not to say',
+            'date_of_birth' => 'sometimes|nullable|date|before:today',
             'current_password' => 'sometimes|string|min:8',
             'password' => 'sometimes|string|min:8|confirmed',
         ]);
@@ -1011,7 +1015,16 @@ class AuthController extends Controller
         // Check if profile is now complete and clear the must_update_profile flag
         if (\Schema::hasColumn('users', 'must_update_profile') && $user->must_update_profile) {
             $user->refresh();
-            $requiredFields = ['first_name', 'last_name', 'phone', 'emergency_contact_name', 'emergency_contact_phone', 'allergies'];
+            $requiredFields = [
+                'first_name',
+                'last_name',
+                'phone',
+                'emergency_contact_name',
+                'emergency_contact_phone',
+                'allergies',
+                'gender',
+                'date_of_birth',
+            ];
             $profileComplete = true;
             foreach ($requiredFields as $field) {
                 if (empty($user->$field)) {
