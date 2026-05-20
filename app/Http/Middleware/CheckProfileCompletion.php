@@ -57,7 +57,7 @@ class CheckProfileCompletion
         $requiredFields = [
             'first_name',
             'last_name',
-            'phone',
+            'phone_number',
             'emergency_contact_name',
             'emergency_contact_phone',
             'allergies',

@@ -233,9 +233,15 @@ class RescueRequestController extends Controller
     protected function notifyEmergencyContact(RescueRequest $rescueRequest): void
     {
         try {
-            $requester = $rescueRequest->requester()->first();
+            // Fetch a fresh user record to ensure we don't use stale relationship data
+            $requester = \App\Models\User::find($rescueRequest->user_id) ?? $rescueRequest->requester()->first();
 
+            // If there is no requester or emergency contact is empty, do not send SMS
             if (!$requester || empty($requester->emergency_contact_phone)) {
+                Log::info('No emergency contact phone present; skipping SMS.', [
+                    'rescue_code' => $rescueRequest->rescue_code,
+                    'user_id' => $rescueRequest->user_id ?? null,
+                ]);
                 return;
             }
 
@@ -248,8 +254,9 @@ class RescueRequestController extends Controller
 
             $normalizedPhone = VonagePhone::normalizeToE164($requester->emergency_contact_phone);
             if (!$normalizedPhone) {
-                Log::error('Invalid emergency contact phone number for Vonage SMS.', [
+                Log::warning('Invalid or deleted emergency contact phone number; skipping Vonage SMS.', [
                     'rescue_code' => $rescueRequest->rescue_code,
+                    'user_id' => $rescueRequest->user_id ?? null,
                     'phone' => $requester->emergency_contact_phone,
                 ]);
                 return;
@@ -1755,13 +1762,12 @@ class RescueRequestController extends Controller
         $requiredFields = [
             'first_name',
             'last_name',
-            'phone',
+            'phone_number',
             'emergency_contact_name',
             'emergency_contact_phone',
             'allergies',
             'gender',
             'date_of_birth',
-            'group',
         ];
 
         foreach ($requiredFields as $field) {
