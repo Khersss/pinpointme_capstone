@@ -12,13 +12,33 @@ export function useAudioRecording() {
     let recordingChunks = [];
     let timerInterval = null;
 
+    const pickSupportedMimeType = () => {
+        const candidates = [
+            'audio/ogg;codecs=opus',
+            'audio/webm;codecs=opus',
+            'audio/ogg',
+            'audio/webm',
+        ];
+
+        for (const mimeType of candidates) {
+            if (MediaRecorder.isTypeSupported(mimeType)) {
+                return mimeType;
+            }
+        }
+
+        return '';
+    };
+
     const startRecording = async () => {
         if (mediaRecorder && mediaRecorder.state === 'recording') return;
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             recordingChunks = [];
-            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+            const mimeType = pickSupportedMimeType();
+            mediaRecorder = mimeType
+                ? new MediaRecorder(stream, { mimeType })
+                : new MediaRecorder(stream);
 
             mediaRecorder.ondataavailable = (e) => {
                 if (e.data.size > 0) recordingChunks.push(e.data);
@@ -49,7 +69,8 @@ export function useAudioRecording() {
             const mr = mediaRecorder;
             mr.onstop = () => {
                 try {
-                    const blob = new Blob(recordingChunks, { type: 'audio/webm' });
+                    const blobType = mr.mimeType || 'audio/webm';
+                    const blob = new Blob(recordingChunks, { type: blobType });
                     // Stop all tracks
                     mr.stream.getTracks().forEach((t) => t.stop());
                     mediaRecorder = null;

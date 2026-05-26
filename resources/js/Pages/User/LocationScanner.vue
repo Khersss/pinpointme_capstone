@@ -2779,7 +2779,6 @@ const extractLocationFromVoice = (transcript) => {
 // Extract emergency details from voice (separates location from emergency description)
 const extractEmergencyFromVoice = (transcript) => {
     const text = transcript.toLowerCase();
-    let cleanDescription = transcript;
     
     const result = {
         description: '',
@@ -2787,48 +2786,9 @@ const extractEmergencyFromVoice = (transcript) => {
         urgency: null,
         injuries: []
     };
-    
-    // Location-related phrases to REMOVE from description (these go to location fields)
-    const locationPhrases = [
-        // Building patterns
-        /(?:i'm in|i am in|i'm at|i am at|at|inside|in)\s*(?:the\s*)?([a-z0-9\s]+?)\s*(?:building|bldg)/gi,
-        /(?:building|bldg)\s*([a-z0-9\s]+?)(?:\s*,|\s+floor|\s+room|$)/gi,
-        /([a-z]+)\s*building/gi,
-        // Floor patterns
-        /(?:floor|flr|level)\s*([a-z0-9\s-]+?)(?:\s*,|\s+room|\s+and|$)/gi,
-        /(\d+)(?:st|nd|rd|th)\s*(?:floor|flr|level)/gi,
-        /(?:ground|basement|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\s*(?:floor|flr|level)/gi,
-        // Room patterns
-        /(?:room|rm|office|classroom|lab|laboratory)\s*([a-z0-9\s-]+?)(?:\s*,|\s*\.|$)/gi,
-        // Combined location references
-        /(?:i'm in|i am in|located at|my location is)\s*[^,\.]+/gi,
-    ];
-    
-    // Remove location phrases from description
-    for (const pattern of locationPhrases) {
-        cleanDescription = cleanDescription.replace(pattern, ' ');
-    }
-    
-    // Clean up the description
-    cleanDescription = cleanDescription
-        .replace(/\s+/g, ' ')  // Multiple spaces to single
-        .replace(/^\s*,\s*/g, '')  // Leading commas
-        .replace(/\s*,\s*$/g, '')  // Trailing commas
-        .replace(/^[\s,]+|[\s,]+$/g, '')  // Trim
-        .trim();
-    
-    // If description is too short or empty after removing location, keep original emergency parts
-    if (cleanDescription.length < 5) {
-        // Try to extract just the emergency/help part
-        const emergencyMatch = transcript.match(/(?:help|need|emergency|injured|hurt|stuck|trapped|bleeding|pain|broken|fire|smoke)[^]*$/i);
-        if (emergencyMatch) {
-            cleanDescription = emergencyMatch[0].trim();
-        } else {
-            cleanDescription = transcript; // Fallback to full transcript
-        }
-    }
-    
-    result.description = cleanDescription;
+
+    // Keep EXACT transcript as requested by user.
+    result.description = String(transcript || '').trim();
     
     // Mobility detection
     const mobilityPatterns = {
@@ -2877,10 +2837,83 @@ const extractEmergencyFromVoice = (transcript) => {
             result.injuries.push(injury);
         }
     }
+
+    // Relate mobility and injuries so they stay consistent with what user said.
+    const related = relateMobilityAndInjuries(text, result.mobility, result.injuries);
+    result.mobility = related.mobility;
+    result.injuries = related.injuries;
+
+    // If urgency phrase was not explicit, infer urgency from what happened.
+    if (!result.urgency) {
+        result.urgency = inferUrgencyFromContext(text, result.injuries, result.mobility);
+    }
     
     // Emergency extraction processing
     
     return result;
+};
+
+const relateMobilityAndInjuries = (text, mobility = null, injuries = []) => {
+    const normalized = Array.from(new Set((injuries || []).map((i) => String(i).toLowerCase())));
+    const hasInjury = (keys) => keys.some((k) => normalized.includes(k));
+    const hasText = (patterns) => patterns.some((p) => text.includes(p));
+
+    let inferredMobility = mobility;
+
+    // Injuries imply mobility constraints when mobility wasn't explicitly provided.
+    if (!inferredMobility) {
+        if (hasInjury(['unconscious', 'breathing', 'chest_pain', 'seizure']) || hasText(['cannot move', 'can\'t move', 'unable to move', 'trapped', 'pinned'])) {
+            inferredMobility = 'immobile';
+        } else if (hasInjury(['fracture', 'head', 'burn']) || hasText(['fell', 'limping', 'sprain', 'hard to walk', 'hurt leg', 'injured leg'])) {
+            inferredMobility = 'limited';
+        }
+    }
+
+    // Mobility-related phrases can recover missing injury tags.
+    if (hasText(['not breathing', 'can\'t breathe', 'cannot breathe', 'choking', 'suffocating']) && !normalized.includes('breathing')) {
+        normalized.push('breathing');
+    }
+    if (hasText(['unconscious', 'passed out', 'not responding', 'fainted']) && !normalized.includes('unconscious')) {
+        normalized.push('unconscious');
+    }
+    if (hasText(['chest pain', 'chest hurts', 'heart attack']) && !normalized.includes('chest_pain')) {
+        normalized.push('chest_pain');
+    }
+
+    // If user clearly says they can move and no injury was detected, mark as none.
+    if (!normalized.length && inferredMobility === 'normal') {
+        normalized.push('none');
+    }
+
+    // Keep "none" exclusive.
+    const cleanedInjuries = normalized.length > 1
+        ? normalized.filter((i) => i !== 'none')
+        : normalized;
+
+    return {
+        mobility: inferredMobility,
+        injuries: cleanedInjuries,
+    };
+};
+
+const inferUrgencyFromContext = (text, injuries = [], mobility = null) => {
+    const has = (patterns) => patterns.some((p) => text.includes(p));
+
+    const criticalSignals = has([
+        'not breathing', 'can\'t breathe', 'cannot breathe', 'dying', 'life threatening',
+        'heart attack', 'stroke', 'severe bleeding', 'unconscious', 'not responding'
+    ]) || injuries.some((i) => ['breathing', 'unconscious', 'chest_pain', 'seizure'].includes(i));
+    if (criticalSignals) return 'critical';
+
+    const highSignals = has([
+        'urgent', 'serious', 'very painful', 'lots of blood', 'bad injury', 'trapped', 'pinned'
+    ]) || injuries.some((i) => ['fracture', 'head', 'burn'].includes(i)) || mobility === 'immobile';
+    if (highSignals) return 'high';
+
+    const mediumSignals = has(['injured', 'hurt', 'pain', 'bleeding', 'broken', 'sprain', 'fell']) || injuries.length > 0 || mobility === 'limited';
+    if (mediumSignals) return 'medium';
+
+    return 'low';
 };
 
 const processAudioTranscription = async (audioBlob) => {

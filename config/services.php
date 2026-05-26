@@ -35,8 +35,9 @@ return [
         ],
     ],
 
-    'openai' => [
-        'key' => env('OPENAI_API_KEY'),
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-1.5-flash'),
     ],
 
     'google' => [
@@ -55,6 +56,12 @@ return [
         'key' => env('VONAGE_KEY'),
         'secret' => env('VONAGE_SECRET'),
         'sms_from' => env('VONAGE_SMS_FROM', 'PinPointMe'),
+    ],
+
+    'infobip' => [
+        'base_url' => env('INFOBIP_BASE_URL', 'https://l2m59r.api.infobip.com'),
+        'key' => env('INFOBIP_API_KEY'),
+        'sender' => env('INFOBIP_SENDER', 'PinPointMe'),
     ],
 
     // Firebase Configuration

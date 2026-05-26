@@ -349,13 +349,22 @@ export async function getLocationDetails(buildingId, floorId, roomId) {
 }
 
 /**
- * OpenAI / AI Assisted Endpoints
+ * AI Assisted Endpoints
  */
 export async function transcribeAudio(audioBlob) {
+    const type = (audioBlob?.type || '').toLowerCase();
+    const extMap = {
+        'audio/ogg': 'ogg',
+        'audio/ogg;codecs=opus': 'ogg',
+        'audio/webm': 'webm',
+        'audio/webm;codecs=opus': 'webm',
+    };
+    const ext = extMap[type] || 'webm';
+    const filename = `audio.${ext}`;
     const form = new FormData();
-    form.append('file', audioBlob, 'audio.webm');
-    form.append('audio', audioBlob, 'audio.webm');
-    const data = await apiFetch('/openai/transcribe', { method: 'POST', body: form });
+    form.append('file', audioBlob, filename);
+    form.append('audio', audioBlob, filename);
+    const data = await apiFetch('/openai/transcribe', { method: 'POST', body: form, timeout: 30000 });
     if (typeof data === 'string') return data;
     return data.text || data.transcript || data.transcription || '';
 }
@@ -373,6 +382,7 @@ export async function extractFieldsAndInferLocation(transcript) {
         const data = await apiFetch('/openai/extract-full', {
             method: 'POST',
             body: JSON.stringify({ transcript }),
+            timeout: 30000,
         });
         const fields = data?.fields ? { ...data.fields } : { ...data };
         if (data?.location_inference) {

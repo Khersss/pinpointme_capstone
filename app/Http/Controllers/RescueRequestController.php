@@ -6,16 +6,16 @@ use App\Models\Building;
 use App\Models\Floor;
 use App\Models\Room;
 use App\Models\RescueRequest;
-use App\Notifications\EmergencyAlert;
 use App\Services\PushNotificationService;
 use App\Services\TranslationService;
 use App\Support\VonagePhone;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -222,13 +222,16 @@ class RescueRequestController extends Controller
             // Log the error but don't fail the rescue request creation
             \Illuminate\Support\Facades\Log::error('Failed to send push notifications to rescuers', [
                 'rescue_code' => $rescueRequest->rescue_code,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
 
     /**
-     * Send SMS alert to requester's emergency contact via Vonage.
+     * Send emergency contact SMS using Infobip.
+     *
+     * @param RescueRequest $rescueRequest
+     * @return void
      */
     protected function notifyEmergencyContact(RescueRequest $rescueRequest): void
     {
@@ -245,8 +248,12 @@ class RescueRequestController extends Controller
                 return;
             }
 
-            if (empty(config('services.vonage.key')) || empty(config('services.vonage.secret'))) {
-                Log::error('Vonage credentials are missing; SMS not sent.', [
+            $apiKey = config('services.infobip.key') ?: env('INFOBIP_API_KEY');
+            $baseUrl = rtrim(config('services.infobip.base_url') ?: env('INFOBIP_BASE_URL', 'https://l2m59r.api.infobip.com'), '/');
+            $sender = config('services.infobip.sender') ?: env('INFOBIP_SENDER', 'PinPointMe');
+
+            if (empty($apiKey) || empty($baseUrl) || empty($sender)) {
+                Log::error('Infobip credentials are missing; SMS not sent.', [
                     'rescue_code' => $rescueRequest->rescue_code,
                 ]);
                 return;
@@ -254,7 +261,7 @@ class RescueRequestController extends Controller
 
             $normalizedPhone = VonagePhone::normalizeToE164($requester->emergency_contact_phone);
             if (!$normalizedPhone) {
-                Log::warning('Invalid or deleted emergency contact phone number; skipping Vonage SMS.', [
+                Log::error('Invalid emergency contact phone number for Infobip SMS.', [
                     'rescue_code' => $rescueRequest->rescue_code,
                     'user_id' => $rescueRequest->user_id ?? null,
                     'phone' => $requester->emergency_contact_phone,
@@ -262,8 +269,61 @@ class RescueRequestController extends Controller
                 return;
             }
 
-            Notification::route('vonage', $normalizedPhone)
-                ->notify(new EmergencyAlert($requester, $rescueRequest));
+            $fullName = trim(($requester->first_name ?? '') . ' ' . ($requester->last_name ?? ''));
+            $displayName = $fullName !== '' ? $fullName : 'Unknown User';
+            $locationParts = array_filter([
+                $rescueRequest->building?->name,
+                $rescueRequest->floor?->name ?? $rescueRequest->floor?->floor_name,
+                $rescueRequest->room?->name ?? $rescueRequest->room?->room_name,
+            ]);
+            $location = !empty($locationParts) ? implode(', ', $locationParts) : 'Unknown Location';
+            $urgency = strtoupper($rescueRequest->urgency_level ?? 'UNKNOWN');
+            $mobility = ucfirst($rescueRequest->mobility_status ?? 'Unknown');
+            $injuries = trim((string) ($rescueRequest->injuries ?? ''));
+            $reportedAt = $rescueRequest->created_at?->format('M d, Y h:i A') ?? '';
+
+            $message = "EMERGENCY REPORT\n" .
+                "Name: {$displayName}\n" .
+                "Time: {$reportedAt}\n" .
+                "Location: {$location}\n" .
+                "Urgency: {$urgency} ({$mobility})\n" .
+                "Injuries: {$injuries}";
+
+            $payload = [
+                'messages' => [[
+                    'from' => $sender,
+                    'destinations' => [[
+                        'to' => ltrim($normalizedPhone, '+'),
+                    ]],
+                    'text' => $message,
+                ]],
+            ];
+
+            $response = Http::withHeaders([
+                'Authorization' => 'App ' . $apiKey,
+                'Accept' => 'application/json',
+            ])
+                ->asJson()
+                ->post($baseUrl . '/sms/2/text/advanced', $payload);
+
+            if ($response->failed()) {
+                Log::error('Infobip SMS failed', [
+                    'rescue_code' => $rescueRequest->rescue_code,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                    'payload' => $payload,
+                ]);
+                return;
+            }
+
+            Log::info('Infobip SMS sent to emergency contact', [
+                'rescue_code' => $rescueRequest->rescue_code,
+                'recipient' => $normalizedPhone,
+                'sender' => $sender,
+                'status' => $response->status(),
+                'response_body' => $response->body(),
+                'response_headers' => $response->headers(),
+            ]);
         } catch (\Exception $e) {
             Log::error('Failed to send emergency contact SMS', [
                 'rescue_code' => $rescueRequest->rescue_code,
@@ -1782,7 +1842,7 @@ class RescueRequestController extends Controller
         }
 
         // All fields are filled — if the flag is still set, clear it now
-        if (\Schema::hasColumn('users', 'must_update_profile') && $user->must_update_profile) {
+        if (Schema::hasColumn('users', 'must_update_profile') && $user->must_update_profile) {
             $user->update(['must_update_profile' => false]);
         }
 

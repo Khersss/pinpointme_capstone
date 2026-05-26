@@ -8,84 +8,147 @@ use Illuminate\Support\Facades\Cache;
 
 class TranslationService
 {
-    private string $apiBase = 'https://api.openai.com/v1';
+    private string $apiBase = 'https://generativelanguage.googleapis.com/v1beta';
+    private array $modelCandidates = ['gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash'];
 
     /**
-     * Get OpenAI API key
+     * Get Gemini API key
      */
     private function apiKey(): string
     {
-        $key = config('services.openai.key') ?: env('OPENAI_API_KEY');
+        $key = config('services.gemini.key') ?: env('GEMINI_API_KEY');
         if (!$key) {
-            throw new \Exception('Missing OpenAI API key');
+            throw new \Exception('Missing Gemini API key');
         }
         return $key;
     }
 
     /**
-     * Make HTTP JSON request to OpenAI API
+     * Make HTTP JSON request to Gemini API
      */
-    private function httpJson(string $url, array $payload, int $timeout = 60)
+    private function geminiJson(array $payload, int $timeout = 60, ?string $model = null): array
     {
-        $resp = Http::withToken($this->apiKey())
-            ->timeout($timeout)
+        $modelName = $model ?: config('services.gemini.model', $this->modelCandidates[0]);
+        $resp = Http::timeout($timeout)
             ->acceptJson()
             ->asJson()
-            ->post($url, $payload);
-            
+            ->post($this->apiBase . '/models/' . $modelName . ':generateContent?key=' . urlencode($this->apiKey()), $payload);
+
         if ($resp->failed()) {
-            Log::warning('OpenAI API error', [
-                'url' => $url, 
-                'status' => $resp->status(), 
+            Log::warning('Gemini API error', [
+                'model' => $modelName,
+                'status' => $resp->status(),
                 'body' => $resp->body()
             ]);
             throw new \Exception('Translation API error: ' . $resp->body());
         }
-        
+
         return $resp->json();
     }
 
+    private function geminiJsonWithFallbacks(array $payload, int $timeout = 60): array
+    {
+        $models = array_values(array_unique(array_merge(
+            [config('services.gemini.model')],
+            $this->modelCandidates
+        )));
+        $lastError = null;
+
+        foreach ($models as $model) {
+            if (!$model) {
+                continue;
+            }
+
+            try {
+                return $this->geminiJson($payload, $timeout, $model);
+            } catch (\Throwable $e) {
+                $lastError = $e;
+                $message = $e->getMessage();
+                if (!str_contains($message, '404') && !str_contains($message, 'not found')) {
+                    throw $e;
+                }
+
+                Log::warning('Gemini model fallback triggered', [
+                    'model' => $model,
+                    'error' => $message,
+                ]);
+            }
+        }
+
+        if ($lastError) {
+            throw $lastError;
+        }
+
+        throw new \RuntimeException('No Gemini model candidates were available');
+    }
+
     /**
-     * Translate text to English using OpenAI
+     * Extract text content from a Gemini response.
+     */
+    private function geminiText(array $data): string
+    {
+        foreach (($data['candidates'] ?? []) as $candidate) {
+            $parts = data_get($candidate, 'content.parts', []);
+            $text = collect($parts)->pluck('text')->filter()->implode('');
+            if (trim($text) !== '') {
+                return trim($text);
+            }
+        }
+
+        return '';
+    }
+
+    private function geminiGenerateText(string $text, string $systemPrompt, int $timeout = 60): string
+    {
+        $data = $this->geminiJsonWithFallbacks([
+            'systemInstruction' => [
+                'parts' => [
+                    ['text' => $systemPrompt],
+                ],
+            ],
+            'contents' => [
+                [
+                    'role' => 'user',
+                    'parts' => [
+                        ['text' => $text],
+                    ],
+                ],
+            ],
+            'generationConfig' => [
+                'temperature' => 0,
+                'maxOutputTokens' => 512,
+            ],
+        ], $timeout);
+
+        return $this->geminiText($data);
+    }
+
+    /**
+     * Translate text to English using Gemini
      */
     public function translateToEnglish(string $text): string
     {
-        // Return empty string if input is empty
         if (empty(trim($text))) {
             return $text;
         }
 
-        // Cache translations to avoid repeated API calls for same text
         $cacheKey = 'translation_' . md5($text);
-        
+
         return Cache::remember($cacheKey, 3600, function () use ($text) {
             try {
-                $data = $this->httpJson($this->apiBase . '/chat/completions', [
-                    'model' => 'gpt-4o-mini',
-                    'temperature' => 0,
-                    'max_tokens' => 500,
-                    'messages' => [
-                        [
-                            'role' => 'system', 
-                            'content' => 'You are a precise translation engine for emergency situations. Detect the language of the user text and output ONLY an accurate English translation. If the text is already English, output it unchanged. Preserve all important details about injuries, location, and urgency. No commentary or explanations.'
-                        ],
-                        [
-                            'role' => 'user', 
-                            'content' => $text
-                        ]
-                    ]
-                ]);
+                $translated = $this->geminiGenerateText(
+                    $text,
+                    'You are a precise translation engine for emergency situations. Detect the language of the user text and output ONLY an accurate English translation. If the text is already English, output it unchanged. Preserve all important details about injuries, location, and urgency. No commentary or explanations.'
+                );
 
-                $translated = $data['choices'][0]['message']['content'] ?? $text;
-                return trim($translated);
+                return $translated !== '' ? trim($translated) : $text;
 
             } catch (\Exception $e) {
                 Log::error('Translation failed', [
                     'text' => $text,
                     'error' => $e->getMessage()
                 ]);
-                
-                // Return original text if translation fails
+
                 return $text;
             }
         });

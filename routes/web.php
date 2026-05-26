@@ -127,7 +127,7 @@ Route::prefix('api')->withoutMiddleware([Csrf::class])->group(function () {
 });
 
 // ============================================================
-// OpenAI Processing Endpoints (Stateless, exclude CSRF for mobile/Ionic client)
+// AI Processing Endpoints (Stateless, exclude CSRF for mobile/Ionic client)
 // ============================================================
 Route::prefix('openai')->withoutMiddleware([Csrf::class])->group(function () {
     Route::post('transcribe', [OpenAIController::class, 'transcribe']);
