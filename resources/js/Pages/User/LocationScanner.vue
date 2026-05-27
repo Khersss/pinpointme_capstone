@@ -2984,30 +2984,34 @@ const processAudioTranscription = async (audioBlob) => {
             
             // Save form data after AI extraction
             saveFormData();
+
+            // Make the transcript visible immediately, then continue enrichment in the background.
+            showNotification('🎤 Voice transcribed. Refining location details...', 'success');
+            scrollToEmergencyForm();
             
             // Step 5: If no location found locally, try API extraction as fallback
             if (!locationResult.hasLocation) {
-                try {
-                    const fields = await extractFieldsAndInferLocation(transcript);
-                    if (fields && fields.location_inference) {
-                        await applyLocationInference(fields.location_inference);
-                    } else {
+                void extractFieldsAndInferLocation(transcript)
+                    .then(async (fields) => {
+                        if (fields && fields.location_inference) {
+                            await applyLocationInference(fields.location_inference);
+                        } else {
+                            showNotification(
+                                '🎤 Voice recorded! Please select your location manually or say it more clearly.',
+                                'warning'
+                            );
+                        }
+                    })
+                    .catch(() => {
+                        console.log('API extraction failed, using local extraction only');
                         showNotification(
-                            '🎤 Voice recorded! Please select your location manually or say it more clearly.',
-                            'warning'
+                            '🎤 Voice recorded! Please select your location from the dropdown.',
+                            'info'
                         );
-                    }
-                } catch (apiError) {
-                    console.log('API extraction failed, using local extraction only');
-                    showNotification(
-                        '🎤 Voice recorded! Please select your location from the dropdown.',
-                        'info'
-                    );
-                }
+                    });
+            } else {
+                showNotification('🎤 Voice recorded and location detected.', 'success');
             }
-            
-            // Scroll to form after processing
-            scrollToEmergencyForm();
             
         } else {
             showNotification('No speech detected. Please try again.', 'warning');

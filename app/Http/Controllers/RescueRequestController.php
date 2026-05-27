@@ -7,12 +7,12 @@ use App\Models\Floor;
 use App\Models\Room;
 use App\Models\RescueRequest;
 use App\Services\PushNotificationService;
+use App\Services\TexbeeSmsService;
 use App\Services\TranslationService;
 use App\Support\VonagePhone;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Schema;
@@ -228,7 +228,7 @@ class RescueRequestController extends Controller
     }
 
     /**
-     * Send emergency contact SMS using Infobip.
+    * Send emergency contact SMS using Texbee.
      *
      * @param RescueRequest $rescueRequest
      * @return void
@@ -248,12 +248,10 @@ class RescueRequestController extends Controller
                 return;
             }
 
-            $apiKey = config('services.infobip.key') ?: env('INFOBIP_API_KEY');
-            $baseUrl = rtrim(config('services.infobip.base_url') ?: env('INFOBIP_BASE_URL', 'https://l2m59r.api.infobip.com'), '/');
-            $sender = config('services.infobip.sender') ?: env('INFOBIP_SENDER', 'PinPointMe');
+            $smsService = app(TexbeeSmsService::class);
 
-            if (empty($apiKey) || empty($baseUrl) || empty($sender)) {
-                Log::error('Infobip credentials are missing; SMS not sent.', [
+            if (empty(config('services.texbee.key')) || empty(config('services.texbee.base_url')) || empty(config('services.texbee.device_id'))) {
+                Log::error('Texbee credentials are missing; SMS not sent.', [
                     'rescue_code' => $rescueRequest->rescue_code,
                 ]);
                 return;
@@ -261,7 +259,7 @@ class RescueRequestController extends Controller
 
             $normalizedPhone = VonagePhone::normalizeToE164($requester->emergency_contact_phone);
             if (!$normalizedPhone) {
-                Log::error('Invalid emergency contact phone number for Infobip SMS.', [
+                Log::error('Invalid emergency contact phone number for Texbee SMS.', [
                     'rescue_code' => $rescueRequest->rescue_code,
                     'user_id' => $rescueRequest->user_id ?? null,
                     'phone' => $requester->emergency_contact_phone,
@@ -289,40 +287,26 @@ class RescueRequestController extends Controller
                 "Urgency: {$urgency} ({$mobility})\n" .
                 "Injuries: {$injuries}";
 
-            $payload = [
-                'messages' => [[
-                    'from' => $sender,
-                    'destinations' => [[
-                        'to' => ltrim($normalizedPhone, '+'),
-                    ]],
-                    'text' => $message,
-                ]],
-            ];
+            $result = $smsService->send($normalizedPhone, $message);
 
-            $response = Http::withHeaders([
-                'Authorization' => 'App ' . $apiKey,
-                'Accept' => 'application/json',
-            ])
-                ->asJson()
-                ->post($baseUrl . '/sms/2/text/advanced', $payload);
-
-            if ($response->failed()) {
-                Log::error('Infobip SMS failed', [
+            if (!$result['success']) {
+                Log::error('Texbee SMS failed', [
                     'rescue_code' => $rescueRequest->rescue_code,
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                    'payload' => $payload,
+                    'status' => $result['status'],
+                    'body' => $result['body'],
+                    'payload' => $result['payload'],
+                    'error' => $result['error'],
                 ]);
                 return;
             }
 
-            Log::info('Infobip SMS sent to emergency contact', [
+            Log::info('Texbee SMS sent to emergency contact', [
                 'rescue_code' => $rescueRequest->rescue_code,
                 'recipient' => $normalizedPhone,
-                'sender' => $sender,
-                'status' => $response->status(),
-                'response_body' => $response->body(),
-                'response_headers' => $response->headers(),
+                'status' => $result['status'],
+                'response_body' => $result['body'],
+                'response_headers' => $result['headers'],
+                'payload' => $result['payload'],
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to send emergency contact SMS', [

@@ -58,10 +58,11 @@ return [
         'sms_from' => env('VONAGE_SMS_FROM', 'PinPointMe'),
     ],
 
-    'infobip' => [
-        'base_url' => env('INFOBIP_BASE_URL', 'https://l2m59r.api.infobip.com'),
-        'key' => env('INFOBIP_API_KEY'),
-        'sender' => env('INFOBIP_SENDER', 'PinPointMe'),
+    'texbee' => [
+        'base_url' => env('TEXBEE_BASE_URL', 'https://api.textbee.dev/api/v1'),
+        'key' => env('TEXBEE_API_KEY'),
+        'device_id' => env('TEXBEE_DEVICE_ID'),
+        'auth_header' => env('TEXBEE_AUTH_HEADER', 'x-api-key'),
     ],
 
     // Firebase Configuration
