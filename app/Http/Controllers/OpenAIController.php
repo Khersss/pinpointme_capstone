@@ -11,6 +11,8 @@ use App\Models\Building;
 use App\Models\Floor;
 use App\Models\Room;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class OpenAIController extends Controller
 {
@@ -38,7 +40,7 @@ class OpenAIController extends Controller
 
         if ($resp->failed()) {
             Log::warning('Gemini API error', ['model' => $modelName, 'status' => $resp->status(), 'body' => $resp->body()]);
-            abort($resp->status(), $resp->body());
+            throw new HttpException($resp->status(), $resp->body());
         }
 
         return $resp->json();
@@ -62,12 +64,19 @@ class OpenAIController extends Controller
             } catch (\Throwable $e) {
                 $lastError = $e;
                 $message = $e->getMessage();
-                if (!str_contains($message, '404') && !str_contains($message, 'not found')) {
+                $status = $e instanceof HttpExceptionInterface ? $e->getStatusCode() : $e->getCode();
+                $shouldFallback = in_array($status, [404, 429, 500, 503, 504], true)
+                    || str_contains($message, 'not found')
+                    || str_contains($message, 'high demand')
+                    || str_contains($message, 'rate limit');
+
+                if (!$shouldFallback) {
                     throw $e;
                 }
 
                 Log::warning('Gemini model fallback triggered', [
                     'model' => $model,
+                    'status' => $status,
                     'error' => $message,
                 ]);
             }
