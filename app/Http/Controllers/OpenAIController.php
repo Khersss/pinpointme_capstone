@@ -18,11 +18,45 @@ class OpenAIController extends Controller
 {
     private string $apiBase = 'https://generativelanguage.googleapis.com/v1beta';
 
-    private array $modelCandidates = ['gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+    private array $modelCandidates = ['gemini-2.5-flash-lite'];
+
+    private function envFileValue(string $name): ?string
+    {
+        $envPath = base_path('.env');
+
+        if (!is_file($envPath)) {
+            return null;
+        }
+
+        $contents = file_get_contents($envPath);
+        if ($contents === false) {
+            return null;
+        }
+
+        if (!preg_match('/^' . preg_quote($name, '/') . '\s*=\s*(.*)$/m', $contents, $matches)) {
+            return null;
+        }
+
+        $value = trim($matches[1]);
+        if ($value === '') {
+            return '';
+        }
+
+        if (preg_match('/^(["\'])(.*)\1$/', $value, $quoted)) {
+            return stripcslashes($quoted[2]);
+        }
+
+        return $value;
+    }
 
     private function apiKey(): string
     {
         $key = config('services.gemini.key') ?: env('GEMINI_API_KEY');
+
+        if (!$key) {
+            $key = $this->envFileValue('GEMINI_API_KEY');
+        }
+
         if (!$key) {
             abort(Response::HTTP_INTERNAL_SERVER_ERROR, 'Missing Gemini API key');
         }
@@ -30,9 +64,16 @@ class OpenAIController extends Controller
         return $key;
     }
 
+    private function geminiModel(): string
+    {
+        return $this->envFileValue('GEMINI_MODEL')
+            ?: config('services.gemini.model')
+            ?: 'gemini-2.5-flash';
+    }
+
     private function geminiJson(array $payload, int $timeout = 60, ?string $model = null): array
     {
-        $modelName = $model ?: config('services.gemini.model', $this->modelCandidates[0]);
+        $modelName = $model ?: $this->geminiModel();
         $resp = Http::timeout($timeout)
             ->acceptJson()
             ->asJson()
@@ -49,7 +90,7 @@ class OpenAIController extends Controller
     private function geminiJsonWithFallbacks(array $payload, int $timeout = 60): array
     {
         $models = array_values(array_unique(array_merge(
-            [config('services.gemini.model')],
+            [$this->geminiModel()],
             $this->modelCandidates
         )));
         $lastError = null;
@@ -158,8 +199,7 @@ class OpenAIController extends Controller
     // POST /openai/transcribe (multipart: file|audio) or JSON { audio_path }
     public function transcribe(Request $request)
     {
-        $apiKey = config('services.gemini.key') ?: env('GEMINI_API_KEY');
-        if (!$apiKey) {
+        if (!$this->apiKey()) {
             Log::error('Gemini API key not configured');
             return response()->json([
                 'error' => 'api_key_missing',
@@ -193,7 +233,7 @@ class OpenAIController extends Controller
             return response()->json(['error' => 'audio_not_found', 'detail' => $path], 404);
         }
 
-        $activeModel = config('services.gemini.model', $this->modelCandidates[0]);
+        $activeModel = $this->geminiModel();
 
         try {
             Log::info('Attempting transcription with Gemini');

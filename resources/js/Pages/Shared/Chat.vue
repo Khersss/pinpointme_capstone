@@ -431,21 +431,10 @@
                             <v-divider class="my-3"></v-divider>
                             <div class="d-flex gap-2">
                                 <v-btn 
-                                    v-if="rescueRequest" 
-                                    variant="outlined" 
-                                    color="primary" 
-                                    size="small"
-                                    class="flex-1"
-                                    @click="viewRescue"
-                                >
-                                    <v-icon start>mdi-eye</v-icon>
-                                    View Details
-                                </v-btn>
-                                <v-btn 
                                     variant="outlined" 
                                     color="grey" 
                                     size="small"
-                                    :class="rescueRequest ? 'flex-1' : 'w-100'"
+                                    class="w-100"
                                     @click="showPhotoViewer = false"
                                 >
                                     <v-icon start>mdi-close</v-icon>
@@ -1176,81 +1165,67 @@ const scrollToBottom = () => {
 };
 
 const goBack = () => {
-    // Check if there's a 'from' query parameter first (most reliable)
+    // Prefer going back in actual browser history to return to the true previous page
+    if (window.history && window.history.length > 1) {
+        try {
+            window.history.back();
+            return;
+        } catch (e) {
+            // ignore and fallthrough to route-based fallbacks
+            console.warn('history.back() failed, falling back to router navigation', e);
+        }
+    }
+
+    // If there's an explicit 'from' query param but no usable history, map to sensible pages
     const urlParams = new URLSearchParams(window.location.search);
     const from = urlParams.get('from');
-    
-    // Handle specific 'from' parameters
-    if (from === 'user-inbox') {
-        router.visit('/user/inbox?from=chat');
-        return;
-    }
-    
-    if (from === 'rescuer-chats') {
-        router.visit('/rescuer/chats?from=chat');
-        return;
-    }
-    
-    if (from === 'dashboard-inprogress') {
-        router.visit('/rescuer/dashboard?tab=inProgress');
-        return;
-    } 
-    
-    if (from === 'dashboard-pending') {
-        router.visit('/rescuer/dashboard?tab=pending');
-        return;
-    }
-    
-    if (from === 'dashboard-rescued') {
-        router.visit('/rescuer/dashboard?tab=rescued');
-        return;
-    }
-    
-    if (from === 'active-rescue' && rescueRequest.value?.id) {
-        router.visit(`/rescuer/active/${rescueRequest.value.id}`);
-        return;
-    }
-    
-    if (from === 'help-coming' && rescueRequest.value?.rescue_code) {
-        router.visit(`/user/help-coming/${rescueRequest.value.rescue_code}`);
-        return;
-    }
-    
-    // Try browser history as fallback if from parameter exists but no specific handler
-    if (from && window.history.length > 1) {
-        const referrer = document.referrer;
-        const currentOrigin = window.location.origin;
-        
-        // Only go back if referrer is from same origin
-        if (referrer && referrer.startsWith(currentOrigin)) {
-            window.history.back();
+
+    if (from) {
+        if (from === 'user-inbox') {
+            router.visit('/user/inbox?from=chat');
+            return;
+        }
+
+        if (from === 'rescuer-chats') {
+            router.visit('/rescuer/chats?from=chat');
+            return;
+        }
+
+        if (from === 'dashboard-inprogress') {
+            router.visit('/rescuer/dashboard?tab=inProgress');
+            return;
+        }
+
+        if (from === 'dashboard-pending') {
+            router.visit('/rescuer/dashboard?tab=pending');
+            return;
+        }
+
+        if (from === 'dashboard-rescued') {
+            router.visit('/rescuer/dashboard?tab=rescued');
+            return;
+        }
+
+        if (from === 'active-rescue' && rescueRequest.value?.id) {
+            router.visit(`/rescuer/active/${rescueRequest.value.id}`);
+            return;
+        }
+
+        if (from === 'help-coming' && rescueRequest.value?.rescue_code) {
+            router.visit(`/user/help-coming/${rescueRequest.value.rescue_code}`);
             return;
         }
     }
-    
-    // Final fallback to role-specific default pages
+
+    // Final safe fallback: send rescuer to chats, users to inbox (avoid forcing help-coming which may trigger completion flows)
     if (props.userRole === 'rescuer') {
         router.visit('/rescuer/chats');
     } else {
-        // For users, go back to messages/inbox first, then help-coming if available
-        if (rescueRequest.value?.rescue_code) {
-            router.visit(`/user/help-coming/${rescueRequest.value.rescue_code}`);
-        } else {
-            router.visit('/user/inbox');
-        }
+        router.visit('/user/inbox');
     }
 };
 
-const viewRescue = () => {
-    if (rescueRequest.value) {
-        if (props.userRole === 'rescuer') {
-            router.visit(`/rescuer/active/${rescueRequest.value.id}`);
-        } else {
-            // Use rescue_code for user's HelpComing page
-            router.visit(`/user/help-coming/${rescueRequest.value.rescue_code}`);
-        }
-    }
-};
+// `viewRescue` removed — View Details feature deprecated in chat profile viewer
 
 // Helper methods
 const isOwnMessage = (message) => {

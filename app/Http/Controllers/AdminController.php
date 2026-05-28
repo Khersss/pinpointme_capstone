@@ -92,16 +92,24 @@ class AdminController extends Controller
             ]);
 
         // User statistics
+        $dashboardRoles = ['student', 'faculty', 'staff', 'rescuer'];
         $userStats = [
-            'total' => User::where('role', '!=', 'admin')->where('role', '!=', 'rescuer')->count(),
+            'total' => User::whereIn('role', $dashboardRoles)->count(),
             'by_role' => [
                 'student' => User::where('role', 'student')->count(),
                 'faculty' => User::where('role', 'faculty')->count(),
                 'staff' => User::where('role', 'staff')->count(),
+                'rescuer' => User::where('role', 'rescuer')->count(),
             ]
         ];
 
-        $usersForStats = User::whereNotIn('role', ['admin', 'rescuer'])
+        $dashboardUsers = User::whereIn('role', $dashboardRoles)
+            ->orderBy('role')
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->get(['id', 'first_name', 'last_name', 'role', 'profile_picture', 'updated_at']);
+
+        $usersForStats = User::where('role', '!=', 'admin')
             ->get(['id', 'gender', 'date_of_birth']);
 
         $normalizeLabel = function ($value, string $fallback) {
@@ -166,11 +174,11 @@ class AdminController extends Controller
         if ($request->expectsJson() || $request->is('api/*')) {
             return response()->json([
                 'success' => true,
-                'data' => compact('statusCounts', 'rescuesByBuilding', 'rescuerStats', 'recentAlerts', 'userStats', 'genderStats', 'ageGroupStats')
+                'data' => compact('statusCounts', 'rescuesByBuilding', 'rescuerStats', 'recentAlerts', 'userStats', 'dashboardUsers', 'genderStats', 'ageGroupStats')
             ]);
         }
 
-        return Inertia::render('Admin/Dashboard', compact('statusCounts', 'rescuesByBuilding', 'rescuerStats', 'recentAlerts', 'userStats', 'genderStats', 'ageGroupStats'));
+        return Inertia::render('Admin/Dashboard', compact('statusCounts', 'rescuesByBuilding', 'rescuerStats', 'recentAlerts', 'userStats', 'dashboardUsers', 'genderStats', 'ageGroupStats'));
     }
 
     /**

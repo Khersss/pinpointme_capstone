@@ -1246,7 +1246,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
-import { apiFetch, getProfilePictureUrl, getUnreadMessageCount, translateRescueRequest, approveSafeRequest, denySafeRequest, approveCancelRequest, denyCancelRequest } from '@/Composables/useApi';
+import { apiFetch, getProfilePictureUrl, getUnreadMessageCount, translateRescueRequest, approveSafeRequest, denySafeRequest, approveCancelRequest, denyCancelRequest, getRescueRequestById } from '@/Composables/useApi';
 import { useDarkMode } from '@/Composables/useDarkMode';
 import { useNotificationAlert } from '@/Composables/useNotificationAlert';
 import RescuerBottomNav from '@/Components/Pages/Rescuer/Menu/RescuerBottomNav.vue';
@@ -1469,9 +1469,10 @@ const fetchRescueDetails = async () => {
             return;
         }
 
-        const response = await apiFetch(`/api/rescue-requests/${id}`, { method: 'GET' });
-        console.log('Rescue details response:', response); // Debug log
-        
+        // Use the composable helper which has retries/timeouts configured
+        const response = await getRescueRequestById(id);
+        console.log('Rescue details response:', response);
+
         // Handle both wrapped and direct response formats
         const data = response.data || response;
         

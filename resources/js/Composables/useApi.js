@@ -364,7 +364,7 @@ export async function transcribeAudio(audioBlob) {
     const form = new FormData();
     form.append('file', audioBlob, filename);
     form.append('audio', audioBlob, filename);
-    const data = await apiFetch('/openai/transcribe', { method: 'POST', body: form, timeout: 30000 });
+    const data = await apiFetch('/openai/transcribe', { method: 'POST', body: form, timeout: 60000 });
     if (typeof data === 'string') return data;
     return data.text || data.transcript || data.transcription || '';
 }

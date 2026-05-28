@@ -224,6 +224,7 @@
                                         </template>
                                     </v-list-item>
                                 </v-list>
+                                                   <!-- IF NONE-->                   
                                 <v-alert v-else type="info" variant="tonal" rounded="lg">
                                     <v-icon start>mdi-information</v-icon>
                                     No rescue data available for this period.
@@ -277,6 +278,85 @@
                                             </v-avatar>
                                             <h4 class="text-h5 font-weight-bold text-teal">{{ userStats.by_role?.staff || 0 }}</h4>
                                             <p class="text-caption text-grey mb-0">Staff</p>
+                                        </v-card>
+                                    </v-col>
+                                </v-row>
+
+                                <v-row class="text-center mt-2">
+                                    <v-col cols="12">
+                                        <v-card class="pa-3 bg-orange-lighten-5" rounded="lg" flat>
+                                            <v-avatar color="orange" size="36" class="mb-2">
+                                                <v-icon color="white" size="20">mdi-lifebuoy</v-icon>
+                                            </v-avatar>
+                                            <h4 class="text-h5 font-weight-bold text-orange">{{ userStats.by_role?.rescuer || 0 }}</h4>
+                                            <p class="text-caption text-grey mb-0">Rescuers</p>
+                                        </v-card>
+                                    </v-col>
+                                </v-row>
+
+                                <v-divider class="my-4"></v-divider>
+
+                                <div class="d-flex align-center justify-space-between mb-3">
+                                    <div>
+                                        <h3 class="text-subtitle-1 font-weight-bold mb-0">Profile Pictures</h3>
+                                        <p class="text-caption text-grey mb-0">Latest avatars across student, faculty, staff, and rescuer accounts</p>
+                                    </div>
+                                    <v-chip size="small" variant="tonal" color="primary">
+                                        {{ dashboardUsers.length }} users
+                                    </v-chip>
+                                </div>
+
+                                <v-row dense>
+                                    <v-col
+                                        v-for="roleCard in dashboardRoleCards"
+                                        :key="roleCard.role"
+                                        cols="12"
+                                        sm="6"
+                                        lg="3"
+                                    >
+                                        <v-card class="pa-3 h-100 role-photo-card" rounded="lg" variant="outlined">
+                                            <div class="d-flex align-center justify-space-between mb-3">
+                                                <div class="d-flex align-center">
+                                                    <v-avatar :color="roleCard.color" size="28" class="mr-2">
+                                                        <v-icon color="white" size="16">{{ roleCard.icon }}</v-icon>
+                                                    </v-avatar>
+                                                    <div>
+                                                        <div class="text-body-2 font-weight-bold">{{ roleCard.label }}</div>
+                                                        <div class="text-caption text-grey">{{ roleCard.count }} total</div>
+                                                    </div>
+                                                </div>
+                                                <v-chip :color="roleCard.color" size="x-small" variant="flat">
+                                                    {{ roleCard.users.length }} photos
+                                                </v-chip>
+                                            </div>
+
+                                            <div v-if="roleCard.users.length > 0" class="d-flex flex-wrap gap-2 role-avatar-grid">
+                                                <v-tooltip
+                                                    v-for="user in roleCard.users"
+                                                    :key="user.id"
+                                                    location="top"
+                                                >
+                                                    <template v-slot:activator="{ props: tooltipProps }">
+                                                        <v-avatar
+                                                            v-bind="tooltipProps"
+                                                            :color="getRoleChipColor(user.role)"
+                                                            size="40"
+                                                            class="role-avatar"
+                                                        >
+                                                            <v-img
+                                                                v-if="user.profile_picture"
+                                                                :src="getUserAvatarUrl(user)"
+                                                                cover
+                                                            />
+                                                            <span v-else class="text-white font-weight-medium text-caption">{{ getUserInitials(user) }}</span>
+                                                        </v-avatar>
+                                                    </template>
+                                                    <span>{{ user.first_name }} {{ user.last_name }} - {{ roleCard.label }}</span>
+                                                </v-tooltip>
+                                            </div>
+                                            <v-alert v-else type="info" variant="tonal" density="compact" rounded="lg" class="mb-0">
+                                                No profile photos yet.
+                                            </v-alert>
                                         </v-card>
                                     </v-col>
                                 </v-row>
@@ -494,7 +574,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useDisplay } from 'vuetify';
 import AdminAppBar from '@/Components/AdminAppBar.vue';
 
-import { getAllRescueRequests } from '@/Composables/useApi';
+import { getAllRescueRequests, getProfilePictureUrl } from '@/Composables/useApi';
 
 const { mobile } = useDisplay();
 const isMobile = computed(() => mobile.value);
@@ -519,7 +599,11 @@ const props = defineProps({
     },
     userStats: {
         type: Object,
-        default: () => ({ total: 0, by_role: { student: 0, faculty: 0, staff: 0 } })
+        default: () => ({ total: 0, by_role: { student: 0, faculty: 0, staff: 0, rescuer: 0 } })
+    },
+    dashboardUsers: {
+        type: Array,
+        default: () => []
     },
     genderStats: {
         type: Array,
@@ -554,6 +638,7 @@ const rescuesByBuilding = ref(props.rescuesByBuilding);
 const rescuerStats = ref(props.rescuerStats);
 const recentAlerts = ref(props.recentAlerts);
 const userStats = ref(props.userStats);
+const dashboardUsers = ref(props.dashboardUsers);
 const genderStats = ref(props.genderStats);
 const ageGroupStats = ref(props.ageGroupStats);
 
@@ -577,6 +662,7 @@ const refreshData = async () => {
             rescuerStats.value = data.data.rescuerStats;
             recentAlerts.value = data.data.recentAlerts;
             userStats.value = data.data.userStats;
+            dashboardUsers.value = data.data.dashboardUsers || [];
             genderStats.value = data.data.genderStats || [];
             ageGroupStats.value = data.data.ageGroupStats || [];
         }
@@ -622,6 +708,46 @@ const STAT_CONFIG = {
 };
 
 const statDialogConfig = computed(() => STAT_CONFIG[statDialog.value.type] || STAT_CONFIG.total);
+
+const dashboardRoleMeta = {
+    student: { label: 'Students', icon: 'mdi-school', color: 'blue' },
+    faculty: { label: 'Faculty', icon: 'mdi-human-male-board', color: 'purple' },
+    staff: { label: 'Staff', icon: 'mdi-briefcase', color: 'teal' },
+    rescuer: { label: 'Rescuers', icon: 'mdi-lifebuoy', color: 'orange' },
+};
+
+const dashboardRoleCards = computed(() => {
+    const roles = ['student', 'faculty', 'staff', 'rescuer'];
+
+    return roles.map((role) => {
+        const meta = dashboardRoleMeta[role];
+        const users = dashboardUsers.value
+            .filter((user) => user.role === role)
+            .sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
+
+        return {
+            role,
+            ...meta,
+            count: userStats.value?.by_role?.[role] || 0,
+            users,
+        };
+    });
+});
+
+const getUserInitials = (user) => {
+    const firstName = user?.first_name?.trim?.() || '';
+    const lastName = user?.last_name?.trim?.() || '';
+    const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.trim();
+    return initials || 'U';
+};
+
+const getUserAvatarUrl = (user) => {
+    return getProfilePictureUrl(user?.profile_picture, user?.updated_at);
+};
+
+const getRoleChipColor = (role) => {
+    return dashboardRoleMeta[role]?.color || 'grey';
+};
 
 const openStatDialog = async (type) => {
     statDialog.value = { show: true, type, loading: true };
@@ -895,6 +1021,21 @@ const formatDate = (dateString) => {
     flex-shrink: 0;
 }
 
+.role-photo-card {
+    min-height: 180px;
+}
+
+.role-avatar-grid {
+    max-height: 160px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.role-avatar {
+    border: 2px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
 /* Mobile Specific Styles */
 @media (max-width: 600px) {
     .page-header {
@@ -909,6 +1050,10 @@ const formatDate = (dateString) => {
     .time-filter-select {
         width: 100%;
         max-width: 100%;
+    }
+
+    .role-avatar-grid {
+        max-height: 220px;
     }
 }
 

@@ -36,6 +36,7 @@ class CheckProfileCompletion
             'user/profile/*',
             'api/user',
             'api/users/*',
+            'api/accept-terms',
             'logout',
             'change-password',
             'terms-acceptance',

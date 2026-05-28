@@ -1,0 +1,1 @@
+﻿{"error":"api_key_missing","message":"Gemini API key is not configured. Please add GEMINI_API_KEY to your .env file."}

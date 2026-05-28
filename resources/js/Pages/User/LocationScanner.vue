@@ -861,6 +861,7 @@ const popupAlert = ref({
 // Polling interval
 let pollingInterval = null;
 const POLLING_INTERVAL = 10000; // 10 seconds
+let isPollingUpdates = false;
 
 // Track previous state for detecting changes
 const previousStatus = ref(null);
@@ -1529,6 +1530,12 @@ const startPolling = () => {
 
 // Poll for updates
 const pollForUpdates = async () => {
+    if (isPollingUpdates || isProcessingAudio.value) {
+        return;
+    }
+
+    isPollingUpdates = true;
+
     try {
         // Check for rescue status changes
         if (userData.value?.id) {
@@ -1565,6 +1572,8 @@ const pollForUpdates = async () => {
         
     } catch (error) {
         console.error('Polling error:', error);
+    } finally {
+        isPollingUpdates = false;
     }
 };
 

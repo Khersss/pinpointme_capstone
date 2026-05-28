@@ -2,7 +2,7 @@ import axios from "axios";
 
 const appUrl = import.meta.env.VITE_APP_URL
     ? `${import.meta.env.VITE_APP_URL}/api`
-    : "http://localhost:8000/api";
+    : `${window.location.origin}/api`;
 
 // Create an Axios instance
 const axiosInstance = axios.create({

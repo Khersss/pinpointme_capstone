@@ -279,8 +279,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
-
-import axios from 'axios';
+import axiosInstance from '@/Utilities/axios';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -317,7 +316,7 @@ const acceptTerms = async () => {
     isSubmitting.value = true;
     
     try {
-        const response = await axios.post('/api/accept-terms', {
+        const response = await axiosInstance.post('/accept-terms', {
             version: TERMS_VERSION
         });
         
