@@ -296,15 +296,23 @@ export async function sendSubscriptionToServer(subscription) {
             credentials: 'same-origin',
         });
 
-        const data = await response.json();
-        
-        if (data.success) {
-            console.log('[Push] Subscription saved to server');
-        } else {
-            console.error('[Push] Failed to save subscription:', data.message);
+        const responseText = await response.text();
+        let data = null;
+
+        try {
+            data = responseText ? JSON.parse(responseText) : {};
+        } catch (parseError) {
+            console.warn('[Push] Subscription server returned non-JSON response; treating 2xx as success:', responseText.slice(0, 200));
+            return response.ok;
         }
 
-        return data.success;
+        if (response.ok && data.success) {
+            console.log('[Push] Subscription saved to server');
+        } else {
+            console.error('[Push] Failed to save subscription:', data?.message || `HTTP ${response.status}`);
+        }
+
+        return response.ok && !!data.success;
     } catch (error) {
         console.error('[Push] Error sending subscription to server:', error);
         return false;

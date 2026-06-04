@@ -56,7 +56,7 @@
         <v-list>
             <v-list-item prepend-icon="mdi-view-dashboard" title="Dashboard" href="/admin/dashboard" :active="activePage === 'dashboard'" @click="closeDrawerOnMobile"></v-list-item>
             <v-list-item prepend-icon="mdi-account-group" title="Users" href="/admin/users" :active="activePage === 'users'" @click="closeDrawerOnMobile"></v-list-item>
-            <v-list-item prepend-icon="mdi-lifebuoy" title="Rescuers" href="/admin/rescuers" :active="activePage === 'rescuers'" @click="closeDrawerOnMobile"></v-list-item>
+            <v-list-item prepend-icon="mdi-lifebuoy" title="Responders" href="/admin/rescuers" :active="activePage === 'rescuers'" @click="closeDrawerOnMobile"></v-list-item>
             <v-list-item prepend-icon="mdi-office-building" title="Buildings" href="/admin/buildings" :active="activePage === 'buildings'" @click="closeDrawerOnMobile"></v-list-item>
             <v-list-item prepend-icon="mdi-file-chart" title="Reports" href="/admin/reports" :active="activePage === 'reports'" @click="closeDrawerOnMobile"></v-list-item>
             <v-list-item prepend-icon="mdi-star-half-full" title="Feedbacks" href="/admin/feedbacks" :active="activePage === 'feedbacks'" @click="closeDrawerOnMobile"></v-list-item>
@@ -467,7 +467,7 @@
                                 @click.stop="showDenyCriticalSafeDialog(notif)"
                             >
                                 <v-icon size="14">mdi-close</v-icon>
-                                <span>Deny & Send Rescuer</span>
+                                <span>Deny & Send Responder</span>
                             </button>
                         </div>
                     </div>
@@ -711,7 +711,7 @@
         <v-card rounded="lg">
             <v-card-title class="d-flex align-center pa-4 text-error">
                 <v-icon start color="error">mdi-account-cancel</v-icon>
-                Decline Rescuer Application
+                Decline Responder Application
             </v-card-title>
             <v-divider></v-divider>
             <v-card-text class="pa-4">
@@ -772,7 +772,7 @@
                 <v-btn variant="text" @click="denyCriticalSafeDialogVisible = false" :disabled="criticalSafeActionLoading">Cancel</v-btn>
                 <v-btn color="error" :loading="!!criticalSafeActionLoading" @click="handleDenyCriticalSafe">
                     <v-icon start>mdi-close</v-icon>
-                    Deny & Alert Rescuer
+                    Deny & Alert Responder
                 </v-btn>
             </v-card-actions>
         </v-card>

@@ -10,7 +10,7 @@
                             <img src="/images/Icons/ppm_logo.png" alt="PinPointMe" class="logo" />
                             <div class="logo-text">
                                 <h1>PinPointMe</h1>
-                                <p>SDCA Emergency Rescue System</p>
+                                <p>St. Dominic Medical Center Incident Response System</p>
                             </div>
                         </div>
                         
@@ -58,53 +58,68 @@
 
                                     <h3 class="section-title">1. Acceptance of Terms</h3>
                                     <p>
-                                        By accessing or using PinPointMe, you agree to be bound by these Terms and Conditions. 
-                                        PinPointMe is an emergency rescue location system developed as a capstone project for St. Dominic College of Asia (SDCA).
+                                        By accessing or using PinPointMe, you agree to be bound by these Terms and Conditions.
+                                        PinPointMe is deployed as a hospital incident tracking and response platform for St. Dominic Medical Center.
                                         If you do not agree with any part of these terms, you may not use the service.
                                     </p>
 
-                                    <h3 class="section-title">2. Service Description</h3>
-                                    <p>PinPointMe provides emergency rescue coordination services within SDCA premises, including:</p>
-                                    <ul class="terms-list">
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Location-based emergency alerts via QR code scanning</li>
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Real-time communication between users and responders</li>
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Access to emergency preventive measures and instructions</li>
-                                    </ul>
-
-                                    <h3 class="section-title">3. User Eligibility</h3>
+                                    <h3 class="section-title">2. Project Title and Objective</h3>
                                     <p>
-                                        The App is exclusively for authorized SDCA community members, including students, faculty, 
-                                        staff, and designated responders. A valid SDCA email address (@sdca.edu.ph) is required 
-                                        to access the service.
+                                        Project title: <strong>PinPointMe: A QR Code-Based Incident Tracking and Response Application for St. Dominic Medical Center</strong>.
+                                    </p>
+                                    <p>
+                                        Objective: to enhance patient safety by facilitating immediate communication between inpatients and ward responders.
                                     </p>
 
-                                    <h3 class="section-title">4. User Responsibilities</h3>
+                                    <h3 class="section-title">3. Service Description</h3>
+                                    <p>PinPointMe provides incident reporting and response coordination services within hospital wards, including:</p>
+                                    <ul class="terms-list">
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> QR-based ward location detection for faster reporting</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Immediate incident details sent to ward responders</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Real-time communication between patients/companions and clinical personnel</li>
+                                    </ul>
+
+                                    <h3 class="section-title">4. Scope and User Roles</h3>
+                                    <p>PinPointMe is intended for the following hospital users:</p>
+                                    <ul class="terms-list">
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Primary Users: Patients and Visitors</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Responders: Clinical Personnel</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Administrators: Information and Communications Technology (ICT) Department of the Hospital</li>
+                                    </ul>
+
+                                    <h3 class="section-title">5. User Eligibility</h3>
+                                    <p>
+                                        The App is available to authorized hospital users.
+                                        A valid email address is required to access the service. External email addresses are supported.
+                                    </p>
+
+                                    <h3 class="section-title">6. User Responsibilities</h3>
                                     <p>Users agree to:</p>
                                     <ul class="terms-list">
                                         <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Provide accurate and truthful information during registration</li>
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Use emergency features strictly for genuine emergency situations</li>
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Refrain from misusing or abusing the rescue request system</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Use incident reporting features strictly for real patient or ward incidents</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Refrain from misusing or abusing the incident request system</li>
                                         <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Maintain the security and confidentiality of their login credentials</li>
                                     </ul>
 
-                                    <h3 class="section-title">5. Prohibited Use</h3>
+                                    <h3 class="section-title">7. Prohibited Use</h3>
                                     <p>Users are prohibited from:</p>
                                     <ul class="terms-list warning">
-                                        <li><v-icon size="16" color="#C62828">mdi-close-circle</v-icon> Submitting false emergency reports</li>
+                                        <li><v-icon size="16" color="#C62828">mdi-close-circle</v-icon> Submitting false incident reports</li>
                                         <li><v-icon size="16" color="#C62828">mdi-close-circle</v-icon> Attempting to gain unauthorized access to the system</li>
                                         <li><v-icon size="16" color="#C62828">mdi-close-circle</v-icon> Interfering with the proper functioning of the service</li>
                                         <li><v-icon size="16" color="#C62828">mdi-close-circle</v-icon> Using the service for any unlawful purpose</li>
                                     </ul>
 
-                                    <h3 class="section-title">6. Limitation of Liability</h3>
+                                    <h3 class="section-title">8. Limitation of Liability</h3>
                                     <p>
-                                        PinPointMe and SDCA shall not be liable for any damages arising from the use or inability 
+                                        PinPointMe and St. Dominic Medical Center shall not be liable for any damages arising from the use or inability
                                         to use the service. This App is a supplementary academic prototype and does not replace 
                                         official emergency services. Its performance is subject to mobile hardware specifications 
                                         and network connectivity.
                                     </p>
 
-                                    <h3 class="section-title">7. Governing Law</h3>
+                                    <h3 class="section-title">9. Governing Law</h3>
                                     <p>
                                         These terms shall be governed by the laws of the Republic of the Philippines, 
                                         including the Data Privacy Act of 2012 (RA 10173).
@@ -132,8 +147,8 @@
 
                                     <h3 class="section-title">1. Introduction</h3>
                                     <p>
-                                        St. Dominic College of Asia ("SDCA") is committed to protecting your privacy. 
-                                        This Privacy Policy explains how we collect, use, and protect your personal information 
+                                        St. Dominic Medical Center is committed to protecting your privacy.
+                                        This Privacy Policy explains how we collect, use, and protect your personal information
                                         through PinPointMe in compliance with the <strong>Data Privacy Act of 2012 (Republic Act No. 10173)</strong>.
                                     </p>
 
@@ -144,9 +159,9 @@
                                         <strong>Personal Information:</strong>
                                     </div>
                                     <ul class="terms-list compact">
-                                        <li>Full name and SDCA email address</li>
-                                        <li>Student/Faculty/Staff ID number</li>
-                                        <li>Institutional role</li>
+                                        <li>Full name and email address</li>
+                                        <li>Patient/visitor or personnel identification details (when applicable)</li>
+                                        <li>User role in the hospital incident workflow</li>
                                     </ul>
 
                                     <div class="info-category">
@@ -164,30 +179,30 @@
                                     </div>
                                     <ul class="terms-list compact">
                                         <li>Location data recorded during active QR code scans</li>
-                                        <li>Rescue request history</li>
+                                        <li>Incident request history</li>
                                     </ul>
 
                                     <h3 class="section-title">3. How We Use Your Information</h3>
                                     <p>Your information is used to:</p>
                                     <ul class="terms-list">
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Facilitate emergency rescue coordination</li>
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Enable location identification via QR code logs during emergencies</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Facilitate ward incident response coordination</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Enable location identification via QR code logs during incidents</li>
                                         <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Allow direct communication between users and responders</li>
-                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Comply with institutional safety protocols</li>
+                                        <li><v-icon size="16" color="#185D33">mdi-check-circle</v-icon> Comply with hospital safety and response protocols</li>
                                     </ul>
 
                                     <h3 class="section-title">4. Data Sharing and Disclosure</h3>
                                     <p>Your information may be shared with:</p>
                                     <ul class="terms-list compact">
-                                        <li>SDCA Security and Safety Office</li>
-                                        <li>Authorized rescue personnel (RCYC)</li>
-                                        <li>Emergency responders during active incidents</li>
+                                        <li>Authorized clinical personnel and ward responders</li>
+                                        <li>Hospital ICT administrators for system operations and audit trails</li>
+                                        <li>Relevant hospital emergency units during active incidents</li>
                                     </ul>
 
                                     <h3 class="section-title">5. Data Retention</h3>
                                     <p>
-                                        Personal data is retained for the duration of the study and your enrollment or employment 
-                                        at SDCA. Rescue records may be kept for safety analysis and incident documentation.
+                                        Personal data is retained based on hospital policy and legal retention requirements.
+                                        Incident records may be kept for patient safety review, quality assurance, and incident documentation.
                                     </p>
 
                                     <h3 class="section-title">6. Your Rights</h3>

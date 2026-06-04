@@ -103,7 +103,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 
 const WIZARD_COMPLETED_KEY = 'pinpointme_wizard_completed';
-const WIZARD_VERSION = '2'; // Increment to show wizard again after major updates - v2 adds profile info requirement
+const WIZARD_VERSION = '3'; // v3 updates guidance for hospital ward incident reporting flow
 
 const props = defineProps({
     /** Override to force-show the wizard (e.g. from help button) */
@@ -120,7 +120,7 @@ const steps = [
     {
         icon: 'mdi-hand-wave',
         title: 'Welcome to PinPointMe! 🎉',
-        description: 'Your trusted campus emergency rescue system. Let us give you a quick tour of the app so you know exactly what to do in an emergency.',
+        description: 'Your hospital ward incident reporting companion. Let us give you a quick tour so you know exactly what to do when a patient incident happens.',
         tip: 'This tour only shows once. You can replay it anytime from the Help button.',
         color: 'linear-gradient(135deg, #3674B5 0%, #13294B 100%)',
         target: null, // Centered, no highlight
@@ -128,8 +128,8 @@ const steps = [
     {
         icon: 'mdi-account-edit',
         title: 'Update Your Information First! ⚠️',
-        description: 'Before using the rescue system, please complete your Personal, Medical, and Emergency Contact information in your profile. This helps rescuers identify you and provide appropriate assistance during emergencies.',
-        tip: 'Go to your Profile → Edit your Personal Info, Medical Info, and Emergency Contacts before creating a rescue report.',
+        description: 'Before using the incident system, please complete your Personal, Medical, and Emergency Contact information in your profile. This helps ward responders identify you and provide appropriate assistance quickly.',
+        tip: 'Go to your Profile -> Edit your Personal Info, Medical Info, and Emergency Contacts before creating an incident report.',
         color: 'linear-gradient(135deg, #E65100 0%, #FF9800 100%)',
         target: '[data-wizard="profile"]',
     },
@@ -144,23 +144,23 @@ const steps = [
     {
         icon: 'mdi-qrcode-scan',
         title: 'Scan QR Code',
-        description: 'Tap this Scan button to scan a QR code posted in your room. This instantly detects your building, floor, and room location.',
+        description: 'Tap this Scan button to scan a QR code posted in the ward. This instantly detects your building, floor, and ward/room location.',
         tip: 'Long-press for Voice Input or Manual Input options!',
         color: 'linear-gradient(135deg, #3674B5 0%, #4A90E2 100%)',
         target: '[data-wizard="scan"]',
     },
     {
         icon: 'mdi-ambulance',
-        title: 'Request Rescue',
-        description: 'After your location is set, scroll down to this emergency form — fill in the details, urgency level, and injuries — then tap "Request Rescue" to alert the team.',
-        tip: 'Include as much detail as possible to help rescuers prepare.',
+        title: 'Report Incident',
+        description: 'After your location is set, scroll down to the incident form, fill in details and urgency, then submit to alert ward responders immediately.',
+        tip: 'Include clear details so nurses and clinical responders can prepare before arrival.',
         color: 'linear-gradient(135deg, #b71c1c 0%, #e53935 100%)',
         target: '#emergency-form-section',
     },
     {
         icon: 'mdi-message-text',
         title: 'Messages',
-        description: 'Once a rescuer is assigned, a chat opens automatically. Tap this Messages button to view all your conversations, share photos, and send voice notes.',
+        description: 'Once a responder is assigned, a chat opens automatically. Tap this Messages button to view all conversations, share photos, and send voice notes.',
         tip: 'A badge appears here when you have unread messages.',
         color: 'linear-gradient(135deg, #1565C0 0%, #42A5F5 100%)',
         target: '[data-wizard="messages"]',
@@ -168,7 +168,7 @@ const steps = [
     {
         icon: 'mdi-bell',
         title: 'Notifications',
-        description: 'Tap the bell icon to see your notifications — rescue status updates, new messages, and important alerts all appear here.',
+        description: 'Tap the bell icon to see incident status updates, new messages, and important alerts.',
         tip: 'Allow browser notifications for sound alerts even when you\'re on a different page.',
         color: 'linear-gradient(135deg, #DFA92C 0%, #FBC02D 100%)',
         target: '[data-wizard="notifications"]',
@@ -184,23 +184,23 @@ const steps = [
     {
         icon: 'mdi-history',
         title: 'History',
-        description: 'Tap History to view your past location scans and rescue records. Keep track of everything that happened.',
-        tip: 'Use this to review your past emergency requests.',
+        description: 'Tap History to view your past location scans and incident records. Keep track of what happened.',
+        tip: 'Use this to review your past incident requests and outcomes.',
         color: 'linear-gradient(135deg, #6A1B9A 0%, #AB47BC 100%)',
         target: '[data-wizard="history"]',
     },
     {
         icon: 'mdi-account-circle',
         title: 'Your Profile',
-        description: 'Tap your avatar and name to access your profile settings. Here you can update your Personal Info, Medical Info, Emergency Contacts, and account settings.',
-        tip: 'Keeping your information updated ensures rescuers can assist you effectively.',
+        description: 'Tap your avatar and name to access your profile settings. Here you can update Personal Info, Medical Info, Emergency Contacts, and account settings.',
+        tip: 'Keeping your information updated ensures responders can assist you effectively.',
         color: 'linear-gradient(135deg, #13294B 0%, #3674B5 100%)',
         target: '[data-wizard="profile"]',
     },
     {
         icon: 'mdi-rocket-launch',
         title: 'You\'re All Set!',
-        description: 'You now know how to use PinPointMe. In an emergency, stay calm, scan or enter your location, and request rescue. Help is always on the way!',
+        description: 'You now know how to use PinPointMe. During a ward incident, stay calm, scan or enter your location, submit the incident details, and wait for responders.',
         tip: null,
         color: 'linear-gradient(135deg, #3674B5 0%, #13294B 100%)',
         target: null, // Centered, no highlight

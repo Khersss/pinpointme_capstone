@@ -58,7 +58,7 @@
                     <v-row no-gutters class="text-center py-2 py-sm-3 stats-row">
                         <v-col cols="4">
                             <div class="text-h6 text-sm-h5 font-weight-bold text-success">{{ stats.rescued }}</div>
-                            <div class="text-caption text-grey">Rescued</div>
+                            <div class="text-caption text-grey">Assisted</div>
                         </v-col>
                         <v-divider vertical></v-divider>
                         <v-col cols="4">
@@ -152,20 +152,18 @@
                                 <v-col cols="12">
                                     <v-text-field
                                         v-model="editData.id_number"
-                                        :class="{ 'required-error': missingMap.id_number }"
-                                        label="ID Number *"
-                                        :rules="[rules.requiredField('ID Number'), rules.idNumber]"
+                                        label="ID Number (Optional)"
+                                        :rules="[rules.idNumber]"
                                         variant="outlined"
                                         density="comfortable"
                                         hide-details="auto"
                                         class="mb-3 mobile-input"
                                         prepend-inner-icon="mdi-card-account-details-outline"
                                         placeholder="Enter 9-digit ID number"
-                                        :hint="isValidIdNumber ? (editData.id_number.startsWith('20') ? '✓ Student ID detected' : '✓ Faculty/Staff ID detected') : '9-digit ID number'"
+                                        :hint="editData.id_number ? (isValidIdNumber ? (editData.id_number.startsWith('20') ? '✓ Student ID detected' : '✓ Faculty/Staff ID detected') : '9-digit ID number') : 'Optional for patient/visitor accounts'"
                                         persistent-hint
                                         maxlength="9"
                                         @input="(e) => { formatIdNumber(); onFieldInput('id_number'); }"
-                                        required
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="12" sm="6">
@@ -1395,7 +1393,6 @@ const requiredFieldLabels = {
     first_name: 'First Name',
     last_name: 'Last Name',
     phone_number: 'Phone Number',
-    id_number: 'ID Number',
     gender: 'Gender',
     date_of_birth: 'Date of Birth',
 };
@@ -1479,7 +1476,7 @@ const rules = {
     },
     // ID Number validation - exactly 9 digits, no letters, and enhanced security
     idNumber: (v) => {
-        if (!v) return 'ID Number is required';
+        if (!v) return true;
         
         // Must be exactly 9 digits, no letters or special characters
         const idRegex = /^\d{9}$/;
@@ -1877,7 +1874,7 @@ const formatStatus = (status) => {
         assigned: 'Assigned',
         en_route: 'En Route',
         on_scene: 'On Scene',
-        rescued: 'Rescued',
+        rescued: 'Assisted',
         safe: 'Safe',
         cancelled: 'Cancelled',
     };
@@ -1934,10 +1931,13 @@ const saveProfile = async () => {
             first_name: editData.first_name,
             last_name: editData.last_name,
             phone_number: editData.phone_number,
-            id_number: editData.id_number,
             gender: editData.gender,
             date_of_birth: editData.date_of_birth,
         };
+
+        if (editData.id_number) {
+            updateData.id_number = editData.id_number;
+        }
 
         // Include role determination based on ID number
         if (editData.id_number && isValidIdNumber.value) {

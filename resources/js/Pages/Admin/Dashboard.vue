@@ -137,7 +137,7 @@
                                 <v-avatar color="primary" size="40" class="mr-3">
                                     <v-icon color="white">mdi-lifebuoy</v-icon>
                                 </v-avatar>
-                                <span class="font-weight-bold">Rescuer Status Overview</span>
+                                <span class="font-weight-bold">Responder Status Overview</span>
                             </v-card-title>
                             <v-divider></v-divider>
                             <v-card-text class="pa-4">
@@ -148,7 +148,7 @@
                                                 <v-icon color="white" size="28">mdi-account-group</v-icon>
                                             </v-avatar>
                                             <h3 class="text-h4 font-weight-bold text-primary">{{ rescuerStats.total }}</h3>
-                                            <p class="text-grey text-body-2 mb-0">Total Rescuers</p>
+                                            <p class="text-grey text-body-2 mb-0">Total Responders</p>
                                         </div>
                                     </v-col>
                                     <v-col cols="6" sm="3">
@@ -166,7 +166,7 @@
                                                 <v-icon color="white" size="28">mdi-run-fast</v-icon>
                                             </v-avatar>
                                             <h3 class="text-h4 font-weight-bold text-warning">{{ rescuerStats.on_rescue }}</h3>
-                                            <p class="text-grey text-body-2 mb-0">On Rescue</p>
+                                            <p class="text-grey text-body-2 mb-0">On Response</p>
                                         </div>
                                     </v-col>
                                     <v-col cols="6" sm="3">
@@ -289,7 +289,7 @@
                                                 <v-icon color="white" size="20">mdi-lifebuoy</v-icon>
                                             </v-avatar>
                                             <h4 class="text-h5 font-weight-bold text-orange">{{ userStats.by_role?.rescuer || 0 }}</h4>
-                                            <p class="text-caption text-grey mb-0">Rescuers</p>
+                                            <p class="text-caption text-grey mb-0">Responders</p>
                                         </v-card>
                                     </v-col>
                                 </v-row>
@@ -299,7 +299,7 @@
                                 <div class="d-flex align-center justify-space-between mb-3">
                                     <div>
                                         <h3 class="text-subtitle-1 font-weight-bold mb-0">Profile Pictures</h3>
-                                        <p class="text-caption text-grey mb-0">Latest avatars across student, faculty, staff, and rescuer accounts</p>
+                                        <p class="text-caption text-grey mb-0">Latest avatars across student, faculty, staff, and responder accounts</p>
                                     </div>
                                     <v-chip size="small" variant="tonal" color="primary">
                                         {{ dashboardUsers.length }} users
@@ -713,7 +713,7 @@ const dashboardRoleMeta = {
     student: { label: 'Students', icon: 'mdi-school', color: 'blue' },
     faculty: { label: 'Faculty', icon: 'mdi-human-male-board', color: 'purple' },
     staff: { label: 'Staff', icon: 'mdi-briefcase', color: 'teal' },
-    rescuer: { label: 'Rescuers', icon: 'mdi-lifebuoy', color: 'orange' },
+    rescuer: { label: 'Responders', icon: 'mdi-lifebuoy', color: 'orange' },
 };
 
 const dashboardRoleCards = computed(() => {

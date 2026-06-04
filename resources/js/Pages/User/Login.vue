@@ -24,7 +24,7 @@
                                 COMING YOUR WAY.
                             </p>
                             <p class="text-body-2 text-white-darken-2 text-center mt-4 px-8" style="max-width: 400px;">
-                                Your trusted emergency rescue system. Fast, reliable, and always ready to help.
+                                Your trusted ward incident response system. Fast, reliable, and ready to support patient safety.
                             </p>
                         </div>
                     </v-col>
@@ -96,7 +96,7 @@
                                             class="google-icon"
                                         >
                                     </template>
-                                    <span class="google-btn-text">Continue with SDCA Google</span>
+                                    <span class="google-btn-text">Continue with Google</span>
                                 </v-btn>
 
                                 <!-- Divider -->
@@ -459,7 +459,7 @@
                         <!-- Step 1: Enter Email -->
                         <div v-if="registerStep === 1">
                             <p class="text-body-2 text-grey mb-4">
-                                Enter your SDCA email address to register. We'll send a verification code to confirm your email.
+                                Enter your email address to register. We'll send a verification code to confirm your email.
                             </p>
 
                             <v-alert
@@ -476,12 +476,12 @@
                             <v-form @submit.prevent="sendRegisterOtp" ref="registerFormRef">
                                 <v-text-field
                                     v-model="registerEmail"
-                                    label="SDCA Email Address"
+                                    label="Email Address"
                                     type="email"
                                     variant="outlined"
                                     density="comfortable"
                                     prepend-inner-icon="mdi-email"
-                                    :rules="[rules.required, rules.email, rules.sdcaEmail]"
+                                    :rules="[rules.required, rules.email]"
                                     :disabled="registerLoading"
                                     @input="filterRegisterEmailInput"
                                 />
@@ -541,12 +541,7 @@
                             <p class="text-body-2 text-grey mb-4">
                                 Your email has been verified. We've sent a <strong>temporary password</strong> to your email.
                             </p>
-                            <v-alert
-                                type="info"
-                                variant="tonal"
-                                class="mb-4 text-left"
-                                density="compact"
-                            >
+                          
                                 <div class="text-caption">
                                     <v-icon size="16" class="mr-1">mdi-information</v-icon>
                                     <strong>Next steps:</strong>
@@ -556,7 +551,7 @@
                                         <li>You'll be asked to set a new password</li>
                                     </ol>
                                 </div>
-                            </v-alert>
+                           
                         </div>
                     </v-card-text>
 
@@ -620,7 +615,7 @@
                             Choose the type of account you'd like to create.
                         </p>
 
-                        <!-- Student / Staff Option -->
+                        <!-- Patient / Visitor Option -->
                         <v-card
                             variant="outlined"
                             rounded="lg"
@@ -630,17 +625,17 @@
                         >
                             <v-card-text class="d-flex align-center pa-4">
                                 <v-avatar color="primary" size="48" class="mr-4">
-                                    <v-icon color="white" size="24">mdi-school</v-icon>
+                                    <v-icon color="white" size="24">mdi-hospital-box</v-icon>
                                 </v-avatar>
                                 <div class="flex-grow-1">
-                                    <div class="text-subtitle-1 font-weight-bold">Student / Staff / Faculty</div>
-                                    <div class="text-caption text-grey">Sign up with your SDCA Google account</div>
+                                    <div class="text-subtitle-1 font-weight-bold">Patient / Visitor</div>
+                                    <div class="text-caption text-grey">Register with any valid email address</div>
                                 </div>
                                 <v-icon color="grey" size="20">mdi-chevron-right</v-icon>
                             </v-card-text>
                         </v-card>
 
-                        <!-- Rescuer Option -->
+                        <!-- Responder Option -->
                         <v-card
                             variant="outlined"
                             rounded="lg"
@@ -653,8 +648,8 @@
                                     <v-icon color="white" size="24">mdi-shield-account</v-icon>
                                 </v-avatar>
                                 <div class="flex-grow-1">
-                                    <div class="text-subtitle-1 font-weight-bold">External Rescuer</div>
-                                    <div class="text-caption text-grey">Register as an emergency responder</div>
+                                    <div class="text-subtitle-1 font-weight-bold">Clinical Responder</div>
+                                    <div class="text-caption text-grey">Register as clinical personnel (subject to approval)</div>
                                 </div>
                                 <v-icon color="grey" size="20">mdi-chevron-right</v-icon>
                             </v-card-text>
@@ -662,18 +657,18 @@
 
                         <p class="text-caption text-grey text-center mt-4">
                             <v-icon size="14" class="mr-1">mdi-information-outline</v-icon>
-                            SDCA students, staff, and faculty must use their institutional Google account.
+                            Sign-in and registration support external email addresses (not limited to school accounts).
                         </p>
                     </v-card-text>
                 </v-card>
             </v-dialog>
 
-            <!-- Rescuer Registration Dialog -->
+            <!-- Clinical Responder Registration Dialog -->
             <v-dialog v-model="showRescuerRegister" max-width="450" persistent>
                 <v-card rounded="lg">
                     <v-card-title class="d-flex align-center pa-4" style="background: #C62828;">
                         <v-icon color="white" class="mr-2">mdi-shield-account</v-icon>
-                        <span class="text-white">Rescuer Registration</span>
+                        <span class="text-white">Clinical Responder Registration</span>
                         <v-spacer />
                         <v-btn icon variant="text" @click="closeRescuerRegister" :disabled="rescuerLoading">
                             <v-icon color="white">mdi-close</v-icon>
@@ -698,10 +693,10 @@
                             </div>
                         </div>
 
-                        <!-- Step 1: Rescuer Details -->
+                        <!-- Step 1: Clinical Responder Details -->
                         <div v-if="rescuerStep === 1">
                             <p class="text-body-2 text-grey mb-4">
-                                Fill in your details to register as an external rescuer. Your registration will require admin approval.
+                                Fill in your details to register as clinical personnel. Your registration will require admin approval.
                             </p>
 
                             <v-alert
@@ -1046,7 +1041,7 @@ const handleGoogleLogin = async () => {
                 window.location.href = data.redirect || 'https://pinpointme.app/user/scanner';
             } else if (data.needs_verification) {
                 isGoogleLoading.value = false;
-                googleError.value = data.message || 'Please verify your SDCA email first. Check your inbox for the verification link.';
+                googleError.value = data.message || 'Please verify your email first. Check your inbox for the verification link.';
             } else {
                 isGoogleLoading.value = false;
                 googleError.value = data.message || 'Google sign-in failed. Please try again.';
@@ -1116,11 +1111,10 @@ const isRegisterPasswordValid = computed(() => {
     return checks.length && checks.uppercase && checks.lowercase && checks.number && checks.special;
 });
 
-// Add SDCA email validation rule
+// Keep registration open to any valid email address.
 rules.sdcaEmail = (v) => {
     if (!v) return true;
-    const domain = v.split('@')[1]?.toLowerCase();
-    return domain === 'sdca.edu.ph' || 'Only SDCA email addresses (@sdca.edu.ph) are allowed';
+    return true;
 };
 
 // Add phone number validation rule

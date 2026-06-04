@@ -31,10 +31,10 @@
                             </div>
                         </div>
 
-                        <h2 class="verify-title">Verify Your SDCA Email</h2>
+                        <h2 class="verify-title">Verify Your Email</h2>
 
                         <p class="verify-description">
-                            We've sent a verification link to your <strong>SDCA Gmail account</strong>.
+                            We've sent a verification link to your <strong>Google account email</strong>.
                             Please check your inbox and click the link to activate your account.
                         </p>
 
@@ -42,7 +42,7 @@
                         <div class="steps-info">
                             <div class="step-item">
                                 <div class="step-num">1</div>
-                                <span>Open your <strong>SDCA Gmail</strong> inbox</span>
+                                <span>Open your <strong>email</strong> inbox</span>
                             </div>
                             <div class="step-item">
                                 <div class="step-num">2</div>

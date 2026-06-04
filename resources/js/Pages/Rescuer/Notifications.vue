@@ -439,7 +439,7 @@ const formatStatus = (status) => {
         'pending': 'Pending',
         'assigned': 'Assigned',
         'in_progress': 'In Progress',
-        'rescued': 'Rescued',
+        'rescued': 'Assisted',
         'safe': 'Safe',
         'completed': 'Completed',
     };

@@ -184,7 +184,7 @@
                                 <v-col cols="12">
                                     <v-text-field
                                         v-model="profile.employee_id"
-                                        label="Rescuer ID"
+                                        label="Responder ID"
                                         readonly
                                         disabled
                                         variant="outlined"

@@ -10,7 +10,7 @@
                 <!-- Page Header -->
                 <div class="d-flex align-center mb-4">
                     <div>
-                        <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold gradient-text">Rescuer Management</h1>
+                        <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold gradient-text">Responder Management</h1>
                         <p class="text-grey mt-1 text-body-2">To maintain security and compliance.</p>
                     </div>
                 </div>
@@ -31,7 +31,7 @@
                         <div class="stat-inline">
                             <v-icon size="22" class="stat-inline-icon amber-icon">mdi-alert-circle</v-icon>
                             <div class="stat-inline-value">{{ counts.on_rescue || 0 }}</div>
-                            <div class="stat-inline-label">On Rescue</div>
+                            <div class="stat-inline-label">On Response</div>
                         </div>
                         <div class="stat-inline">
                             <v-icon size="22" class="stat-inline-icon">mdi-sleep</v-icon>
@@ -51,12 +51,12 @@
                     </div>
                 </v-card>
 
-                <!-- Pending Rescuer Applications -->
+                <!-- Pending Responder Applications -->
                 <v-card v-if="pendingApplications.length > 0" rounded="lg" elevation="0" class="mb-3 pending-card">
                     <v-card-title class="d-flex align-center justify-space-between pa-4">
                         <div class="d-flex align-center">
                             <v-icon start color="orange-darken-2">mdi-account-clock</v-icon>
-                            <span class="font-weight-bold">Pending Rescuer Applications</span>
+                            <span class="font-weight-bold">Pending Responder Applications</span>
                             <v-chip size="small" color="orange" variant="flat" class="ml-2">{{ pendingApplications.length }}</v-chip>
                         </div>
                         <v-btn variant="text" size="small" color="primary" @click="pendingExpanded = !pendingExpanded">
@@ -121,7 +121,7 @@
                             <v-col cols="12" sm="4" md="3">
                                 <v-text-field
                                     v-model="search"
-                                    label="Search rescuers..."
+                                    label="Search responders..."
                                     variant="outlined"
                                     density="compact"
                                     hide-details
@@ -309,7 +309,7 @@
                         <template v-slot:no-data>
                             <div class="text-center py-8">
                                 <v-icon size="64" color="grey-lighten-1">mdi-account-off</v-icon>
-                                <p class="text-grey mt-4">No rescuers found. Click "Add Rescuer" to create one.</p>
+                                <p class="text-grey mt-4">No responders found. Click "Add Responder" to create one.</p>
                             </div>
                         </template>
                     </v-data-table>
@@ -380,14 +380,14 @@
             </v-container>
         </v-main>
 
-        <!-- Add/Edit Single Rescuer Dialog -->
+        <!-- Add/Edit Single Responder Dialog -->
         <v-dialog v-model="dialog" max-width="550">
             <v-card rounded="lg">
                 <v-card-title class="d-flex align-center pa-4">
                     <v-icon :color="isEditing ? 'info' : 'primary'" class="mr-2">
                         {{ isEditing ? 'mdi-account-edit' : 'mdi-account-plus' }}
                     </v-icon>
-                    {{ isEditing ? 'Edit Rescuer' : 'Add New Rescuer' }}
+                    {{ isEditing ? 'Edit Responder' : 'Add New Responder' }}
                 </v-card-title>
                 <v-divider></v-divider>
                 <v-card-text class="pa-4">
@@ -451,7 +451,7 @@
                         />
                         <v-text-field
                             v-model="formData.rescuer_id"
-                            label="Rescuer ID (9 digits)"
+                            label="Responder ID (9 digits)"
                             variant="outlined"
                             density="compact"
                             :rules="[rules.rescuerId]"
@@ -475,7 +475,7 @@
                             density="compact"
                         >
                             <span class="text-body-2">
-                                An email with OTP verification will be sent to the rescuer. 
+                                An email with OTP verification will be sent to the responder. 
                                 Account will be <strong>pending</strong> until email is verified and password is changed.
                             </span>
                         </v-alert>
@@ -501,7 +501,7 @@
                 </v-card-title>
                 <v-divider></v-divider>
                 <v-card-text class="pa-4">
-                    <p class="mb-4">Update status for {{ selectedRescuers.length }} selected rescuer(s):</p>
+                    <p class="mb-4">Update status for {{ selectedRescuers.length }} selected responder(s):</p>
                     <v-select
                         v-model="bulkUpdateStatus"
                         :items="['available', 'off_duty', 'unavailable']"
@@ -525,7 +525,7 @@
             <v-card rounded="lg">
                 <v-card-title class="text-error pa-4">
                     <v-icon start color="error">mdi-alert</v-icon>
-                    Delete Rescuer
+                    Delete Responder
                 </v-card-title>
                 <v-divider></v-divider>
                 <v-card-text class="pa-4">
@@ -548,7 +548,7 @@
                 </v-card-title>
                 <v-divider></v-divider>
                 <v-card-text class="pa-4">
-                    Are you sure you want to delete <strong>{{ selectedRescuers.length }}</strong> rescuer(s)? This action cannot be undone.
+                    Are you sure you want to delete <strong>{{ selectedRescuers.length }}</strong> responder(s)? This action cannot be undone.
                 </v-card-text>
                 <v-card-actions class="pa-4">
                     <v-spacer />
@@ -563,7 +563,7 @@
             <v-card v-if="viewingRescuer" rounded="lg">
                 <v-card-title class="pa-4">
                     <v-icon color="primary" class="mr-2">mdi-account</v-icon>
-                    Rescuer Profile
+                    Responder Profile
                 </v-card-title>
                 <v-divider></v-divider>
                 <v-card-text class="pa-4">
@@ -612,12 +612,12 @@
             </v-card>
         </v-dialog>
 
-        <!-- Decline Rescuer Application Dialog -->
+        <!-- Decline Responder Application Dialog -->
         <v-dialog v-model="declineDialog" max-width="450">
             <v-card rounded="lg">
                 <v-card-title class="text-error pa-4">
                     <v-icon start color="error">mdi-account-cancel</v-icon>
-                    Decline Rescuer Application
+                    Decline Responder Application
                 </v-card-title>
                 <v-divider></v-divider>
                 <v-card-text class="pa-4">
@@ -728,7 +728,7 @@ const exportRescuers = (format = 'csv') => {
             headStyles: { fillColor: [33, 150, 243] },
             margin: { top: 20 }
         });
-        doc.save('rescuers_export.pdf');
+        doc.save('responders_export.pdf');
     } else {
         // Export as CSV or XLSX
         const data = rescuersList.value.map(r => ({
@@ -743,9 +743,9 @@ const exportRescuers = (format = 'csv') => {
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Rescuers');
         if (format === 'csv') {
-            XLSX.writeFile(workbook, 'rescuers_export.csv');
+            XLSX.writeFile(workbook, 'responders_export.csv');
         } else {
-            XLSX.writeFile(workbook, 'rescuers_export.xlsx');
+            XLSX.writeFile(workbook, 'responders_export.xlsx');
         }
     }
 };
@@ -775,7 +775,7 @@ const exportPDF = () => {
         headStyles: { fillColor: [25, 118, 210] },
         margin: { top: 20 }
     });
-    doc.save('rescuers_export.pdf');
+    doc.save('responders_export.pdf');
 };
 const rescuersList = ref(props.rescuers?.data || []);
 const counts = ref(props.counts);
@@ -821,15 +821,15 @@ const approveRescuerApplication = async (app) => {
         });
         const data = await response.json();
         if (data.success) {
-            showSnackbar(`${app.first_name} ${app.last_name} has been approved as a rescuer!`, 'success');
+            showSnackbar(`${app.first_name} ${app.last_name} has been approved as a responder!`, 'success');
             pendingApplications.value = pendingApplications.value.filter(a => a.id !== app.id);
             fetchRescuers(); // Refresh the rescuer list
         } else {
-            showSnackbar(data.message || 'Error approving rescuer', 'error');
+            showSnackbar(data.message || 'Error approving responder', 'error');
         }
     } catch (error) {
-        console.error('Error approving rescuer:', error);
-        showSnackbar('Error approving rescuer', 'error');
+        console.error('Error approving responder:', error);
+        showSnackbar('Error approving responder', 'error');
     } finally {
         approvalLoading.value = null;
     }
@@ -864,11 +864,11 @@ const declineRescuerApplication = async () => {
             declineDialog.value = false;
             fetchRescuers();
         } else {
-            showSnackbar(data.message || 'Error declining rescuer', 'error');
+            showSnackbar(data.message || 'Error declining responder', 'error');
         }
     } catch (error) {
-        console.error('Error declining rescuer:', error);
-        showSnackbar('Error declining rescuer', 'error');
+        console.error('Error declining responder:', error);
+        showSnackbar('Error declining responder', 'error');
     } finally {
         approvalLoading.value = null;
     }
@@ -967,21 +967,21 @@ const rules = {
         
         return true;
     },
-    // Rescuer ID validation - exactly 9 digits
+    // Responder ID validation - exactly 9 digits
     rescuerId: (v) => {
-        if (!v) return 'Rescuer ID is required';
+        if (!v) return 'Responder ID is required';
         
         // Remove all non-digit characters
         const cleaned = v.replace(/\D/g, '');
         
         // Must be exactly 9 digits
         if (cleaned.length !== 9) {
-            return `Rescuer ID must be exactly 9 digits (${cleaned.length}/9)`;
+            return `Responder ID must be exactly 9 digits (${cleaned.length}/9)`;
         }
         
         // Ensure it's purely numeric (no letters)
         if (!/^\d{9}$/.test(cleaned)) {
-            return 'Rescuer ID must contain only numbers';
+            return 'Responder ID must contain only numbers';
         }
         
         return true;
@@ -1050,8 +1050,8 @@ const fetchRescuers = async () => {
             }
         }
     } catch (error) {
-        console.error('Error fetching rescuers:', error);
-        showSnackbar('Error fetching rescuers', 'error');
+        console.error('Error fetching responders:', error);
+        showSnackbar('Error fetching responders', 'error');
     } finally {
         loading.value = false;
     }
@@ -1150,15 +1150,15 @@ const saveRescuer = async () => {
         
         const data = await response.json();
         if (data.success) {
-            showSnackbar(isEditing.value ? 'Rescuer updated successfully' : 'Rescuer created successfully', 'success');
+            showSnackbar(isEditing.value ? 'Responder updated successfully' : 'Responder created successfully', 'success');
             dialog.value = false;
             fetchRescuers();
         } else {
-            showSnackbar(data.errors ? Object.values(data.errors).flat().join(', ') : 'Error saving rescuer', 'error');
+            showSnackbar(data.errors ? Object.values(data.errors).flat().join(', ') : 'Error saving responder', 'error');
         }
     } catch (error) {
-        console.error('Error saving rescuer:', error);
-        showSnackbar('Error saving rescuer', 'error');
+        console.error('Error saving responder:', error);
+        showSnackbar('Error saving responder', 'error');
     } finally {
         saving.value = false;
     }
@@ -1168,7 +1168,7 @@ const updateStatus = async (rescuer, status) => {
     try {
         // Validate status change
         if (status === 'on_rescue') {
-            showSnackbar('Cannot manually set rescuer to "On Rescue". This status is set automatically when they accept a rescue.', 'warning');
+            showSnackbar('Cannot manually set responder to "On Response". This status is set automatically when they accept a request.', 'warning');
             return;
         }
         
@@ -1192,9 +1192,9 @@ const updateStatus = async (rescuer, status) => {
             
             // Show appropriate message based on status
             const statusMessages = {
-                'available': 'Rescuer is now available and can accept rescue requests',
-                'off_duty': 'Rescuer is now off duty and cannot accept rescue requests',
-                'unavailable': 'Rescuer is now unavailable and cannot accept rescue requests'
+                'available': 'Responder is now available and can accept requests',
+                'off_duty': 'Responder is now off duty and cannot accept requests',
+                'unavailable': 'Responder is now unavailable and cannot accept requests'
             };
             
             showSnackbar(statusMessages[status] || `Status updated to ${formatStatus(status)}`, 'success');
@@ -1233,8 +1233,8 @@ const deleteRescuer = async () => {
             fetchRescuers();
         }
     } catch (error) {
-        console.error('Error deleting rescuer:', error);
-        showSnackbar('Error deleting rescuer', 'error');
+        console.error('Error deleting responder:', error);
+        showSnackbar('Error deleting responder', 'error');
     } finally {
         deleting.value = false;
     }
@@ -1263,7 +1263,7 @@ const processBulkDelete = async () => {
         fetchRescuers();
     } catch (error) {
         console.error('Error bulk deleting:', error);
-        showSnackbar('Error deleting rescuers', 'error');
+        showSnackbar('Error deleting responders', 'error');
     } finally {
         bulkDeleting.value = false;
     }

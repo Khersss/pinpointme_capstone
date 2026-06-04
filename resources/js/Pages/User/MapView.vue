@@ -344,38 +344,12 @@ const userRoomAnnotation = computed(() => {
 });
 
 const evacuationPaths = computed(() => {
-    if (!selectedFloor.value?.floor_plan_data) return [];
-    return selectedFloor.value.floor_plan_data.evacuation_paths || [];
+    return [];
 });
 
 // Only get evacuation path from user's location
 const userEvacuationPath = computed(() => {
-    if (!evacuationPaths.value.length || !userRoomAnnotation.value) return null;
-    
-    // Find path that starts from or near user's room
-    const userRoom = userRoomAnnotation.value;
-    const userCenterX = userRoom.x + (userRoom.width / 2);
-    const userCenterY = userRoom.y + (userRoom.height / 2);
-    
-    // Find the path closest to user's room or the first path if only one exists
-    let closestPath = evacuationPaths.value[0];
-    let minDistance = Infinity;
-    
-    for (const path of evacuationPaths.value) {
-        if (path.points && path.points.length > 0) {
-            const startPoint = path.points[0];
-            const distance = Math.sqrt(
-                Math.pow(startPoint.x - userCenterX, 2) + 
-                Math.pow(startPoint.y - userCenterY, 2)
-            );
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestPath = path;
-            }
-        }
-    }
-    
-    return closestPath;
+    return null;
 });
 
 const svgViewBox = computed(() => {
@@ -439,12 +413,12 @@ const formatStatus = (status) => {
     const texts = {
         pending: 'Pending',
         open: 'Pending',
-        assigned: 'Rescuer Assigned',
+        assigned: 'Responder Assigned',
         accepted: 'Help Coming',
         in_progress: 'In Progress',
-        en_route: 'Rescuer En Route',
-        on_scene: 'Rescuer Arrived',
-        rescued: 'Rescued',
+        en_route: 'Responder En Route',
+        on_scene: 'Responder Arrived',
+        rescued: 'Assisted',
         safe: 'Safe',
         completed: 'Completed',
         cancelled: 'Cancelled',

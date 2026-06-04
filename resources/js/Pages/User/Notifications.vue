@@ -500,7 +500,7 @@ const formatStatus = (status) => {
         'en_route': 'En Route',
         'in_progress': 'In Progress',
         'on_scene': 'Arrived',
-        'rescued': 'Rescued',
+        'rescued': 'Assisted',
         'safe': 'Safe',
         'completed': 'Completed',
         'cancelled': 'Cancelled',

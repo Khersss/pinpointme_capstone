@@ -7,7 +7,6 @@ use App\Models\Floor;
 use App\Models\Room;
 use App\Models\RescueRequest;
 use App\Services\PushNotificationService;
-use App\Services\TexbeeSmsService;
 use App\Services\TranslationService;
 use App\Support\VonagePhone;
 use Illuminate\Http\Request;
@@ -144,9 +143,11 @@ class RescueRequestController extends Controller
 
         $rescueRequest = RescueRequest::create($data);
 
-        // Send push notification to all rescuers
+        // Send push notification to all responders
         $this->notifyRescuers($rescueRequest);
-        $this->notifyEmergencyContact($rescueRequest);
+
+        // SMS alerts are no longer used for ward incident reporting.
+        // $this->notifyEmergencyContact($rescueRequest);
 
         // Handle API requests differently
         if ($request->expectsJson() || $request->is('api/*')) {
@@ -186,20 +187,23 @@ class RescueRequestController extends Controller
             }
             $locationStr = !empty($location) ? implode(' - ', $location) : 'Unknown Location';
 
-            $urgencyLevel = $rescueRequest->urgency_level ?? 'normal';
-            $urgencyPrefix = $urgencyLevel === 'critical' ? '🚨 CRITICAL: ' :
-                           ($urgencyLevel === 'high' ? '⚠️ URGENT: ' : '');
+            $incidentType = trim((string) ($rescueRequest->mobility_status ?? ''));
+            $pleaseSpecify = trim((string) ($rescueRequest->urgency_level ?? ''));
+            $urgencyLevel = trim((string) ($rescueRequest->injuries ?? '')) ?: 'normal';
+            $urgencyPrefix = in_array(strtolower($urgencyLevel), ['critical', 'high'], true)
+                ? '🚨 URGENT: '
+                : '';
 
             $payload = [
-                'title' => $urgencyPrefix . 'New Rescue Request',
-                'body' => "Location: {$locationStr}\nCode: {$rescueRequest->rescue_code}",
+                'title' => $urgencyPrefix . 'New Incident Report',
+                'body' => "Location: {$locationStr}\nIncident: {$incidentType}\nDetails: {$pleaseSpecify}\nPriority: {$urgencyLevel}\nCode: {$rescueRequest->rescue_code}",
                 'icon' => '/images/logos/pinpointme.png',
                 'badge' => '/images/logos/pinpointme.png',
                 'tag' => 'rescue-' . $rescueRequest->rescue_code,
-                'type' => 'rescue_request',
+                'type' => 'incident_report',
                 'requireInteraction' => true,
                 'data' => [
-                    'type' => 'rescue_request',
+                    'type' => 'incident_report',
                     'rescue_code' => $rescueRequest->rescue_code,
                     'request_id' => $rescueRequest->id,
                     'urgency_level' => $urgencyLevel,
@@ -228,7 +232,8 @@ class RescueRequestController extends Controller
     }
 
     /**
-    * Send emergency contact SMS using Texbee.
+     * Legacy SMS notification path, retained for reference only.
+     * Ward incident reporting now uses push notifications only.
      *
      * @param RescueRequest $rescueRequest
      * @return void
@@ -236,80 +241,11 @@ class RescueRequestController extends Controller
     protected function notifyEmergencyContact(RescueRequest $rescueRequest): void
     {
         try {
-            // Fetch a fresh user record to ensure we don't use stale relationship data
-            $requester = \App\Models\User::find($rescueRequest->user_id) ?? $rescueRequest->requester()->first();
-
-            // If there is no requester or emergency contact is empty, do not send SMS
-            if (!$requester || empty($requester->emergency_contact_phone)) {
-                Log::info('No emergency contact phone present; skipping SMS.', [
-                    'rescue_code' => $rescueRequest->rescue_code,
-                    'user_id' => $rescueRequest->user_id ?? null,
-                ]);
-                return;
-            }
-
-            $smsService = app(TexbeeSmsService::class);
-
-            if (empty(config('services.texbee.key')) || empty(config('services.texbee.base_url')) || empty(config('services.texbee.device_id'))) {
-                Log::error('Texbee credentials are missing; SMS not sent.', [
-                    'rescue_code' => $rescueRequest->rescue_code,
-                ]);
-                return;
-            }
-
-            $normalizedPhone = VonagePhone::normalizeToE164($requester->emergency_contact_phone);
-            if (!$normalizedPhone) {
-                Log::error('Invalid emergency contact phone number for Texbee SMS.', [
-                    'rescue_code' => $rescueRequest->rescue_code,
-                    'user_id' => $rescueRequest->user_id ?? null,
-                    'phone' => $requester->emergency_contact_phone,
-                ]);
-                return;
-            }
-
-            $fullName = trim(($requester->first_name ?? '') . ' ' . ($requester->last_name ?? ''));
-            $displayName = $fullName !== '' ? $fullName : 'Unknown User';
-            $locationParts = array_filter([
-                $rescueRequest->building?->name,
-                $rescueRequest->floor?->name ?? $rescueRequest->floor?->floor_name,
-                $rescueRequest->room?->name ?? $rescueRequest->room?->room_name,
-            ]);
-            $location = !empty($locationParts) ? implode(', ', $locationParts) : 'Unknown Location';
-            $urgency = strtoupper($rescueRequest->urgency_level ?? 'UNKNOWN');
-            $mobility = ucfirst($rescueRequest->mobility_status ?? 'Unknown');
-            $injuries = trim((string) ($rescueRequest->injuries ?? ''));
-            $reportedAt = $rescueRequest->created_at?->format('M d, Y h:i A') ?? '';
-
-            $message = "EMERGENCY REPORT\n" .
-                "Name: {$displayName}\n" .
-                "Time: {$reportedAt}\n" .
-                "Location: {$location}\n" .
-                "Urgency: {$urgency} ({$mobility})\n" .
-                "Injuries: {$injuries}";
-
-            $result = $smsService->send($normalizedPhone, $message);
-
-            if (!$result['success']) {
-                Log::error('Texbee SMS failed', [
-                    'rescue_code' => $rescueRequest->rescue_code,
-                    'status' => $result['status'],
-                    'body' => $result['body'],
-                    'payload' => $result['payload'],
-                    'error' => $result['error'],
-                ]);
-                return;
-            }
-
-            Log::info('Texbee SMS sent to emergency contact', [
+            Log::info('SMS notifications are disabled for incident reporting.', [
                 'rescue_code' => $rescueRequest->rescue_code,
-                'recipient' => $normalizedPhone,
-                'status' => $result['status'],
-                'response_body' => $result['body'],
-                'response_headers' => $result['headers'],
-                'payload' => $result['payload'],
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to send emergency contact SMS', [
+            Log::error('SMS notification fallback skipped', [
                 'rescue_code' => $rescueRequest->rescue_code,
                 'error' => $e->getMessage(),
             ]);
@@ -584,10 +520,10 @@ class RescueRequestController extends Controller
                         if ($request->expectsJson() || $request->is('api/*')) {
                             return response()->json([
                                 'success' => false,
-                                'message' => 'Rescuer is currently ' . str_replace('_', ' ', $rescuer->status) . ' and cannot accept rescue requests.'
+                                'message' => 'Responder is currently ' . str_replace('_', ' ', $rescuer->status) . ' and cannot accept rescue requests.'
                             ], 422);
                         }
-                        return redirect()->back()->with('error', 'Rescuer is not available.');
+                        return redirect()->back()->with('error', 'Responder is not available.');
                     }
                     
                     // Check if rescuer already has an active rescue
@@ -600,10 +536,10 @@ class RescueRequestController extends Controller
                         if ($request->expectsJson() || $request->is('api/*')) {
                             return response()->json([
                                 'success' => false,
-                                'message' => 'Rescuer already has an active rescue assignment.'
+                                'message' => 'Responder already has an active rescue assignment.'
                             ], 422);
                         }
-                        return redirect()->back()->with('error', 'Rescuer already has an active rescue.');
+                        return redirect()->back()->with('error', 'Responder already has an active rescue.');
                     }
                 }
             }
@@ -973,7 +909,7 @@ class RescueRequestController extends Controller
     }
 
     /**
-     * Approve safe request from user - Rescuer allows the user to mark themselves safe
+     * Approve safe request from user - Responder allows the user to mark themselves safe
      *
      * @param Request $request
      * @param int $id
@@ -1021,7 +957,7 @@ class RescueRequestController extends Controller
                 'rescue_id' => $rescueRequest->id,
                 'rescue_code' => $rescueRequest->rescue_code,
                 'user_name' => "{$rescueRequest->requester->first_name} {$rescueRequest->requester->last_name}",
-                'rescuer_name' => $rescuer ? "{$rescuer->first_name} {$rescuer->last_name}" : "Unknown Rescuer",
+                'rescuer_name' => $rescuer ? "{$rescuer->first_name} {$rescuer->last_name}" : "Unknown Responder",
                 'approval_reason' => $request->input('reason', 'Approved by rescuer'),
                 'building' => $rescueRequest->building ? $rescueRequest->building->name : null,
                 'floor' => $rescueRequest->floor ? $rescueRequest->floor->name : null,
@@ -1142,16 +1078,6 @@ class RescueRequestController extends Controller
                 'success' => false,
                 'message' => 'This rescue request can no longer be cancelled because it is already completed or cancelled.',
             ], 422);
-        }
-
-        // Block cancellation for HIGH and CRITICAL urgency levels
-        if (in_array(strtolower($rescueRequest->urgency_level ?? ''), ['high', 'critical'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Rescue requests with ' . strtoupper($rescueRequest->urgency_level) . ' urgency level cannot be cancelled. A rescuer must verify your safety in person.',
-                'urgency_blocked' => true,
-                'urgency_level' => $rescueRequest->urgency_level,
-            ], 403);
         }
 
         // Block if there's already a pending cancel approval
@@ -1364,7 +1290,7 @@ class RescueRequestController extends Controller
             'user_id' => $rescueRequest->assigned_rescuer,
             'action' => 'cancel_approved',
             'description' => sprintf(
-                'Rescuer approved cancellation for rescue #%d (Code: %s). User reason: %s.',
+                'Responder approved cancellation for rescue #%d (Code: %s). User reason: %s.',
                 $rescueRequest->id,
                 $rescueRequest->rescue_code ?? 'N/A',
                 $rescueRequest->cancel_approval_reason
@@ -1421,7 +1347,7 @@ class RescueRequestController extends Controller
             'user_id' => $rescueRequest->assigned_rescuer,
             'action' => 'cancel_denied',
             'description' => sprintf(
-                'Rescuer denied cancellation for rescue #%d (Code: %s). Deny reason: %s.',
+                'Responder denied cancellation for rescue #%d (Code: %s). Deny reason: %s.',
                 $rescueRequest->id,
                 $rescueRequest->rescue_code ?? 'N/A',
                 $request->deny_reason
@@ -1520,7 +1446,7 @@ class RescueRequestController extends Controller
 
         // Create admin notification for false alarm report
         $reporterUser = $request->reported_by ? \App\Models\User::find($request->reported_by) : auth()->user();
-        $reporterName = $reporterUser ? "{$reporterUser->first_name} {$reporterUser->last_name}" : 'Unknown Rescuer';
+        $reporterName = $reporterUser ? "{$reporterUser->first_name} {$reporterUser->last_name}" : 'Unknown Responder';
         $requesterName = ($rescueRequest->requester ? "{$rescueRequest->requester->first_name} {$rescueRequest->requester->last_name}" : 'Unknown User');
         $locationStr = trim(implode(' > ', array_filter([
             $rescueRequest->building?->name,
@@ -1531,7 +1457,7 @@ class RescueRequestController extends Controller
         \App\Models\AdminNotification::create([
             'type' => 'false_alarm_report',
             'title' => 'False Alarm Report',
-            'message' => "Rescuer {$reporterName} reported a false alarm for request #{$rescueRequest->id} (Code: {$rescueRequest->rescue_code}) by {$requesterName}.",
+            'message' => "Responder {$reporterName} reported a false alarm for request #{$rescueRequest->id} (Code: {$rescueRequest->rescue_code}) by {$requesterName}.",
             'data' => [
                 'rescue_id' => $rescueRequest->id,
                 'rescue_code' => $rescueRequest->rescue_code,

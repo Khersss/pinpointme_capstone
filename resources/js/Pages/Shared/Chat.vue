@@ -411,7 +411,7 @@
                         <!-- Additional Info if available -->
                         <div v-if="rescueRequest" class="rescue-info">
                             <v-divider class="my-3"></v-divider>
-                            <h3 class="text-subtitle-2 mb-2">Emergency Details</h3>
+                            <h3 class="text-subtitle-2 mb-2">Incident Details</h3>
                             
                             <div class="info-item">
                                 <v-icon size="16" class="mr-2 text-grey">mdi-alert-circle-outline</v-icon>

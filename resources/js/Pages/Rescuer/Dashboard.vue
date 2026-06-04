@@ -139,7 +139,7 @@
                         @click="selectedTab = 'rescued'"
                     >
                         <v-icon size="16" class="tab-icon">mdi-check-circle</v-icon>
-                        <span class="tab-text">Rescued</span>
+                        <span class="tab-text">Assisted</span>
                         <v-chip size="x-small" color="white" variant="flat" class="tab-count">{{ counts.completed }}</v-chip>
                     </button>
                 </div>
@@ -364,18 +364,8 @@
                                             <v-icon size="12" class="mr-1">mdi-text-box-outline</v-icon>
                                             {{ truncateText(request.description, 80) }}
                                         </p>
-                                        <!-- Urgency + Mobility chips row -->
+                                        <!-- Incident summary chips row -->
                                         <div class="request-details-chips">
-                                            <v-chip 
-                                                v-if="request.urgency_level"
-                                                :color="getUrgencyColor(request.urgency_level)" 
-                                                variant="tonal" 
-                                                size="x-small"
-                                                class="mr-1"
-                                            >
-                                                <v-icon start size="10">mdi-alert-circle</v-icon>
-                                                {{ request.urgency_level }}
-                                            </v-chip>
                                             <v-chip 
                                                 v-if="request.mobility_status"
                                                 color="info" 
@@ -383,8 +373,18 @@
                                                 size="x-small"
                                                 class="mr-1"
                                             >
-                                                <v-icon start size="10">mdi-wheelchair-accessibility</v-icon>
+                                                <v-icon start size="10">mdi-hospital-box-outline</v-icon>
                                                 {{ request.mobility_status }}
+                                            </v-chip>
+                                            <v-chip 
+                                                v-if="request.urgency_level"
+                                                color="secondary" 
+                                                variant="tonal" 
+                                                size="x-small"
+                                                class="mr-1"
+                                            >
+                                                <v-icon start size="10">mdi-information-outline</v-icon>
+                                                {{ request.urgency_level }}
                                             </v-chip>
                                             <v-chip 
                                                 v-if="request.injuries"
@@ -392,7 +392,7 @@
                                                 variant="tonal" 
                                                 size="x-small"
                                             >
-                                                <v-icon start size="10">mdi-bandage</v-icon>
+                                                <v-icon start size="10">mdi-alert-circle</v-icon>
                                                 {{ truncateText(request.injuries, 20) }}
                                             </v-chip>
                                         </div>
@@ -2178,7 +2178,7 @@ const showNotification = (message, color = 'info') => {
     background: linear-gradient(90deg, #f1f8f4 0%, white 20%);
 }
 
-/* Rescued Filter Section */
+/* Assisted Filter Section */
 .rescued-filter-section {
     display: flex;
     gap: 8px;

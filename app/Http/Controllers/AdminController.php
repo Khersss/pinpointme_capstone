@@ -984,7 +984,7 @@ class AdminController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Rescuer {$rescuer->first_name} {$rescuer->last_name} has been approved.",
+            'message' => "Responder {$rescuer->first_name} {$rescuer->last_name} has been approved.",
             'data' => $rescuer,
         ]);
     }

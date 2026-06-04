@@ -7,7 +7,7 @@
                     <v-icon>mdi-arrow-left</v-icon>
                 </v-btn>
                 <div class="header-title">
-                    <h1>Active Rescue</h1>
+                    <h1>Active Response</h1>
                     <p v-if="rescueRequest?.rescue_code">Code: {{ rescueRequest.rescue_code }}</p>
                 </div>
                 <v-chip
@@ -26,15 +26,15 @@
         <!-- Main Content -->
         <v-main class="rescue-main">
             <!-- Loading State -->
-            <div v-if="loading" class="loading-container">
+                <div v-if="loading" class="loading-container">
                 <v-progress-circular indeterminate color="primary" size="64" />
-                <p class="mt-4 text-grey">Loading rescue details...</p>
+                <p class="mt-4 text-grey">Loading response details...</p>
             </div>
 
             <!-- No Rescue Found -->
             <div v-else-if="!rescueRequest" class="empty-state">
                 <v-icon size="64" color="grey-lighten-1">mdi-alert-circle-outline</v-icon>
-                <h3>No Active Rescue</h3>
+                <h3>No Active Response</h3>
                 <p>You will be redirected to the dashboard.</p>
             </div>
 
@@ -43,9 +43,9 @@
                 <!-- Completion Banner (if completed) - HelpComing Style -->
                 <div v-if="currentStatus === 'rescued' || currentStatus === 'safe' || currentStatus === 'completed'" class="text-center py-4 mb-4">
                     <v-icon size="56" color="success" class="mb-2">mdi-check-circle</v-icon>
-                    <h3 class="text-h6 mb-1">Rescue Complete</h3>
+                    <h3 class="text-h6 mb-1">Response Complete</h3>
                     
-                    <p class="text-grey mb-3">Person has been successfully rescued and marked as safe.</p>
+                    <p class="text-grey mb-3">Person has been successfully responded to and marked as okay.</p>
                 </div>
 
                 <!-- Urgency Banner -->
@@ -168,7 +168,7 @@
                 </div>
 
                 <!-- Additional Info Card -->
-                <div v-if="rescueRequest.people_count || rescueRequest.mobility_status || rescueRequest.injuries || hasMediaAttachments || hasMedicalInfo || hasEmergencyContact" class="info-card additional-card">
+                <div v-if="rescueRequest.people_count || rescueRequest.mobility_status || rescueRequest.urgency_level || rescueRequest.injuries || hasMediaAttachments || hasMedicalInfo || hasEmergencyContact" class="info-card additional-card">
                     <div class="card-header">
                         <v-icon size="20" color="info">mdi-clipboard-list</v-icon>
                         <span>Additional Information</span>
@@ -179,11 +179,15 @@
                             {{ rescueRequest.people_count }} {{ rescueRequest.people_count > 1 ? 'people' : 'person' }}
                         </v-chip>
                         <v-chip v-if="rescueRequest.mobility_status" size="small" variant="tonal" :color="getMobilityColor(rescueRequest.mobility_status)">
-                            <v-icon start size="16">mdi-wheelchair-accessibility</v-icon>
-                            {{ formatMobility(rescueRequest.mobility_status) }}
+                            <v-icon start size="16">mdi-hospital-box-outline</v-icon>
+                            {{ rescueRequest.mobility_status }}
+                        </v-chip>
+                        <v-chip v-if="rescueRequest.urgency_level" size="small" variant="tonal" color="secondary">
+                            <v-icon start size="16">mdi-information-outline</v-icon>
+                            {{ rescueRequest.urgency_level }}
                         </v-chip>
                         <v-chip v-if="rescueRequest.injuries" size="small" variant="tonal" color="error">
-                            <v-icon start size="16">mdi-bandage</v-icon>
+                            <v-icon start size="16">mdi-alert-circle</v-icon>
                             {{ rescueRequest.injuries }}
                         </v-chip>
                         <v-chip v-if="rescueRequest.original_injuries" size="x-small" variant="tonal" color="info">
@@ -357,7 +361,7 @@
                                 <div class="text-body-2">You cannot accept this request while the user is considering marking themselves as safe.</div>
                             </v-alert>
 
-                            <v-btn
+                                <v-btn
                                 color="success"
                                 size="x-large"
                                 block
@@ -369,7 +373,7 @@
                                 elevation="3"
                             >
                                 <v-icon start size="22">mdi-run-fast</v-icon>
-                                <span class="btn-text">Accept & Start Rescue</span>
+                                <span class="btn-text">Start Response</span>
                             </v-btn>
                         </div>
                         
@@ -518,7 +522,7 @@
                             @click="showSummary = !showSummary"
                         >
                             <v-icon start>mdi-clipboard-text</v-icon>
-                            {{ showSummary ? 'Hide' : 'View' }} Rescue Summary
+                            {{ showSummary ? 'Hide' : 'View' }} Response Summary
                         </v-btn>
 
                         <!-- Rescue Summary Card (toggleable) -->
@@ -526,13 +530,13 @@
                             <div v-show="showSummary" class="rescue-summary-card mt-4">
                                 <div class="summary-header">
                                     <v-icon size="20" color="primary">mdi-clipboard-text</v-icon>
-                                    <span class="summary-header-text">Rescue Summary</span>
+                                    <span class="summary-header-text">Response Summary</span>
                                 </div>
 
                                 <div class="summary-details">
                                     <div class="summary-row">
                                         <v-icon size="16" color="grey">mdi-account</v-icon>
-                                        <span class="summary-label">Person Rescued</span>
+                                        <span class="summary-label">Person Responded</span>
                                         <span class="summary-value">{{ rescueRequest?.firstName }} {{ rescueRequest?.lastName }}</span>
                                     </div>
                                     <div class="summary-row">
@@ -565,8 +569,8 @@
                                         <v-icon size="16" color="grey">mdi-camera</v-icon>
                                         <span>Documentation Photo</span>
                                     </div>
-                                    <div class="summary-photo-wrap" @click="openPhotoViewer(rescueRequest.completion_photo, 'Rescue Completion Photo')">
-                                        <img :src="rescueRequest.completion_photo" alt="Rescue completion photo" class="summary-photo" />
+                                    <div class="summary-photo-wrap" @click="openPhotoViewer(rescueRequest.completion_photo, 'Response Completion Photo')">
+                                        <img :src="rescueRequest.completion_photo" alt="Response completion photo" class="summary-photo" />
                                         <div class="summary-photo-overlay">
                                             <v-icon color="white" size="24">mdi-magnify-plus</v-icon>
                                         </div>
@@ -588,12 +592,12 @@
                 </div>
                 <v-card-text class="pa-5">
                     <p class="text-body-2 text-medium-emphasis mb-4">
-                        Confirm the person is rescued and safe. You may add notes and a photo of the rescue for documentation.
+                        Confirm the person is responded to and okay. You may add notes and a photo of the response for documentation.
                     </p>
 
                     <v-textarea
                         v-model="completionNotes"
-                        label="Rescue Notes (optional)"
+                        label="Response Notes (optional)"
                         placeholder="Describe what you did, condition of the person, etc."
                         rows="3"
                         variant="outlined"
@@ -672,7 +676,7 @@
                 <v-card-title class="d-flex align-center pa-4 bg-primary">
                     <v-icon color="white" class="mr-2">mdi-alert-circle</v-icon>
                     <span class="text-white text-subtitle-1 font-weight-bold">
-                        {{ currentStatus === 'assigned' ? 'Cancel Assignment' : 'Cancel Rescue' }}
+                        {{ currentStatus === 'assigned' ? 'Cancel Assignment' : 'Cancel Response' }}
                     </span>
                     <v-spacer />
                     <v-btn icon variant="text" size="small" @click="showCancelDialog = false; cancellationReason = ''; cancelType = 'valid'">
@@ -717,7 +721,7 @@
                 </v-card-text>
                 <v-card-actions class="pa-4 pt-0">
                     <v-btn variant="outlined" color="grey" @click="showCancelDialog = false; cancellationReason = ''; cancelType = 'valid'" class="rounded-lg">
-                        {{ currentStatus === 'assigned' ? 'Keep Assignment' : 'Keep Rescue' }}
+                        {{ currentStatus === 'assigned' ? 'Keep Assignment' : 'Keep Response' }}
                     </v-btn>
                     <v-spacer />
                     <v-btn
@@ -1638,7 +1642,7 @@ const acceptRescue = async () => {
             currentStatus.value = 'in_progress';
             rescueRequest.value = { ...rescueRequest.value, ...data, status: 'in_progress' };
             statusTimestamps.value['in_progress'] = new Date().toISOString();
-            showSnackbar('Rescue accepted and started!', 'success');
+            showSnackbar('Response accepted and started!', 'success');
             
             // Store the rescue ID for later reference
             localStorage.setItem('lastRescueRequestId', rescueRequest.value.id.toString());
@@ -1693,7 +1697,7 @@ const startRescue = async () => {
             // Store the rescue ID for later reference
             localStorage.setItem('lastRescueRequestId', rescueRequest.value.id.toString());
             
-            showSnackbar('Rescue started! You can now proceed to the location.', 'success');
+            showSnackbar('Response started! You can now proceed to the location.', 'success');
         }
     } catch (error) {
         console.error('Error starting rescue:', error);
@@ -1745,7 +1749,7 @@ const completeRescue = async () => {
 
         const data = response.data || response;
         if (data) {
-            // Update local rescue request with completion data
+            // Update local response request with completion data
             rescueRequest.value = { ...rescueRequest.value, ...data, status: 'safe' };
             currentStatus.value = 'safe';
             showSnackbar('Person marked as safe!', 'success');
@@ -1851,7 +1855,7 @@ const openChat = () => {
     if (rescueRequest.value?.id) {
         router.visit(`/rescuer/rescue-chat/${rescueRequest.value.id}?from=active-rescue`);
     } else {
-        showSnackbar('No rescue request found', 'warning');
+        showSnackbar('No response request found', 'warning');
     }
 };
 
@@ -1978,7 +1982,7 @@ const formatStatus = (status) => {
         'pending': 'Pending',
         'assigned': 'Assigned',
         'in_progress': 'In Progress',
-        'rescued': 'Rescued',
+        'rescued': 'Assisted',
         'safe': 'Safe',
         'cancelled': 'Cancelled',
     };
@@ -2080,7 +2084,7 @@ const handleApproveSafeRequest = async () => {
         } catch (e) { /* ignore */ }
         
         showSafeApprovalDialog.value = false;
-        showSnackbar('User marked as safe. Rescue completed.', 'success');
+        showSnackbar('User marked as okay. Response completed.', 'success');
         
         // Vibrate for successful completion
         if (navigator.vibrate) {

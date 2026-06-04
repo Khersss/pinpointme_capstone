@@ -35,7 +35,7 @@ class AuthController extends Controller
     ) {}
 
     /**
-     * Send SDCA Google verification email with link
+     * Send Google verification email with link
      */
     public function sendGoogleVerificationLink(Request $request)
     {
@@ -54,15 +54,15 @@ class AuthController extends Controller
         try {
             Mail::send([], [], function ($message) use ($user, $verifyUrl) {
                 $message->to($user->email)
-                    ->subject('PinPointMe - Verify Your SDCA Google Account')
+                    ->subject('PinPointMe - Verify Your Account')
                     ->html("
                         <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
                             <div style='background: linear-gradient(135deg, #3674B5 0%, #2D5F96 100%); padding: 30px; text-align: center;'>
-                                <h1 style='color: white; margin: 0; font-size: 28px;'>Verify Your SDCA Google Account</h1>
+                                <h1 style='color: white; margin: 0; font-size: 28px;'>Verify Your Account</h1>
                             </div>
                             <div style='padding: 30px; background-color: #f8f9fa;'>
                                 <h2 style='color: #333; margin-bottom: 20px;'>Hi {$user->first_name}!</h2>
-                                <p style='color: #666; font-size: 16px; line-height: 1.6;'>Thank you for signing up with PinPointMe using your SDCA Google account. Please verify your email by clicking the button below:</p>
+                                <p style='color: #666; font-size: 16px; line-height: 1.6;'>Thank you for signing up with PinPointMe. Please verify your email by clicking the button below:</p>
                                 <div style='text-align:center; margin: 30px 0;'>
                                     <a href='{$verifyUrl}' style='background: #3674B5; color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-size: 18px; font-weight: bold;'>Verify My Account</a>
                                 </div>
@@ -82,7 +82,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Handle SDCA Google verification link
+     * Handle account verification link.
      */
     public function verifyGoogleLink(Request $request)
     {
@@ -104,7 +104,7 @@ class AuthController extends Controller
         $user->save();
         return Inertia::render('User/GoogleVerifyResult', [
             'success' => true,
-            'message' => 'Your account has been verified! You can now sign in using your SDCA Google account.'
+            'message' => 'Your account has been verified! You can now sign in.'
         ]);
     }
 
@@ -223,13 +223,6 @@ class AuthController extends Controller
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
                 return redirect('/login')->withErrors(['email' => 'Your account has been deactivated. Please contact the administrator.']);
-            }
-            // Block login if SDCA Google and not verified
-            if (str_ends_with($user->email, '@sdca.edu.ph') && !$user->email_verified_at) {
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-                return redirect('/login')->withErrors(['email' => 'Please verify your SDCA Google account first. Check your inbox for the verification link.']);
             }
             // Block external rescuers still in OTP verification (not yet email-verified)
             if ($user->role === 'rescuer' && $user->status === 'otp_pending') {
@@ -598,34 +591,11 @@ class AuthController extends Controller
     }
 
     /**
-     * Validate SDCA email format
+     * Validate email format.
      */
     public static function isValidSdcaEmail($email)
     {
-        // In local/development environment, allow any email for testing
-        if (app()->environment('local', 'development', 'testing')) {
-            return true;
-        }
-        
-        // Allow @sdca.edu.ph emails for production
-        // Also allow common test emails for development
-        $validDomains = ['sdca.edu.ph'];
-        $testEmails = ['admin@example.com', 'admin1@example.com', 'test@example.com'];
-        
-        // Check if it's a test email (for development)
-        if (in_array(strtolower($email), $testEmails)) {
-            return true;
-        }
-        
-        // Check domain
-        $emailParts = explode('@', $email);
-        if (count($emailParts) !== 2) {
-            return false;
-        }
-        
-        $domain = strtolower($emailParts[1]);
-        
-        return in_array($domain, $validDomains);
+        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
     }
 
     /**
@@ -1476,14 +1446,6 @@ class AuthController extends Controller
 
         $email = trim($request->email);
         
-        // Validate SDCA email
-        if (!self::isValidSdcaEmail($email)) {
-            return response()->json([
-                'success' => false, 
-                'message' => 'Only SDCA email addresses (@sdca.edu.ph) are allowed for registration'
-            ], 422);
-        }
-
         // Check if user already exists
         $existingUser = User::where('email', $email)->first();
         if ($existingUser) {
@@ -1769,7 +1731,6 @@ class AuthController extends Controller
     {
         return \Laravel\Socialite\Facades\Socialite::driver('google')
             ->redirectUrl(config('services.google.redirect'))
-            ->with(['hd' => 'sdca.edu.ph']) // Restrict to SDCA domain at OAuth level
             ->redirect();
     }
 
@@ -1817,16 +1778,7 @@ class AuthController extends Controller
                 'id' => $googleUser->getId()
             ]);
             
-            // Verify SDCA domain
             $email = strtolower($googleUser->getEmail());
-            $domain = substr($email, strpos($email, '@') + 1);
-            
-            if ($domain !== 'sdca.edu.ph') {
-                \Log::warning('Non-SDCA email attempted Google login', ['email' => $email]);
-                return redirect('/login')->withErrors([
-                    'google' => 'Only SDCA email addresses (@sdca.edu.ph) are allowed to sign in with Google.'
-                ]);
-            }
             
             // Check if user already exists
             $user = User::where('email', $email)->first();
@@ -1851,11 +1803,11 @@ class AuthController extends Controller
                     try {
                         Mail::send([], [], function ($message) use ($user, $verifyUrl) {
                             $message->to($user->email)
-                                ->subject('PinPointMe - Verify Your SDCA Google Account')
+                                ->subject('PinPointMe - Verify Your Account')
                                 ->html("
                                     <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
                                         <div style='background: linear-gradient(135deg, #3674B5 0%, #2D5F96 100%); padding: 30px; text-align: center;'>
-                                            <h1 style='color: white; margin: 0; font-size: 28px;'>Verify Your SDCA Google Account</h1>
+                                            <h1 style='color: white; margin: 0; font-size: 28px;'>Verify Your Account</h1>
                                         </div>
                                         <div style='padding: 30px; background-color: #f8f9fa;'>
                                             <h2 style='color: #333; margin-bottom: 20px;'>Hi {$user->first_name}!</h2>
@@ -1938,15 +1890,15 @@ class AuthController extends Controller
             try {
                 Mail::send([], [], function ($message) use ($newUser, $verifyUrl, $firstName) {
                     $message->to($newUser->email)
-                        ->subject('PinPointMe - Verify Your SDCA Google Account')
+                        ->subject('PinPointMe - Verify Your Google Account')
                         ->html("
                             <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
                                 <div style='background: linear-gradient(135deg, #3674B5 0%, #2D5F96 100%); padding: 30px; text-align: center;'>
-                                    <h1 style='color: white; margin: 0; font-size: 28px;'>Verify Your SDCA Google Account</h1>
+                                    <h1 style='color: white; margin: 0; font-size: 28px;'>Verify Your Google Account</h1>
                                 </div>
                                 <div style='padding: 30px; background-color: #f8f9fa;'>
                                     <h2 style='color: #333; margin-bottom: 20px;'>Hi {$firstName}!</h2>
-                                    <p style='color: #666; font-size: 16px; line-height: 1.6;'>Thank you for signing up with PinPointMe using your SDCA Google account. Please verify your email by clicking the button below:</p>
+                                    <p style='color: #666; font-size: 16px; line-height: 1.6;'>Thank you for signing up with PinPointMe using your Google account. Please verify your email by clicking the button below:</p>
                                     <div style='text-align:center; margin: 30px 0;'>
                                         <a href='{$verifyUrl}' style='background: #3674B5; color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-size: 18px; font-weight: bold;'>Verify My Account</a>
                                     </div>
@@ -2067,16 +2019,6 @@ class AuthController extends Controller
             $lastName = $tokenData['family_name'] ?? '';
             $avatar = $tokenData['picture'] ?? null;
             
-            // Verify SDCA domain
-            $domain = substr($email, strpos($email, '@') + 1);
-            
-            if ($domain !== 'sdca.edu.ph') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Only SDCA email addresses (@sdca.edu.ph) are allowed.'
-                ], 403);
-            }
-
             // Check if user already exists
             $user = User::where('email', $email)->first();
             
@@ -2098,11 +2040,11 @@ class AuthController extends Controller
                     try {
                         Mail::send([], [], function ($message) use ($user, $verifyUrl) {
                             $message->to($user->email)
-                                ->subject('PinPointMe - Verify Your SDCA Google Account')
+                                ->subject('PinPointMe - Verify Your Google Account')
                                 ->html("
                                     <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
                                         <div style='background: linear-gradient(135deg, #3674B5 0%, #2D5F96 100%); padding: 30px; text-align: center;'>
-                                            <h1 style='color: white; margin: 0; font-size: 28px;'>Verify Your SDCA Google Account</h1>
+                                            <h1 style='color: white; margin: 0; font-size: 28px;'>Verify Your Google Account</h1>
                                         </div>
                                         <div style='padding: 30px; background-color: #f8f9fa;'>
                                             <h2 style='color: #333; margin-bottom: 20px;'>Hi {$user->first_name}!</h2>
@@ -2133,7 +2075,7 @@ class AuthController extends Controller
                     return response()->json([
                         'success' => false,
                         'needs_verification' => true,
-                        'message' => 'Please verify your SDCA email first. A verification link has been sent to your inbox.'
+                        'message' => 'Please verify your email first. A verification link has been sent to your inbox.'
                     ]);
                 }
 
@@ -2198,15 +2140,15 @@ class AuthController extends Controller
                 try {
                     Mail::send([], [], function ($message) use ($newUser, $verifyUrl, $firstName) {
                         $message->to($newUser->email)
-                            ->subject('PinPointMe - Verify Your SDCA Google Account')
+                            ->subject('PinPointMe - Verify Your Account')
                             ->html("
                                 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
                                     <div style='background: linear-gradient(135deg, #3674B5 0%, #2D5F96 100%); padding: 30px; text-align: center;'>
-                                        <h1 style='color: white; margin: 0; font-size: 28px;'>Verify Your SDCA Google Account</h1>
+                                        <h1 style='color: white; margin: 0; font-size: 28px;'>Verify Your Account</h1>
                                     </div>
                                     <div style='padding: 30px; background-color: #f8f9fa;'>
                                         <h2 style='color: #333; margin-bottom: 20px;'>Hi {$firstName}!</h2>
-                                        <p style='color: #666; font-size: 16px; line-height: 1.6;'>Thank you for signing up with PinPointMe using your SDCA Google account. Please verify your email by clicking the button below:</p>
+                                        <p style='color: #666; font-size: 16px; line-height: 1.6;'>Thank you for signing up with PinPointMe. Please verify your email by clicking the button below:</p>
                                         <div style='text-align:center; margin: 30px 0;'>
                                             <a href='{$verifyUrl}' style='background: #3674B5; color: white; padding: 16px 32px; border-radius: 8px; text-decoration: none; font-size: 18px; font-weight: bold;'>Verify My Account</a>
                                         </div>
@@ -2234,7 +2176,7 @@ class AuthController extends Controller
                 return response()->json([
                     'success' => false,
                     'needs_verification' => true,
-                    'message' => 'Please verify your SDCA email first. A verification link has been sent to your inbox.'
+                    'message' => 'Please verify your email first. A verification link has been sent to your inbox.'
                 ]);
             }
             
@@ -2727,11 +2669,11 @@ class AuthController extends Controller
                             <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
                                 <div style='background: linear-gradient(135deg, #3674B5 0%, #2D5F96 100%); padding: 30px; text-align: center;'>
                                     <h1 style='color: white; margin: 0; font-size: 28px;'>Welcome to PinPointMe!</h1>
-                                    <p style='color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;'>Your SDCA Google account is connected!</p>
+                                    <p style='color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;'>Your Google account is connected!</p>
                                 </div>
                                 <div style='padding: 30px; background-color: #f8f9fa;'>
                                     <h2 style='color: #333; margin-bottom: 20px;'>Account Created Successfully</h2>
-                                    <p style='color: #666; font-size: 16px; line-height: 1.6;'>Your PinPointMe account has been created using your SDCA Google account.</p>
+                                    <p style='color: #666; font-size: 16px; line-height: 1.6;'>Your PinPointMe account has been created using your Google account.</p>
                                     
                                     <div style='background: #d4edda; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;'>
                                         <h3 style='color: #155724; margin-top: 0;'>Account Details</h3>

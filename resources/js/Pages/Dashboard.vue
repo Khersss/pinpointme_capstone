@@ -46,7 +46,7 @@
                             <v-card-text>
                                 <v-btn color="primary" class="mr-2" href="/admin/dashboard">Admin Dashboard</v-btn>
                                 <v-btn color="primary" class="mr-2" href="/admin/users">Manage Users</v-btn>
-                                <v-btn color="primary" class="mr-2" href="/admin/rescuers">Manage Rescuers</v-btn>
+                                <v-btn color="primary" class="mr-2" href="/admin/rescuers">Manage Responders</v-btn>
                                 <v-btn color="primary" class="mr-2" href="/admin/buildings">Manage Buildings</v-btn>
                                 <v-btn color="primary" class="mr-2" href="/admin/reports">Reports</v-btn>
                                 <v-btn color="primary" href="/audit-trails">Audit Trails</v-btn>

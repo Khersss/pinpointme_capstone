@@ -266,12 +266,12 @@ const filteredLocations = computed(() => {
 // Stats counts
 const pendingCount = computed(() => 
     locations.value.filter(loc => 
-        !loc.isRescued && !['rescued', 'safe', 'cancelled'].includes(loc.status)
+        !loc.isAssisted && !['rescued', 'safe', 'cancelled'].includes(loc.status)
     ).length
 );
 const rescuedCount = computed(() => 
     locations.value.filter(loc => 
-        loc.isRescued || ['rescued', 'safe'].includes(loc.status)
+        loc.isAssisted || ['rescued', 'safe'].includes(loc.status)
     ).length
 );
 
@@ -333,7 +333,7 @@ const fetchLocationHistory = async () => {
             building_name: buildingName,
             floor_name: floorName,
             location: formatLocationFromRecord(record),
-            isRescued: ['rescued', 'safe'].includes(record.status),
+            isAssisted: ['rescued', 'safe'].includes(record.status),
             status: record.status,
             timestamp: record.created_at,
             rescue_code: record.rescue_code,

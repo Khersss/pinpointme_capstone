@@ -18,7 +18,11 @@ class OpenAIController extends Controller
 {
     private string $apiBase = 'https://generativelanguage.googleapis.com/v1beta';
 
-    private array $modelCandidates = ['gemini-2.5-flash-lite'];
+    private array $modelCandidates = [
+        'gemini-3.5-flash',
+        'gemini-2.5-flash',
+        'gemini-2.5-flash-lite',
+    ];
 
     private function envFileValue(string $name): ?string
     {
@@ -68,7 +72,7 @@ class OpenAIController extends Controller
     {
         return $this->envFileValue('GEMINI_MODEL')
             ?: config('services.gemini.model')
-            ?: 'gemini-2.5-flash';
+            ?: 'gemini-3.5-flash';
     }
 
     private function geminiJson(array $payload, int $timeout = 60, ?string $model = null): array

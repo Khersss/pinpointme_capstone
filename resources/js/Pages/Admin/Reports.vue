@@ -99,7 +99,7 @@
                         <div class="stat-inline">
                             <v-icon size="22" class="stat-inline-icon green-icon">mdi-check-circle</v-icon>
                             <div class="stat-inline-value">{{ getStatusCount('rescued') || 0 }}</div>
-                            <div class="stat-inline-label">Rescued</div>
+                            <div class="stat-inline-label">Assisted</div>
                         </div>
                         <div class="stat-inline">
                             <v-icon size="22" class="stat-inline-icon amber-icon">mdi-clock-outline</v-icon>
@@ -551,7 +551,7 @@
                         </v-avatar>
                         <div>
                             <div class="font-weight-bold text-h6 text-grey-darken-4">{{ getFalseAlarmReporter(selectedFalseAlarm) }}</div>
-                            <div class="text-body-2 text-grey-darken-1">Rescuer who reported</div>
+                            <div class="text-body-2 text-grey-darken-1">Responder who reported</div>
                         </div>
                     </div>
 
@@ -756,17 +756,41 @@
                             <template v-slot:prepend>
                                 <v-icon>mdi-lifebuoy</v-icon>
                             </template>
-                            <v-list-item-title>Assigned Rescuer</v-list-item-title>
+                            <v-list-item-title>Assigned Responder</v-list-item-title>
                             <v-list-item-subtitle>{{ selectedReport.rescuer_name }}</v-list-item-subtitle>
                         </v-list-item>
                         <v-list-item>
                             <template v-slot:prepend>
-                                <v-icon>mdi-alert</v-icon>
+                                <v-icon>mdi-hospital-box-outline</v-icon>
+                            </template>
+                            <v-list-item-title>Incident Type</v-list-item-title>
+                            <v-list-item-subtitle>
+                                <v-chip color="info" size="small">
+                                    {{ selectedReport.mobility_status || 'Not specified' }}
+                                </v-chip>
+                            </v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item>
+                            <template v-slot:prepend>
+                                <v-icon>mdi-information-outline</v-icon>
+                            </template>
+                            <v-list-item-title>Please Specify</v-list-item-title>
+                            <v-list-item-subtitle>
+                                <v-chip color="secondary" size="small">
+                                    {{ selectedReport.urgency_level || 'Not specified' }}
+                                </v-chip>
+                            </v-list-item-subtitle>
+                        </v-list-item>
+
+                        <v-list-item>
+                            <template v-slot:prepend>
+                                <v-icon>mdi-alert-circle</v-icon>
                             </template>
                             <v-list-item-title>Urgency Level</v-list-item-title>
                             <v-list-item-subtitle>
-                                <v-chip :color="getUrgencyColor(selectedReport.urgency_level)" size="small">
-                                    {{ selectedReport.urgency_level || 'Low' }}
+                                <v-chip :color="getUrgencyColor(selectedReport.injuries)" size="small">
+                                    {{ selectedReport.injuries || 'Low' }}
                                 </v-chip>
                             </v-list-item-subtitle>
                         </v-list-item>
@@ -954,7 +978,7 @@ const falseAlarmTimeOptions = [
 
 const falseAlarmHeaders = [
     { title: 'Date', key: 'created_at', width: '180px' },
-    { title: 'Reported By (Rescuer)', key: 'reporter', sortable: false },
+    { title: 'Reported By (Responder)', key: 'reporter', sortable: false },
     { title: 'Requester', key: 'requester', sortable: false },
     { title: 'Reason', key: 'reason', sortable: false },
     { title: 'Actions', key: 'actions', sortable: false, width: '80px' },
@@ -986,7 +1010,7 @@ const statusFilters = [
     { label: 'All Status', value: 'all' },
     { label: 'Need Help', value: 'need_help' },
     { label: 'In Progress', value: 'in_progress' },
-    { label: 'Rescued', value: 'rescued' },
+    { label: 'Assisted', value: 'rescued' },
     { label: 'Cancelled', value: 'cancelled' },
     { label: 'False Reports', value: 'false_report' }
 ];
@@ -1026,7 +1050,7 @@ const statusDistribution = computed(() => {
     return [
         { name: 'Need Help', count: counts.value.pending, percentage: Math.round((counts.value.pending / total) * 100), color: 'warning' },
         { name: 'In Progress', count: counts.value.in_progress, percentage: Math.round((counts.value.in_progress / total) * 100), color: 'info' },
-        { name: 'Rescued', count: counts.value.completed, percentage: Math.round((counts.value.completed / total) * 100), color: 'success' },
+        { name: 'Assisted', count: counts.value.completed, percentage: Math.round((counts.value.completed / total) * 100), color: 'success' },
         { name: 'Cancelled', count: counts.value.cancelled || 0, percentage: Math.round(((counts.value.cancelled || 0) / total) * 100), color: 'error' },
         { name: 'False Reports', count: counts.value.false_reports || 0, percentage: Math.round(((counts.value.false_reports || 0) / total) * 100), color: 'red-darken-3' }
     ];
@@ -1275,7 +1299,7 @@ const exportToPDF = async (data, timePeriod) => {
         doc.text(`Period: ${periodText}`, pageWidth - 60, 28);
         
         // Table headers and data
-        const tableColumn = ['Code', 'Reported By', 'Location', 'Time', 'Date', 'Status', 'Urgency', 'Rescuer'];
+        const tableColumn = ['Code', 'Reported By', 'Location', 'Time', 'Date', 'Status', 'Urgency', 'Responder'];
         const tableRows = data.map(r => [
             r.rescue_code || '',
             r.name || '',
@@ -1337,7 +1361,7 @@ const exportToPDF = async (data, timePeriod) => {
 };
 
 const generateCSV = (data) => {
-    const headers = ['Rescue Code', 'Name', 'Location', 'Time', 'Date', 'Status', 'Urgency', 'Rescuer'];
+    const headers = ['Rescue Code', 'Name', 'Location', 'Time', 'Date', 'Status', 'Urgency', 'Responder'];
     const rows = data.map(r => [
         r.rescue_code,
         r.name,
@@ -1383,9 +1407,9 @@ const formatStatus = (status) => {
         accepted: 'In Progress',
         in_progress: 'In Progress',
         en_route: 'In Progress',
-        rescued: 'Rescued',
-        completed: 'Rescued',
-        safe: 'Rescued',
+        rescued: 'Assisted',
+        completed: 'Assisted',
+        safe: 'Assisted',
         cancelled: 'Cancelled',
         false_report: 'False Report'
     };
@@ -1552,8 +1576,8 @@ const viewFalseAlarmDetails = (item) => {
 };
 
 const getFalseAlarmReporter = (report) => {
-    if (report.user) return `${report.user.first_name || ''} ${report.user.last_name || ''}`.trim() || 'Unknown Rescuer';
-    return report.initiator || 'Unknown Rescuer';
+    if (report.user) return `${report.user.first_name || ''} ${report.user.last_name || ''}`.trim() || 'Unknown Responder';
+    return report.initiator || 'Unknown Responder';
 };
 
 const getFalseAlarmReason = (report) => {

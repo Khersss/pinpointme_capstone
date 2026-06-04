@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckProfileCompletion
@@ -27,7 +28,7 @@ class CheckProfileCompletion
             return $next($request);
         }
 
-        if (!\Schema::hasColumn('users', 'must_update_profile')) {
+        if (!Schema::hasColumn('users', 'must_update_profile')) {
             return $next($request);
         }
 
@@ -36,6 +37,7 @@ class CheckProfileCompletion
             'user/profile/*',
             'api/user',
             'api/users/*',
+            'api/auth/*',
             'api/accept-terms',
             'logout',
             'change-password',

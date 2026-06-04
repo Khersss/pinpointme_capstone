@@ -31,18 +31,20 @@ class EmergencyAlert extends Notification
         $fullName = trim(($this->user->first_name ?? '') . ' ' . ($this->user->last_name ?? ''));
         $displayName = $fullName !== '' ? $fullName : ($this->user->username ?? 'A user');
         $location = $this->buildLocation();
-        $urgency = strtoupper($this->report->urgency_level ?? 'UNKNOWN');
-        $mobility = ucfirst($this->report->mobility_status ?? 'Unknown');
-        $injuries = $this->report->injuries ?? '';
-        $injuries = trim((string) $injuries);
+        $incidentType = trim((string) ($this->report->mobility_status ?? ''));
+        $pleaseSpecify = trim((string) ($this->report->injuries ?? ''));
+        $urgency = trim((string) ($this->report->urgency_level ?? '')) ?: 'Unknown';
+        $additionalInfo = trim((string) ($this->report->additional_info ?? ''));
         $reportedAt = $this->report->created_at?->format('M d, Y h:i A') ?? '';
 
         $content = "EMERGENCY REPORT\n" .
             "Name: {$displayName}\n" .
             "Time: {$reportedAt}\n" .
             "Location: {$location}\n" .
-            "Urgency: {$urgency} ({$mobility})\n" .
-            "Injuries: {$injuries}";
+            "Incident Type: {$incidentType}\n" .
+            "Please Specify: {$pleaseSpecify}\n" .
+            "Urgency Level: {$urgency}" .
+            ($additionalInfo !== '' ? "\nAdditional Info: {$additionalInfo}" : '');
 
         return (new VonageMessage)->content($content);
     }

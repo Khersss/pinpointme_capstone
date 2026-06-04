@@ -323,38 +323,12 @@ const targetRoomAnnotation = computed(() => {
 });
 
 const evacuationPaths = computed(() => {
-    if (!selectedFloor.value?.floor_plan_data) return [];
-    return selectedFloor.value.floor_plan_data.evacuation_paths || [];
+    return [];
 });
 
 // Only get evacuation path from target location
 const targetEvacuationPath = computed(() => {
-    if (!evacuationPaths.value.length || !targetRoomAnnotation.value) return null;
-    
-    // Find path that starts from or near target's room
-    const targetRoom = targetRoomAnnotation.value;
-    const targetCenterX = targetRoom.x + (targetRoom.width / 2);
-    const targetCenterY = targetRoom.y + (targetRoom.height / 2);
-    
-    // Find the path closest to target's room or the first path if only one exists
-    let closestPath = evacuationPaths.value[0];
-    let minDistance = Infinity;
-    
-    for (const path of evacuationPaths.value) {
-        if (path.points && path.points.length > 0) {
-            const startPoint = path.points[0];
-            const distance = Math.sqrt(
-                Math.pow(startPoint.x - targetCenterX, 2) + 
-                Math.pow(startPoint.y - targetCenterY, 2)
-            );
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestPath = path;
-            }
-        }
-    }
-    
-    return closestPath;
+    return null;
 });
 
 const svgViewBox = computed(() => {

@@ -110,7 +110,7 @@
                                     :items="rescuerOptions"
                                     item-title="label"
                                     item-value="value"
-                                    label="Rescuer"
+                                    label="Responder"
                                     variant="outlined"
                                     density="compact"
                                     clearable
@@ -328,7 +328,7 @@
                             </v-btn>
                         </v-card-title>
                         <v-card-text class="pa-4">
-                            <!-- User & Rescuer -->
+                            <!-- User & Responder -->
                             <div class="d-flex align-center mb-4">
                                 <v-avatar :color="getAvatarColor(selectedFeedback.user)" size="40" class="mr-3">
                                     <span class="text-white font-weight-bold">{{ getInitials(selectedFeedback.user) }}</span>
@@ -346,9 +346,9 @@
 
                             <v-divider class="mb-4" />
 
-                            <!-- Rescuer Info -->
+                            <!-- Responder Info -->
                             <div v-if="selectedFeedback.rescuer" class="mb-4">
-                                <p class="text-caption text-grey mb-1">Rescuer</p>
+                                <p class="text-caption text-grey mb-1">Responder</p>
                                 <div class="d-flex align-center">
                                     <v-icon size="18" color="primary" class="mr-2">mdi-lifebuoy</v-icon>
                                     <span class="font-weight-medium">{{ getRescuerName(selectedFeedback.rescuer) }}</span>
@@ -501,7 +501,7 @@
                                 :class="{ 'active-tab': sysAppFilter === 'rescuer' }"
                             >
                                 <v-icon start size="14">mdi-lifebuoy</v-icon>
-                                Rescuer App ({{ sysRescuerAppCount }})
+                                Responder App ({{ sysRescuerAppCount }})
                             </v-chip>
                         </div>
                         <!-- Filters -->
@@ -590,7 +590,7 @@
                         <v-card-title class="d-flex align-center justify-space-between">
                             <div>
                                 <v-icon start color="primary">mdi-format-list-bulleted</v-icon>
-                                <span class="text-subtitle-1 font-weight-bold">{{ sysAppFilter === 'user' ? 'User App' : sysAppFilter === 'rescuer' ? 'Rescuer App' : 'All' }} Reports ({{ filteredSysFeedbacks.length }})</span>
+                                <span class="text-subtitle-1 font-weight-bold">{{ sysAppFilter === 'user' ? 'User App' : sysAppFilter === 'rescuer' ? 'Responder App' : 'All' }} Reports ({{ filteredSysFeedbacks.length }})</span>
                             </div>
                         </v-card-title>
 
@@ -624,7 +624,7 @@
                                                 <span class="font-weight-medium text-body-2">{{ getUserName(report.user) }}</span>
                                                 <v-chip v-if="report.user?.role" size="x-small" :color="report.user.role === 'rescuer' ? 'teal' : 'indigo'" variant="tonal">
                                                     <v-icon start size="8">{{ report.user.role === 'rescuer' ? 'mdi-lifebuoy' : 'mdi-account' }}</v-icon>
-                                                    {{ report.user.role === 'rescuer' ? 'Rescuer' : 'User' }}
+                                                    {{ report.user.role === 'rescuer' ? 'Responder' : 'User' }}
                                                 </v-chip>
                                             </div>
                                             <div class="text-caption text-grey">
@@ -696,7 +696,7 @@
                                             <span class="font-weight-bold">{{ getUserName(selectedSysReport.user) }}</span>
                                             <v-chip v-if="selectedSysReport.user?.role" size="x-small" :color="selectedSysReport.user.role === 'rescuer' ? 'teal' : 'indigo'" variant="tonal">
                                                 <v-icon start size="10">{{ selectedSysReport.user.role === 'rescuer' ? 'mdi-lifebuoy' : 'mdi-account' }}</v-icon>
-                                                {{ selectedSysReport.user.role === 'rescuer' ? 'Rescuer' : 'User' }}
+                                                {{ selectedSysReport.user.role === 'rescuer' ? 'Responder' : 'User' }}
                                             </v-chip>
                                         </div>
                                         <div class="text-caption text-grey">{{ formatDate(selectedSysReport.created_at) }}</div>
@@ -918,7 +918,7 @@ const fetchRescuers = async () => {
             }))
         ];
     } catch (e) {
-        console.error('Error fetching rescuers:', e);
+        console.error('Error fetching responders:', e);
     }
 };
 
@@ -945,7 +945,7 @@ const getUserName = (user) => {
 };
 
 const getRescuerName = (rescuer) => {
-    if (!rescuer) return 'No Rescuer';
+    if (!rescuer) return 'No Responder';
     return `${rescuer.first_name || ''} ${rescuer.last_name || ''}`.trim() || rescuer.name || 'Unknown';
 };
 

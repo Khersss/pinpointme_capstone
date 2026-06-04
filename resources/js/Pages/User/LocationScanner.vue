@@ -34,18 +34,18 @@
                 </div>
             </div>
 
-            <!-- Active Rescue Section -->
+            <!-- Active Response Section -->
             <div v-if="hasActiveRequest && activeRequest" class="notification-section">
-                <div class="section-header warning">
+                    <div class="section-header warning">
                     <v-icon size="18" class="mr-2">mdi-ambulance</v-icon>
-                    Active Rescue
+                    Active Response
                 </div>
                 <div class="notification-item" @click="goToActiveRescue">
                     <v-avatar :color="getStatusColor(activeRequest.status)" size="44">
                         <v-icon color="white">mdi-ambulance</v-icon>
                     </v-avatar>
                     <div class="notification-content">
-                        <h4>Rescue {{ activeRequest.rescue_code }}</h4>
+                        <h4>Response {{ activeRequest.rescue_code }}</h4>
                         <v-chip :color="getStatusColor(activeRequest.status)" size="x-small" variant="flat" class="mt-1">
                             {{ formatStatus(activeRequest.status) }}
                         </v-chip>
@@ -81,10 +81,10 @@
             </div>
 
             <template v-slot:append>
-                <div class="notification-actions">
+                    <div class="notification-actions">
                     <v-btn v-if="hasActiveRequest" block color="warning" variant="flat" class="mb-2 rounded-lg" @click="showNotificationPanel = false; goToActiveRescue()">
                         <v-icon start>mdi-ambulance</v-icon>
-                        View Active Rescue
+                        View Active Response
                     </v-btn>
                     <v-btn block color="primary" variant="tonal" class="rounded-lg" @click="showNotificationPanel = false; goToInbox()">
                         <v-icon start>mdi-email</v-icon>
@@ -113,8 +113,8 @@
                                 </v-avatar>
                                 <div class="pulse-ring warning"></div>
                             </div>
-                            <h2>Active Rescue Request</h2>
-                            <p>You have an ongoing rescue request</p>
+                            <h2>Active Response Request</h2>
+                            <p>You have an ongoing response request</p>
                         </div>
                     </div>
                     
@@ -142,15 +142,15 @@
                                     <div class="detail-row" v-if="activeRequest.rescuer">
                                         <v-icon color="success" size="20">mdi-account-hard-hat</v-icon>
                                         <div>
-                                            <span class="label">Assigned Rescuer</span>
-                                            <span class="value">{{ activeRequest.rescuer.first_name }} {{ activeRequest.rescuer.last_name }}</span>
+                                                <span class="label">Assigned Responder</span>
+                                                <span class="value">{{ activeRequest.rescuer.first_name }} {{ activeRequest.rescuer.last_name }}</span>
                                         </div>
                                     </div>
                                     <div class="detail-row" v-else>
                                         <v-icon color="grey" size="20">mdi-account-search</v-icon>
                                         <div>
-                                            <span class="label">Rescuer</span>
-                                            <span class="value text-grey">Waiting for assignment...</span>
+                                                <span class="label">Responder</span>
+                                                <span class="value text-grey">Waiting for assignment...</span>
                                         </div>
                                     </div>
                                     <div class="detail-row">
@@ -175,16 +175,16 @@
                             variant="tonal"
                             class="rounded-xl"
                         >
-                            <v-alert-title v-if="activeRequest?.status === 'rescued' || activeRequest?.status === 'completed'" class="font-weight-bold">
-                                Please confirm you are safe
-                            </v-alert-title>
-                            <v-alert-title v-else class="font-weight-bold">Need help?</v-alert-title>
-                            <p class="mt-2 mb-0" v-if="activeRequest?.status === 'rescued' || activeRequest?.status === 'completed'">
-                                Your rescue has been completed. Please confirm that you are safe before submitting a new rescue request.
-                            </p>
-                            <p class="mt-2 mb-0" v-else>
-                                You can only have one active rescue request at a time. Wait for your current request to be completed.
-                            </p>
+                                <v-alert-title v-if="activeRequest?.status === 'rescued' || activeRequest?.status === 'completed'" class="font-weight-bold">
+                                    Please confirm you are okay
+                                </v-alert-title>
+                                <v-alert-title v-else class="font-weight-bold">Need help?</v-alert-title>
+                                <p class="mt-2 mb-0" v-if="activeRequest?.status === 'rescued' || activeRequest?.status === 'completed'">
+                                    Your response has been completed. Please confirm that you are okay before submitting a new response request.
+                                </p>
+                                <p class="mt-2 mb-0" v-else>
+                                    You can only have one active response request at a time. Wait for your current request to be completed.
+                                </p>
                         </v-alert>
                     </div>
                 </div>
@@ -347,7 +347,7 @@
                         <v-card id="emergency-form-section" class="mb-4 rounded-xl emergency-form-card" elevation="8">
                             <div class="emergency-form-header">
                                 <v-icon color="white" size="24" class="mr-2">mdi-alert-circle</v-icon>
-                                <span>Emergency Details (Optional)</span>
+                                <span>Incident Details (Optional)</span>
                                 <v-chip v-if="hasLocation" size="x-small" color="white" variant="flat" class="ml-auto">
                                     <v-icon start size="12">mdi-check</v-icon>
                                     Ready
@@ -391,29 +391,11 @@
                                                 @input="sanitizeEmergencyNameField('lastName')"
                                             />
                                         </v-col>
-                                        <v-col cols="12">
-                                            <v-textarea
-                                                v-model="emergencyForm.description"
-                                                label="Describe your emergency (Optional)"
-                                                variant="outlined"
-                                                rows="2"
-                                                prepend-inner-icon="mdi-text"
-                                                hide-details
-                                                class="mt-3"
-                                                placeholder="Briefly describe the situation if you can"
-                                                :readonly="!isProfileComplete"
-                                                @input="sanitizeNoEmojiField('description')"
-                                            />
-                                            <div class="text-caption text-grey mt-1 d-flex align-center">
-                                                <v-icon size="12" class="mr-1">mdi-translate</v-icon>
-                                                <span>Descriptions in other languages are automatically translated to English for rescuers</span>
-                                            </div>
-                                        </v-col>
                                         <v-col cols="6">
                                             <v-select
                                                 v-model="emergencyForm.mobilityStatus"
-                                                :items="mobilityOptions"
-                                                label="Mobility (Optional)"
+                                                :items="incidentTypeOptions"
+                                                label="Incident Type"
                                                 variant="outlined"
                                                 density="comfortable"
                                                 prepend-inner-icon="mdi-walk"
@@ -426,8 +408,8 @@
                                         <v-col cols="6">
                                             <v-select
                                                 v-model="emergencyForm.urgencyLevel"
-                                                :items="urgencyOptions"
-                                                label="Urgency (Optional)"
+                                                :items="pleaseSpecifyOptions"
+                                                label="Please Specify"
                                                 variant="outlined"
                                                 density="comfortable"
                                                 prepend-inner-icon="mdi-speedometer"
@@ -440,23 +422,38 @@
                                         <v-col cols="12">
                                             <v-select
                                                 v-model="emergencyForm.injuries"
-                                                :items="injuryOptions"
-                                                label="Injuries (Optional)"
+                                                :items="urgencyLevelOptions"
+                                                label="Urgency Level"
                                                 variant="outlined"
                                                 density="comfortable"
                                                 prepend-inner-icon="mdi-medical-bag"
-                                                multiple
-                                                chips
-                                                closable-chips
                                                 hide-details
                                                 class="mt-3"
                                                 :readonly="!isProfileComplete"
                                             />
                                         </v-col>
-                                        <v-col cols="12" v-if="emergencyForm.injuries?.includes('other')">
+                                        <v-col cols="12">
+                                            <v-textarea
+                                                v-model="emergencyForm.description"
+                                                label="Describe the incident (Optional)"
+                                                variant="outlined"
+                                                rows="2"
+                                                prepend-inner-icon="mdi-text"
+                                                hide-details
+                                                class="mt-3"
+                                                placeholder="Briefly describe the situation if you can"
+                                                :readonly="!isProfileComplete"
+                                                @input="sanitizeNoEmojiField('description')"
+                                            />
+                                            <div class="text-caption text-grey mt-1 d-flex align-center">
+                                                <v-icon size="12" class="mr-1">mdi-translate</v-icon>
+                                                <span>Descriptions in other languages are automatically translated to English for responders</span>
+                                            </div>
+                                        </v-col>
+                                        <v-col cols="12" v-if="emergencyForm.mobilityStatus === 'Other'">
                                             <v-text-field
                                                 v-model="emergencyForm.otherInjury"
-                                                label="Specify Other Injury"
+                                                label="Specify Other Incident Type"
                                                 variant="outlined"
                                                 density="comfortable"
                                                 prepend-inner-icon="mdi-pencil"
@@ -602,7 +599,7 @@
                                     elevation="2"
                                 >
                                     <v-icon start>{{ !isProfileComplete ? 'mdi-account-alert' : 'mdi-send' }}</v-icon>
-                                    {{ !isProfileComplete ? 'Complete Profile to Enable' : 'Request Rescue' }}
+                                    {{ !isProfileComplete ? 'Complete Profile to Enable' : 'Request Assistance' }}
                                 </v-btn>
                             </v-card-actions>
                         </v-card>
@@ -617,7 +614,7 @@
                         <v-btn icon variant="text" @click="closeQrScanner">
                             <v-icon color="white">mdi-close</v-icon>
                         </v-btn>
-                        <span class="qr-title">Scan QR Code</span>
+                        <span class="qr-title">Scan Ward QR Code</span>
                         
                         <!-- Camera Control Buttons -->
                         <div class="camera-controls-header">
@@ -726,7 +723,7 @@
                             <div class="help-step">
                                 <div class="step-number">4</div>
                                 <div class="step-content">
-                                    <h4>Request Rescue</h4>
+                                    <h4>Request Assistance</h4>
                                     <p>Submit your request and wait for help</p>
                                 </div>
                             </div>
@@ -1096,12 +1093,6 @@ const hasFloorPlan = computed(() => {
 });
 
 const evacuationPaths = computed(() => {
-    if (!selectedFloor.value?.floor_plan_data) return [];
-    const paths = selectedFloor.value.floor_plan_data.evacuation_paths || [];
-    // Filter paths for selected room
-    if (selectedRoom.value) {
-        return paths.filter(path => path.room_id === selectedRoom.value.id);
-    }
     return [];
 });
 
@@ -1136,7 +1127,7 @@ const emergencyForm = ref({
     description: '',
     mobilityStatus: '',
     urgencyLevel: '',
-    injuries: [],
+    injuries: '',
     otherInjury: '',
     additionalInfo: '',
 });
@@ -1229,7 +1220,7 @@ const restoreFormData = () => {
         }
 
         const sf = formData.emergencyForm || {};
-        const hasContent = sf.description || sf.mobilityStatus || sf.urgencyLevel || sf.additionalInfo || (sf.injuries && sf.injuries.length > 0);
+        const hasContent = sf.description || sf.mobilityStatus || sf.urgencyLevel || sf.additionalInfo || sf.injuries;
         if (!hasContent) return false;
 
         // Preserve authenticated user names
@@ -1242,7 +1233,7 @@ const restoreFormData = () => {
             description: sf.description || '',
             mobilityStatus: sf.mobilityStatus || '',
             urgencyLevel: sf.urgencyLevel || '',
-            injuries: Array.isArray(sf.injuries) ? [...sf.injuries] : [],
+            injuries: sf.injuries || '',
             otherInjury: sf.otherInjury || '',
             additionalInfo: sf.additionalInfo || '',
         };
@@ -1317,7 +1308,7 @@ const resetFormData = () => {
         description: '',
         mobilityStatus: '',
         urgencyLevel: '',
-        injuries: [],
+        injuries: '',
         otherInjury: '',
         additionalInfo: '',
     };
@@ -1341,32 +1332,65 @@ const previewMediaFile = ref(null);
 const MAX_FILES = 5;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-const mobilityOptions = [
-    { title: 'Can walk normally', value: 'normal' },
-    { title: 'Limited mobility', value: 'limited' },
-    { title: 'Cannot move / Immobile', value: 'immobile' },
-    { title: 'Unknown', value: 'unknown' },
+// Ward incident categories and their specific follow-up options.
+const incidentCategories = [
+    {
+        title: 'Service Call',
+        value: 'Service Call',
+        items: ['Call Nurse', 'Need Assistance', 'Buzzer / Call Bell', 'Please Come Here', 'Patient Needs Attention'],
+    },
+    {
+        title: 'Machine Problem',
+        value: 'Machine Problem',
+        items: ['Bed Alarm Issue', 'Monitor Problem', 'IV Pump Problem', 'Oxygen Machine Problem', 'Suction Machine Problem', 'Other Equipment Issue'],
+    },
+    {
+        title: 'Medication Request',
+        value: 'Medication Request',
+        items: ['Need Medication', 'Missed Dose', 'Wrong Time', 'Medication Follow-up', 'Prescription Clarification'],
+    },
+    {
+        title: 'Patient Assistance',
+        value: 'Patient Assistance',
+        items: ['Toileting Assistance', 'Repositioning', 'Transfer Help', 'Feeding Assistance', 'Walking Assistance'],
+    },
+    {
+        title: 'Cleaning / Housekeeping',
+        value: 'Cleaning / Housekeeping',
+        items: ['Spill Cleanup', 'Dirty Room', 'Bathroom Cleaning', 'Waste Disposal', 'Linen Change'],
+    },
+    {
+        title: 'Supply Request',
+        value: 'Supply Request',
+        items: ['Need Supplies', 'Restock Supplies', 'Linen Request', 'Gloves / PPE Needed', 'Water Request'],
+    },
+    {
+        title: 'Security Concern',
+        value: 'Security Concern',
+        items: ['Unauthorized Person', 'Visitor Issue', 'Lost Belongings', 'Privacy Concern', 'Unsafe Behavior'],
+    },
+    {
+        title: 'Other',
+        value: 'Other',
+        items: ['Other Concern', 'Not Listed', 'Please Specify'],
+    },
 ];
 
-const urgencyOptions = [
-    { title: 'Low - Not life threatening', value: 'low' },
-    { title: 'Medium - Needs Attention Soon', value: 'medium' },
-    { title: 'High - Urgent Attention Needed', value: 'high' },
-    { title: 'Critical - Life Threatening', value: 'critical' },
-];
+const incidentTypeOptions = incidentCategories.map((c) => ({ title: c.title, value: c.value }));
 
-const injuryOptions = [
-    { title: 'None', value: 'none' },
-    { title: 'Bleeding / Cut', value: 'bleeding' },
-    { title: 'Fracture / Broken Bone', value: 'fracture' },
-    { title: 'Burn', value: 'burn' },
-    { title: 'Head Injury', value: 'head' },
-    { title: 'Breathing Difficulty', value: 'breathing' },
-    { title: 'Unconscious', value: 'unconscious' },
-    { title: 'Chest Pain', value: 'chest_pain' },
-    { title: 'Seizure', value: 'seizure' },
-    { title: 'Allergic Reaction', value: 'allergic' },
-    { title: 'Other', value: 'other' },
+const pleaseSpecifyOptions = computed(() => {
+    const selected = emergencyForm.value.mobilityStatus;
+    if (!selected) return [];
+    const category = incidentCategories.find((c) => c.value === selected);
+    if (!category) return [];
+    return category.items.map((item) => ({ title: item, value: item }));
+});
+
+const urgencyLevelOptions = [
+    { title: 'Low', value: 'low' },
+    { title: 'Medium', value: 'medium' },
+    { title: 'High', value: 'high' },
+    { title: 'Critical', value: 'critical' },
 ];
 
 // Submission
@@ -1580,10 +1604,10 @@ const pollForUpdates = async () => {
 // Trigger notification for status change
 const triggerStatusChangeNotification = (oldStatus, newStatus, request) => {
     const statusMessages = {
-        'accepted': { title: '🚨 Rescuer Assigned!', message: 'A rescuer has accepted your request and is on the way.', type: 'success', icon: 'mdi-account-hard-hat' },
+        'accepted': { title: '🚨 Responder Assigned!', message: 'A rescuer has accepted your request and is on the way.', type: 'success', icon: 'mdi-account-hard-hat' },
         'in_progress': { title: '🏃 Rescue In Progress', message: 'The rescuer is now heading to your location.', type: 'info', icon: 'mdi-run' },
-        'en_route': { title: '🚑 Rescuer En Route', message: 'Help is on the way! Stay calm and wait for assistance.', type: 'info', icon: 'mdi-ambulance' },
-        'rescued': { title: '✅ You\'ve Been Rescued!', message: 'Please confirm you are safe to complete the rescue.', type: 'success', icon: 'mdi-check-circle' },
+        'en_route': { title: '🚑 Responder En Route', message: 'Help is on the way! Stay calm and wait for assistance.', type: 'info', icon: 'mdi-ambulance' },
+        'rescued': { title: '✅ You\'ve Been Assisted!', message: 'Please confirm that you\'ve been assisted to complete the rescue.', type: 'success', icon: 'mdi-check-circle' },
         'completed': { title: '✅ Rescue Completed', message: 'Your rescue has been marked as complete.', type: 'success', icon: 'mdi-check-circle' },
     };
     
@@ -1743,11 +1767,11 @@ const getStatusColor = (status) => {
 const formatStatus = (status) => {
     const labels = {
         'pending': 'Pending',
-        'accepted': 'Rescuer Assigned',
+        'accepted': 'Responder Assigned',
         'in_progress': 'Rescue In Progress',
-        'en_route': 'Rescuer En Route',
-        'rescued': 'Rescued - Please confirm you are safe',
-        'completed': 'Completed - Please confirm you are safe',
+        'en_route': 'Responder En Route',
+        'rescued': 'Assisted - Please confirm that you\'ve been assisted',
+        'completed': 'Completed - Please confirm that you\'ve been assisted',
         'safe': 'Marked as Safe',
         'cancelled': 'Cancelled',
     };
@@ -2786,141 +2810,156 @@ const extractLocationFromVoice = (transcript) => {
 };
 
 // Extract emergency details from voice (separates location from emergency description)
+// Updated to use NEW revised incident types: mobility_status, urgency_level, injuries array, other_injury
 const extractEmergencyFromVoice = (transcript) => {
-    const text = transcript.toLowerCase();
-    
+    const text = String(transcript || '').toLowerCase();
+
     const result = {
-        description: '',
-        mobility: null,
-        urgency: null,
-        injuries: []
+        description: String(transcript || '').trim(),
+        incident_type: '',
+        please_specify: '',
+        urgency_level: '',
+        additional_info: '',
+        other_detail: '',
     };
 
-    // Keep EXACT transcript as requested by user.
-    result.description = String(transcript || '').trim();
-    
-    // Mobility detection
-    const mobilityPatterns = {
-        'immobile': ['cannot move', "can't move", 'unable to move', 'stuck', 'trapped', 'immobile', 'paralyzed', 'pinned'],
-        'limited': ['limited mobility', 'hard to walk', 'difficulty walking', 'injured leg', 'hurt leg', 'limping', 'barely walk'],
-        'normal': ['can walk', 'able to walk', 'walking fine', 'mobile', 'i can move'],
-    };
-    
-    for (const [status, patterns] of Object.entries(mobilityPatterns)) {
-        if (patterns.some(p => text.includes(p))) {
-            result.mobility = status;
+    const incidentMatchers = [
+        ['Service Call', ['service call', 'call nurse', 'need assistance', 'need help', 'help in the ward', 'buzzer', 'call bell', 'please come here']],
+        ['Machine Problem', ['machine problem', 'machine issue', 'equipment problem', 'equipment issue', 'monitor problem', 'bed alarm', 'iv pump', 'oxygen machine', 'suction machine', 'call bell not working']],
+        ['Medication Request', ['medication request', 'medicine request', 'need medication', 'give medicine', 'missed dose', 'medication follow-up', 'prescription clarification']],
+        ['Patient Assistance', ['patient assistance', 'assist patient', 'help the patient', 'toileting', 'reposition', 'transfer help', 'feeding assistance', 'walking assistance']],
+        ['Cleaning / Housekeeping', ['cleaning', 'housekeeping', 'spill', 'dirty room', 'bathroom cleaning', 'waste disposal', 'linen change']],
+        ['Supply Request', ['supply request', 'need supplies', 'restock', 'refill', 'linen request', 'ppe', 'gloves', 'water request']],
+        ['Security Concern', ['security concern', 'security issue', 'intruder', 'unsafe', 'unauthorized person', 'lost belongings', 'privacy concern', 'visitor issue']],
+    ];
+
+    for (const [label, patterns] of incidentMatchers) {
+        if (patterns.some((pattern) => text.includes(pattern))) {
+            result.incident_type = label;
             break;
         }
     }
-    
-    // Urgency detection
-    const urgencyPatterns = {
-        'critical': ['critical', 'dying', 'heart attack', 'stroke', 'not breathing', 'severe bleeding', 'life threatening', 'emergency', 'please hurry', 'help me'],
-        'high': ['urgent', 'serious', 'bad injury', 'lots of blood', 'unconscious', 'passed out', 'seizure', 'very hurt'],
-        'medium': ['injured', 'hurt', 'pain', 'bleeding', 'broken', 'sprain', 'need help', 'fell down'],
-        'low': ['minor', 'small cut', 'slight', 'feeling unwell', 'dizzy', 'not serious'],
+
+    if (!result.incident_type && ['other', 'not listed', 'different', 'something else'].some((pattern) => text.includes(pattern))) {
+        result.incident_type = 'Other';
+        result.other_detail = result.description;
+    }
+
+    const specifyMatchers = {
+        'Service Call': [
+            ['Call Nurse', ['call nurse', 'need nurse', 'nurse please']],
+            ['Need Assistance', ['need assistance', 'need help', 'assist me']],
+            ['Buzzer / Call Bell', ['buzzer', 'call bell', 'bell not working']],
+            ['Please Come Here', ['please come here', 'come here', 'come to my room']],
+            ['Patient Needs Attention', ['need attention', 'check the patient', 'patient needs attention']],
+        ],
+        'Machine Problem': [
+            ['Bed Alarm Issue', ['bed alarm', 'alarm issue', 'alarm problem']],
+            ['Monitor Problem', ['monitor problem', 'monitor issue', 'vital signs monitor', 'ecg monitor']],
+            ['IV Pump Problem', ['iv pump', 'drip pump', 'infusion pump']],
+            ['Oxygen Machine Problem', ['oxygen machine', 'oxygen problem', 'oxygen supply']],
+            ['Suction Machine Problem', ['suction machine', 'suction problem']],
+            ['Other Equipment Issue', ['equipment issue', 'device issue', 'machine issue']],
+        ],
+        'Medication Request': [
+            ['Need Medication', ['need medication', 'give medicine']],
+            ['Missed Dose', ['missed dose', 'dose missed']],
+            ['Wrong Time', ['wrong time', 'late medication', 'early medication']],
+            ['Medication Follow-up', ['follow-up medication', 'medication follow up']],
+            ['Prescription Clarification', ['prescription clarification', 'clarify prescription']],
+        ],
+        'Patient Assistance': [
+            ['Toileting Assistance', ['toilet', 'bathroom help', 'toileting']],
+            ['Repositioning', ['reposition', 'turn patient', 'change position']],
+            ['Transfer Help', ['transfer help', 'move patient', 'lift patient']],
+            ['Feeding Assistance', ['feeding assistance', 'help eat', 'feeding']],
+            ['Walking Assistance', ['walking assistance', 'help walk', 'ambulate']],
+        ],
+        'Cleaning / Housekeeping': [
+            ['Spill Cleanup', ['spill', 'spill cleanup']],
+            ['Dirty Room', ['dirty room', 'room is dirty']],
+            ['Bathroom Cleaning', ['bathroom cleaning', 'dirty bathroom']],
+            ['Waste Disposal', ['waste disposal', 'garbage']],
+            ['Linen Change', ['linen change', 'change sheets']],
+        ],
+        'Supply Request': [
+            ['Need Supplies', ['need supplies', 'supplies needed']],
+            ['Restock Supplies', ['restock', 'refill supplies']],
+            ['Linen Request', ['linen request', 'fresh linen']],
+            ['Gloves / PPE Needed', ['gloves', 'ppe', 'mask']],
+            ['Water Request', ['water request', 'need water']],
+        ],
+        'Security Concern': [
+            ['Unauthorized Person', ['unauthorized person', 'stranger in ward', 'intruder']],
+            ['Visitor Issue', ['visitor issue', 'visitor problem', 'visitor concern']],
+            ['Lost Belongings', ['lost belongings', 'stolen', 'theft']],
+            ['Privacy Concern', ['privacy concern', 'privacy issue']],
+            ['Unsafe Behavior', ['unsafe behavior', 'aggressive', 'threatening']],
+        ],
     };
-    
-    for (const [level, patterns] of Object.entries(urgencyPatterns)) {
-        if (patterns.some(p => text.includes(p))) {
-            result.urgency = level;
+
+    if (result.incident_type && specifyMatchers[result.incident_type]) {
+        for (const [label, patterns] of specifyMatchers[result.incident_type]) {
+            if (patterns.some((pattern) => text.includes(pattern))) {
+                result.please_specify = label;
+                break;
+            }
+        }
+    }
+
+    const urgencySignals = [
+        ['critical', ['critical', 'emergency', 'not breathing', 'can\'t breathe', 'cannot breathe', 'heart attack', 'stroke', 'unconscious', 'severe bleeding']],
+        ['high', ['urgent', 'serious', 'very urgent', 'immediate', 'right now', 'severe', 'needs immediate']],
+        ['medium', ['please help', 'need help', 'need assistance', 'call nurse', 'soon', 'when available', 'can you help', 'respond']],
+        ['low', ['routine', 'later', 'not urgent', 'whenever possible']],
+    ];
+
+    for (const [label, patterns] of urgencySignals) {
+        if (patterns.some((pattern) => text.includes(pattern))) {
+            result.urgency_level = label;
             break;
         }
     }
-    
-    // Injury detection
-    const injuryPatterns = {
-        'bleeding': ['bleeding', 'blood', 'cut', 'laceration', 'wound', 'gash'],
-        'fracture': ['broken', 'fracture', 'bone', 'snap', 'crack'],
-        'burn': ['burn', 'burned', 'fire', 'hot', 'scalded'],
-        'head': ['head injury', 'hit head', 'hit my head', 'concussion', 'head hurt', 'headache'],
-        'breathing': ['breathing', 'breath', 'asthma', 'choking', 'suffocating', 'can\'t breathe'],
-        'unconscious': ['unconscious', 'fainted', 'passed out', 'not responding', 'blacked out'],
-        'chest_pain': ['chest pain', 'heart', 'chest hurts', 'chest'],
-        'seizure': ['seizure', 'convulsion', 'shaking', 'fits'],
-        'allergic': ['allergic', 'allergy', 'swelling', 'hives', 'anaphylaxis'],
-    };
-    
-    for (const [injury, patterns] of Object.entries(injuryPatterns)) {
-        if (patterns.some(p => text.includes(p))) {
-            result.injuries.push(injury);
-        }
+
+    if (!result.urgency_level) {
+        result.urgency_level = 'medium';
     }
 
-    // Relate mobility and injuries so they stay consistent with what user said.
-    const related = relateMobilityAndInjuries(text, result.mobility, result.injuries);
-    result.mobility = related.mobility;
-    result.injuries = related.injuries;
-
-    // If urgency phrase was not explicit, infer urgency from what happened.
-    if (!result.urgency) {
-        result.urgency = inferUrgencyFromContext(text, result.injuries, result.mobility);
+    if (!result.please_specify && result.incident_type === 'Other') {
+        result.please_specify = 'Please Specify';
     }
-    
-    // Emergency extraction processing
-    
+
+    console.log('🎤 Voice extraction result:', result);
     return result;
 };
 
-const relateMobilityAndInjuries = (text, mobility = null, injuries = []) => {
-    const normalized = Array.from(new Set((injuries || []).map((i) => String(i).toLowerCase())));
-    const hasInjury = (keys) => keys.some((k) => normalized.includes(k));
-    const hasText = (patterns) => patterns.some((p) => text.includes(p));
-
-    let inferredMobility = mobility;
-
-    // Injuries imply mobility constraints when mobility wasn't explicitly provided.
-    if (!inferredMobility) {
-        if (hasInjury(['unconscious', 'breathing', 'chest_pain', 'seizure']) || hasText(['cannot move', 'can\'t move', 'unable to move', 'trapped', 'pinned'])) {
-            inferredMobility = 'immobile';
-        } else if (hasInjury(['fracture', 'head', 'burn']) || hasText(['fell', 'limping', 'sprain', 'hard to walk', 'hurt leg', 'injured leg'])) {
-            inferredMobility = 'limited';
-        }
-    }
-
-    // Mobility-related phrases can recover missing injury tags.
-    if (hasText(['not breathing', 'can\'t breathe', 'cannot breathe', 'choking', 'suffocating']) && !normalized.includes('breathing')) {
-        normalized.push('breathing');
-    }
-    if (hasText(['unconscious', 'passed out', 'not responding', 'fainted']) && !normalized.includes('unconscious')) {
-        normalized.push('unconscious');
-    }
-    if (hasText(['chest pain', 'chest hurts', 'heart attack']) && !normalized.includes('chest_pain')) {
-        normalized.push('chest_pain');
-    }
-
-    // If user clearly says they can move and no injury was detected, mark as none.
-    if (!normalized.length && inferredMobility === 'normal') {
-        normalized.push('none');
-    }
-
-    // Keep "none" exclusive.
-    const cleanedInjuries = normalized.length > 1
-        ? normalized.filter((i) => i !== 'none')
-        : normalized;
-
-    return {
-        mobility: inferredMobility,
-        injuries: cleanedInjuries,
-    };
-};
-
-const inferUrgencyFromContext = (text, injuries = [], mobility = null) => {
+const inferUrgencyFromContext = (text, injuries = [], mobility = '') => {
     const has = (patterns) => patterns.some((p) => text.includes(p));
 
-    const criticalSignals = has([
-        'not breathing', 'can\'t breathe', 'cannot breathe', 'dying', 'life threatening',
-        'heart attack', 'stroke', 'severe bleeding', 'unconscious', 'not responding'
-    ]) || injuries.some((i) => ['breathing', 'unconscious', 'chest_pain', 'seizure'].includes(i));
-    if (criticalSignals) return 'critical';
+    // Critical signals
+    if (has(['not breathing', 'can\'t breathe', 'cannot breathe', 'dying', 'life threatening', 'heart attack', 'stroke', 'critical', 'emergency'])) {
+        return 'critical';
+    }
 
-    const highSignals = has([
-        'urgent', 'serious', 'very painful', 'lots of blood', 'bad injury', 'trapped', 'pinned'
-    ]) || injuries.some((i) => ['fracture', 'head', 'burn'].includes(i)) || mobility === 'immobile';
-    if (highSignals) return 'high';
+    // High urgency if unconscious or serious breathing issues
+    if (injuries.includes('unconscious') || injuries.includes('breathing') || injuries.includes('chest_pain')) {
+        return 'high';
+    }
 
-    const mediumSignals = has(['injured', 'hurt', 'pain', 'bleeding', 'broken', 'sprain', 'fell']) || injuries.length > 0 || mobility === 'limited';
-    if (mediumSignals) return 'medium';
+    // High urgency signals
+    if (has(['urgent', 'serious', 'very painful', 'needs immediate', 'asap', 'important', 'immediate'])) {
+        return 'high';
+    }
+
+    // Medium urgency signals
+    if (has(['needs attention', 'soon', 'moderate', 'request', 'assistance', 'help', 'call'])) {
+        return 'medium';
+    }
+
+    // Low if no concerning injuries
+    if (injuries.length === 0 || injuries.includes('none')) {
+        return 'low';
+    }
 
     return 'low';
 };
@@ -2981,14 +3020,20 @@ const processAudioTranscription = async (audioBlob) => {
             
             // Step 4: Apply emergency details
             emergencyForm.value.description = emergencyResult.description;
-            if (emergencyResult.mobility) {
-                emergencyForm.value.mobilityStatus = emergencyResult.mobility;
+            if (emergencyResult.incident_type) {
+                emergencyForm.value.mobilityStatus = emergencyResult.incident_type;
             }
-            if (emergencyResult.urgency) {
-                emergencyForm.value.urgencyLevel = emergencyResult.urgency;
+            if (emergencyResult.please_specify) {
+                emergencyForm.value.urgencyLevel = emergencyResult.please_specify;
             }
-            if (emergencyResult.injuries.length > 0) {
-                emergencyForm.value.injuries = emergencyResult.injuries;
+            if (emergencyResult.urgency_level) {
+                emergencyForm.value.injuries = emergencyResult.urgency_level;
+            }
+            if (emergencyResult.additional_info) {
+                emergencyForm.value.additionalInfo = emergencyResult.additional_info;
+            }
+            if (emergencyResult.other_detail) {
+                emergencyForm.value.otherInjury = emergencyResult.other_detail;
             }
             
             // Save form data after AI extraction
@@ -3129,16 +3174,10 @@ const submitRescueRequest = async () => {
 
     isSubmitting.value = true;
     try {
-        // Combine injuries into a string, replacing 'other' with actual value
-        let injuriesString = '';
-        if (emergencyForm.value.injuries && emergencyForm.value.injuries.length > 0) {
-            const injuries = emergencyForm.value.injuries.map(i => 
-                i === 'other' && emergencyForm.value.otherInjury 
-                    ? emergencyForm.value.otherInjury 
-                    : i
-            );
-            injuriesString = injuries.join(', ');
-        }
+        const incidentTypeValue = emergencyForm.value.mobilityStatus || '';
+        const pleaseSpecifyValue = emergencyForm.value.urgencyLevel || '';
+        const urgencyLevelValue = emergencyForm.value.injuries || '';
+        const additionalInfoValue = emergencyForm.value.additionalInfo || emergencyForm.value.otherInjury || '';
 
         // Use FormData if there are media files attached
         let result;
@@ -3151,10 +3190,10 @@ const submitRescueRequest = async () => {
             if (selectedFloor.value) formData.append('floor_id', selectedFloor.value.id);
             if (selectedRoom.value) formData.append('room_id', selectedRoom.value.id);
             formData.append('description', emergencyForm.value.description || '');
-            formData.append('mobility_status', emergencyForm.value.mobilityStatus || '');
-            formData.append('urgency_level', emergencyForm.value.urgencyLevel || '');
-            formData.append('injuries', injuriesString);
-            formData.append('additional_info', emergencyForm.value.additionalInfo || '');
+            formData.append('mobility_status', incidentTypeValue || '');
+            formData.append('injuries', pleaseSpecifyValue || '');
+            formData.append('urgency_level', urgencyLevelValue || '');
+            formData.append('additional_info', additionalInfoValue || '');
             formData.append('firstName', emergencyForm.value.firstName || '');
             formData.append('lastName', emergencyForm.value.lastName || '');
             
@@ -3173,10 +3212,10 @@ const submitRescueRequest = async () => {
                 floor_id: selectedFloor.value?.id || null,
                 room_id: selectedRoom.value?.id || null,
                 description: emergencyForm.value.description,
-                mobility_status: emergencyForm.value.mobilityStatus,
-                urgency_level: emergencyForm.value.urgencyLevel,
-                injuries: injuriesString,
-                additional_info: emergencyForm.value.additionalInfo,
+                mobility_status: incidentTypeValue,
+                injuries: pleaseSpecifyValue,
+                urgency_level: urgencyLevelValue,
+                additional_info: additionalInfoValue,
                 firstName: emergencyForm.value.firstName,
                 lastName: emergencyForm.value.lastName,
             };
@@ -3299,44 +3338,7 @@ const drawEvacuationPaths = () => {
         }
     });
     
-    // Draw evacuation paths for selected room
-    evacuationPaths.value.forEach(path => {
-        if (path.points.length < 2) return;
-        
-        // Draw path line
-        ctx.beginPath();
-        ctx.moveTo(path.points[0].x, path.points[0].y);
-        for (let i = 1; i < path.points.length; i++) {
-            ctx.lineTo(path.points[i].x, path.points[i].y);
-        }
-        ctx.strokeStyle = path.color || '#FF5722';
-        ctx.lineWidth = 4;
-        ctx.stroke();
-        
-        // Draw arrow heads along the path
-        for (let i = 1; i < path.points.length; i++) {
-            drawArrowHeadEvac(ctx, path.points[i - 1], path.points[i], path.color || '#FF5722');
-        }
-        
-        // Draw points
-        path.points.forEach((point, i) => {
-            ctx.beginPath();
-            ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
-            ctx.fillStyle = i === 0 ? '#4CAF50' : (i === path.points.length - 1 ? '#f44336' : path.color || '#FF5722');
-            ctx.fill();
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-        });
-        
-        // Draw path name at first point
-        if (path.name) {
-            ctx.fillStyle = '#000';
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText(path.name, path.points[0].x + 10, path.points[0].y - 10);
-        }
-    });
+    // Ward floor plans now show the location point only.
 };
 
 const drawArrowHeadEvac = (ctx, from, to, color) => {
@@ -3549,7 +3551,7 @@ const showNotification = (message, color = 'info') => {
     scroll-behavior: smooth;
 }
 
-/* Header Styling - Matches Rescuer Dashboard */
+/* Header Styling - Matches Responder Dashboard */
 .scanner-header {
     position: sticky;
     top: 0;

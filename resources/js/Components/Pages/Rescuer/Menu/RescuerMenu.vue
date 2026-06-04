@@ -8,7 +8,7 @@
                 </v-avatar>
             </template>
             <v-list-item-title class="font-weight-bold text-white">{{ userName }}</v-list-item-title>
-            <v-list-item-subtitle class="text-white-darken-1">Rescuer</v-list-item-subtitle>
+            <v-list-item-subtitle class="text-white-darken-1">Responder</v-list-item-subtitle>
         </v-list-item>
 
         <v-divider color="rgba(255,255,255,0.2)" />

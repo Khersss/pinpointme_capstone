@@ -59,7 +59,7 @@
                                     <div class="step-dot">
                                         <v-icon v-if="isStepCompleted(rescue.status, 'rescued') || isStepActive(rescue.status, 'rescued')" size="14" color="white">mdi-check-circle</v-icon>
                                     </div>
-                                    <span>Rescued</span>
+                                    <span>Assisted</span>
                                 </div>
                             </div>
                         </div>
@@ -246,22 +246,12 @@
                                             <v-divider class="mb-3" />
                                         </template>
 
-                                        <!-- Emergency Details (if missing) -->
+                                        <!-- Incident Details (if missing) -->
                                         <template v-if="needsDetailsUpdate">
                                             <p class="text-subtitle-2 font-weight-bold mb-2">
                                                 <v-icon size="16" class="mr-1">mdi-alert-circle</v-icon>
-                                                Emergency Details
+                                                Incident Details
                                             </p>
-                                            <v-textarea
-                                                v-model="updateForm.description"
-                                                label="Describe your emergency"
-                                                variant="outlined"
-                                                rows="2"
-                                                prepend-inner-icon="mdi-text"
-                                                hide-details
-                                                class="mb-3"
-                                                placeholder="Briefly describe the situation"
-                                            />
                                             <v-row dense class="mb-3">
                                                 <v-col cols="6">
                                                     <v-select
@@ -269,7 +259,7 @@
                                                         :items="mobilityOptions"
                                                         item-title="title"
                                                         item-value="value"
-                                                        label="Mobility Status"
+                                                        label="Incident Type"
                                                         variant="outlined"
                                                         density="comfortable"
                                                         prepend-inner-icon="mdi-walk"
@@ -283,7 +273,7 @@
                                                         :items="urgencyOptions"
                                                         item-title="title"
                                                         item-value="value"
-                                                        label="Urgency"
+                                                        label="Please Specify"
                                                         variant="outlined"
                                                         density="comfortable"
                                                         prepend-inner-icon="mdi-speedometer"
@@ -292,18 +282,25 @@
                                                     />
                                                 </v-col>
                                             </v-row>
+                                            <v-textarea
+                                                v-model="updateForm.description"
+                                                label="Describe the incident"
+                                                variant="outlined"
+                                                rows="2"
+                                                prepend-inner-icon="mdi-text"
+                                                hide-details
+                                                class="mb-3"
+                                                placeholder="Briefly describe the situation"
+                                            />
                                             <v-select
                                                 v-model="updateForm.injuries"
                                                 :items="injuryOptions"
                                                 item-title="title"
                                                 item-value="value"
-                                                label="Injuries (if any)"
+                                                label="Urgency Level"
                                                 variant="outlined"
                                                 density="comfortable"
                                                 prepend-inner-icon="mdi-medical-bag"
-                                                multiple
-                                                chips
-                                                closable-chips
                                                 hide-details
                                                 class="mb-3"
                                             />
@@ -382,14 +379,14 @@
                             </v-card-text>
                         </v-card>
 
-                        <!-- Emergency Details -->
+                        <!-- Incident Details -->
                         <v-card v-if="rescue.description || rescue.urgency_level || rescue.mobility_status || rescue.injuries || rescue.status === 'rescued' || rescue.status === 'safe'" class="mb-3 rounded-xl emergency-card" elevation="2">
                             <div class="card-header-icon">
                                 <v-avatar color="error" size="40">
                                     <v-icon color="white" size="20">mdi-alert-circle</v-icon>
                                 </v-avatar>
                                 <div class="card-header-text">
-                                    <h3>Emergency Details</h3>
+                                    <h3>Incident Details</h3>
                                     <p>Request information and status</p>
                                 </div>
                             </div>
@@ -433,56 +430,51 @@
                                         </div>
                                     </div>
 
-                                    <!-- Urgency & Mobility Row -->
+                                    <!-- Incident Details Row -->
                                     <div class="detail-row" v-if="rescue.urgency_level || rescue.mobility_status || rescue.emergency_type || rescue.status === 'rescued' || rescue.status === 'safe'">
-                                        <div v-if="rescue.urgency_level || rescue.status === 'rescued' || rescue.status === 'safe'" class="detail-item half">
-                                            <span class="detail-label">Urgency Level</span>
+                                        <div v-if="rescue.mobility_status || rescue.status === 'rescued' || rescue.status === 'safe'" class="detail-item half">
+                                            <span class="detail-label">Incident Type</span>
                                             <div class="detail-chip-value">
                                                 <v-chip 
-                                                    v-if="rescue.urgency_level"
-                                                    :color="getUrgencyColor(rescue.urgency_level)" 
+                                                    v-if="rescue.mobility_status"
+                                                    color="info" 
                                                     variant="flat" 
                                                     size="small"
                                                 >
-                                                    <v-icon start size="12">{{ getUrgencyIcon(rescue.urgency_level) }}</v-icon>
-                                                    {{ getUrgencyTitle(rescue.urgency_level) }}
+                                                    <v-icon start size="12">mdi-hospital-box-outline</v-icon>
+                                                    {{ rescue.mobility_status }}
                                                 </v-chip>
                                                 <span v-else class="text-grey">Not specified</span>
                                             </div>
                                         </div>
 
-                                        <div v-if="rescue.mobility_status || rescue.status === 'rescued' || rescue.status === 'safe'" class="detail-item half">
-                                            <span class="detail-label">Mobility Status</span>
+                                        <div v-if="rescue.urgency_level || rescue.status === 'rescued' || rescue.status === 'safe'" class="detail-item half">
+                                            <span class="detail-label">Please Specify</span>
                                             <div class="detail-chip-value">
-                                                <v-chip v-if="rescue.mobility_status" color="info" variant="flat" size="small">
-                                                    <v-icon start size="12">mdi-wheelchair-accessibility</v-icon>
-                                                    {{ getMobilityTitle(rescue.mobility_status) }}
+                                                <v-chip v-if="rescue.urgency_level" color="secondary" variant="flat" size="small">
+                                                    <v-icon start size="12">mdi-information-outline</v-icon>
+                                                    {{ rescue.urgency_level }}
                                                 </v-chip>
                                                 <span v-else class="text-grey">Not specified</span>
                                             </div>
                                         </div>
 
-                                        <div v-if="rescue.emergency_type" class="detail-item half">
-                                            <span class="detail-label">Emergency Type</span>
+                                        <div v-if="rescue.injuries || rescue.status === 'rescued' || rescue.status === 'safe'" class="detail-item half">
+                                            <span class="detail-label">Urgency Level</span>
                                             <div class="detail-chip-value">
-                                                <v-chip color="orange" variant="flat" size="small">
-                                                    <v-icon start size="12">{{ getEmergencyTypeIcon(rescue.emergency_type) }}</v-icon>
-                                                    {{ rescue.emergency_type }}
+                                                <v-chip v-if="rescue.injuries" color="error" variant="flat" size="small">
+                                                    <v-icon start size="12">mdi-alert-circle</v-icon>
+                                                    {{ rescue.injuries }}
                                                 </v-chip>
+                                                <span v-else class="text-grey">Not specified</span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Injuries -->
-                                    <div v-if="rescue.injuries || rescue.status === 'rescued' || rescue.status === 'safe'" class="detail-item">
-                                        <span class="detail-label">Injuries Reported</span>
-                                        <p v-if="rescue.injuries" class="detail-value">
-                                            {{ getInjuryTitles(rescue.injuries) }}
-                                        </p>
-                                        <p v-else class="detail-value text-grey">
-                                            No injuries reported
-                                        </p>
-                                        <div v-if="rescue.original_injuries" class="translation-info mt-1">
+                                    <!-- Original urgency value -->
+                                    <div v-if="rescue.original_injuries" class="detail-item">
+                                        <span class="detail-label">Original Urgency Value</span>
+                                        <div class="translation-info mt-1">
                                             <v-chip size="x-small" color="info" variant="tonal" class="mb-1">
                                                 <v-icon start size="10">mdi-translate</v-icon>
                                                 Translated
@@ -590,8 +582,8 @@
                             <v-alert type="warning" variant="tonal" class="mb-4 rounded-xl" density="comfortable">
                                 <div class="d-flex align-center">
                                     <div>
-                                        <div class="font-weight-bold">Safe Request Denied</div>
-                                        <div class="text-caption">{{ rescue.safe_approval_reason || 'The rescuer believes you still need assistance.' }}</div>
+                                        <div class="font-weight-bold">Okay Request Denied</div>
+                                        <div class="text-caption">{{ rescue.safe_approval_reason || 'The responder believes you still need assistance.' }}</div>
                                     </div>
                                 </div>
                             </v-alert>
@@ -679,7 +671,7 @@
                                     class="mt-2 mx-2"
                                     icon="mdi-shield-lock-outline"
                                 >
-                                    <span class="text-caption">Cancellation is disabled for <strong>{{ rescue.urgency_level?.toUpperCase() }}</strong> urgency requests. A rescuer must verify your safety.</span>
+                                    <span class="text-caption">Cancellation is disabled for <strong>{{ rescue.urgency_level?.toUpperCase() }}</strong> urgency requests. A responder must verify you are okay.</span>
                                 </v-alert>
                             </div>
                         </div>
@@ -718,7 +710,7 @@
                                         flex
                                     >
                                         <v-icon start size="18">mdi-message-text-outline</v-icon>
-                                        <span>Chat with Rescuer</span>
+                                        <span>Chat with Responder</span>
                                     </v-btn>
                                     
                                     <v-btn
@@ -744,7 +736,7 @@
                                     <v-icon start color="error">mdi-close-circle</v-icon>
                                     <div>
                                         <div class="font-weight-bold">Cancellation Denied</div>
-                                        <div class="text-caption">{{ rescue.cancel_approval_reason || 'The rescuer believes you still need assistance.' }}</div>
+                                        <div class="text-caption">{{ rescue.cancel_approval_reason || 'The responder believes you still need assistance.' }}</div>
                                     </div>
                                 </div>
                             </v-alert>
@@ -752,7 +744,7 @@
                             <v-alert type="info" variant="tonal" density="compact" class="mb-3 rounded-lg">
                                 <div class="text-caption">
                                     <v-icon size="14" class="mr-1">mdi-chat-processing</v-icon>
-                                    Please use chat to communicate with your rescuer if you no longer need help.
+                                    Please use chat to communicate with your responder if you no longer need help.
                                 </div>
                             </v-alert>
                             
@@ -771,10 +763,10 @@
                                         </div>
                                         <div class="slide-text">
                                             <span v-if="!isSlideComplete" class="slide-instruction">
-                                                {{ isSliding ? 'Keep sliding...' : 'Slide to mark as safe instead' }}
+                                                {{ isSliding ? 'Keep sliding...' : 'Slide to mark okay instead' }}
                                             </span>
                                             <span v-else class="slide-success">
-                                                Safe request sent!
+                                                Okay request sent!
                                             </span>
                                         </div>
                                     </div>
@@ -844,7 +836,7 @@
                                         </div>
                                         <div class="slide-text">
                                             <span class="slide-instruction slide-locked-text">
-                                                Waiting for rescuer to accept...
+                                                Waiting for responder to accept...
                                             </span>
                                         </div>
                                     </div>
@@ -865,10 +857,10 @@
                                         </div>
                                         <div class="slide-text">
                                             <span v-if="!isSlideComplete" class="slide-instruction">
-                                                {{ isSliding ? 'Keep sliding...' : 'Slide to confirm you are safe' }}
+                                                {{ isSliding ? 'Keep sliding...' : 'Slide to mark okay' }}
                                             </span>
                                             <span v-else class="slide-success">
-                                                Marked as safe!
+                                                Marked as okay!
                                             </span>
                                         </div>
                                     </div>
@@ -885,7 +877,7 @@
                                 icon="mdi-shield-lock-outline"
                             >
                                 <div class="text-caption">
-                                    Your urgency level is <strong>{{ rescue.urgency_level }}</strong>. A rescuer must accept and verify your safety before you can be marked as safe or cancel this request.
+                                    Your urgency level is <strong>{{ rescue.injuries }}</strong>. A rescuer must accept and verify your safety before you can be marked as safe.
                                 </div>
                             </v-alert>
 
@@ -1290,7 +1282,7 @@
                                 <v-icon size="32" color="white">mdi-comment-alert</v-icon>
                             </v-avatar>
                             <h3 class="text-h6 mb-1">Reason for Cancellation</h3>
-                            <p class="text-grey text-body-2">Please provide a brief reason for cancelling your rescue request. This will be sent to admin for review.</p>
+                            <p class="text-grey text-body-2">Please provide a brief reason for cancelling your request assistance. This will be sent to admin for review.</p>
                         </div>
 
                         <!-- Reason Text Area -->
@@ -1688,31 +1680,29 @@ const cancelProofPhotoPreview = ref(null);
 const isTakingPhoto = ref(false);
 
 // Check if cancellation is allowed (allow cancellation unless rescued/safe/cancelled)
-// Also block if cancel approval is pending or urgency is high/critical
+// Only block if cancel approval is already pending
 const canCancel = computed(() => {
     if (!rescue.value) return false;
     if (rescue.value.cancel_approval_requested && rescue.value.cancel_approval_status === 'pending') return false;
-    // Block cancel for HIGH and CRITICAL urgency levels
-    if (['high', 'critical'].includes((rescue.value.urgency_level || '').toLowerCase())) return false;
     return !['rescued', 'safe', 'cancelled', 'completed'].includes(rescue.value.status);
 });
 
 // Check if cancel is blocked due to urgency level
 const isCancelBlockedByUrgency = computed(() => {
     if (!rescue.value) return false;
-    return ['high', 'critical'].includes((rescue.value.urgency_level || '').toLowerCase());
+    return false;
 });
 
 // Check if urgency level is critical (requires admin approval to mark safe)
 const isCriticalUrgency = computed(() => {
     if (!rescue.value) return false;
-    return (rescue.value.urgency_level || '').toLowerCase() === 'critical';
+    return (rescue.value.injuries || '').toLowerCase() === 'critical';
 });
 
 // Check if urgency is High or Critical (requires rescuer to accept before user can slide)
 const isHighOrCriticalUrgency = computed(() => {
     if (!rescue.value) return false;
-    return ['high', 'critical'].includes((rescue.value.urgency_level || '').toLowerCase());
+    return ['high', 'critical'].includes((rescue.value.injuries || '').toLowerCase());
 });
 
 // Slide is locked for High/Critical urgency until a rescuer has accepted
@@ -2308,8 +2298,8 @@ const fetchRescueData = async (silent = false) => {
         } else if (oldApprovalStatus === 'pending' && newApprovalStatus === 'denied') {
             // Approval denied
             showNotification({
-                title: '⚠️ Safe Request Denied',
-                message: newRescueData.safe_approval_reason || 'The rescuer believes you still need assistance. They are on their way.',
+                title: '⚠️ Okay Request Denied',
+                message: newRescueData.safe_approval_reason || 'The responder believes you still need assistance. They are on their way.',
                 type: 'warning',
                 icon: 'mdi-alert-circle',
                 sound: 'warning',
@@ -2325,7 +2315,7 @@ const fetchRescueData = async (silent = false) => {
             // Cancel approved - the status should now be 'cancelled'
             showNotification({
                 title: '✅ Cancellation Approved!',
-                message: 'The rescuer has approved your cancellation. Your request has been cancelled.',
+                message: 'The responder has approved your cancellation. Your request has been cancelled.',
                 type: 'success',
                 icon: 'mdi-check-circle',
                 sound: 'success',
@@ -2346,7 +2336,7 @@ const fetchRescueData = async (silent = false) => {
             // Cancel denied
             showNotification({
                 title: '⚠️ Cancellation Denied',
-                message: newRescueData.cancel_approval_reason || 'The rescuer believes you still need assistance. Use chat to communicate.',
+                message: newRescueData.cancel_approval_reason || 'The responder believes you still need assistance. Use chat to communicate.',
                 type: 'warning',
                 icon: 'mdi-alert-circle',
                 sound: 'warning',
@@ -4146,7 +4136,7 @@ const handleGoBack = () => {
     font-style: italic;
 }
 
-/* Emergency Details */
+/* Incident Details */
 .emergency-details {
     display: flex;
     flex-direction: column;

@@ -11,7 +11,7 @@
                 <div class="d-flex align-center mb-4">
                     <div>
                         <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold gradient-text">User Management</h1>
-                        <p class="text-grey mt-1 text-body-2">Manage students, faculty, and staff accounts</p>
+                        <p class="text-grey mt-1 text-body-2">Manage patient, clinical personnel, and hospital staff accounts</p>
                     </div>
                 </div>
 
@@ -27,17 +27,17 @@
                         <div class="stat-inline">
                             <v-icon size="22" class="stat-inline-icon blue-icon">mdi-school</v-icon>
                             <div class="stat-inline-value">{{ stats.by_role?.student || 0 }}</div>
-                            <div class="stat-inline-label">Students</div>
+                            <div class="stat-inline-label">Patients/Visitors</div>
                         </div>
                         <div class="stat-inline">
                             <v-icon size="22" class="stat-inline-icon purple-icon">mdi-human-male-board</v-icon>
                             <div class="stat-inline-value">{{ stats.by_role?.faculty || 0 }}</div>
-                            <div class="stat-inline-label">Faculty</div>
+                            <div class="stat-inline-label">Clinical Personnel</div>
                         </div>
                         <div class="stat-inline">
                             <v-icon size="22" class="stat-inline-icon teal-icon">mdi-briefcase</v-icon>
                             <div class="stat-inline-value">{{ stats.by_role?.staff || 0 }}</div>
-                            <div class="stat-inline-label">Staff</div>
+                            <div class="stat-inline-label">Hospital Staff</div>
                         </div>
                     </div>
                 </v-card>
@@ -315,24 +315,25 @@
                         </v-row>
                         <v-text-field
                             v-model="formData.email"
-                            label="Email (@sdca.edu.ph)"
+                            label="Email"
                             type="email"
                             variant="outlined"
                             density="compact"
                             :rules="[
                                 v => !!v || 'Email is required', 
-                                v => /.+@.+\..+/.test(v) || 'Invalid email',
-                                v => v.endsWith('@sdca.edu.ph') || 'Must be an SDCA email (@sdca.edu.ph)'
+                                v => /.+@.+\..+/.test(v) || 'Invalid email'
                             ]"
                             class="mb-3"
-                            hint="Must be an SDCA email address"
+                            hint="Accepts institutional or external email addresses"
                             persistent-hint
                             @keypress="preventInvalidEmailChars"
                             @input="sanitizeEmail"
                         />
                         <v-select
                             v-model="formData.role"
-                            :items="['student', 'faculty', 'staff']"
+                            :items="roleSelectOptions"
+                            item-title="label"
+                            item-value="value"
                             label="Role"
                             variant="outlined"
                             density="compact"
@@ -348,8 +349,8 @@
                             :label="getIdLabel(formData.role)"
                             variant="outlined"
                             density="compact"
-                            :rules="[rules.idNumber]"
-                            :hint="`Must be exactly 9 digits (${(formData.id_number || '').length}/9)`"
+                            :rules="isIdRequired(formData.role) ? [rules.idNumber] : []"
+                            :hint="isIdRequired(formData.role) ? `Must be exactly 9 digits (${(formData.id_number || '').length}/9)` : 'Optional for patient/visitor accounts'"
                             persistent-hint
                             class="mb-3"
                             :counter="9"
@@ -357,7 +358,7 @@
                             inputmode="numeric"
                             pattern="[0-9]*"
                             placeholder="123456789"
-                            :error="formData.id_number && formData.id_number.length !== 9"
+                            :error="isIdRequired(formData.role) && formData.id_number && formData.id_number.length !== 9"
                         />
                         
                         <v-text-field
@@ -516,7 +517,7 @@
                                 <v-icon>mdi-card-account-details</v-icon>
                             </template>
                             <v-list-item-title>{{ viewingUser.student_id || viewingUser.faculty_id || viewingUser.staff_id || 'Not provided' }}</v-list-item-title>
-                            <v-list-item-subtitle>ID Number</v-list-item-subtitle>
+                            <v-list-item-subtitle>Identifier</v-list-item-subtitle>
                         </v-list-item>
                         <v-list-item>
                             <template v-slot:prepend>
@@ -732,8 +733,8 @@ const isFormValid = computed(() => {
         return false;
     }
     
-    // Check email format and domain
-    if (!formData.value.email.endsWith('@sdca.edu.ph')) {
+    // Check email format
+    if (!/.+@.+\..+/.test(formData.value.email)) {
         return false;
     }
     
@@ -784,9 +785,15 @@ const headers = [
 
 const roleOptions = [
     { label: 'All Roles', value: 'all' },
-    { label: 'Students', value: 'student' },
-    { label: 'Faculty', value: 'faculty' },
-    { label: 'Staff', value: 'staff' }
+    { label: 'Patients / Visitors', value: 'student' },
+    { label: 'Clinical Personnel', value: 'faculty' },
+    { label: 'Hospital Staff', value: 'staff' }
+];
+
+const roleSelectOptions = [
+    { label: 'Patient / Visitor', value: 'student' },
+    { label: 'Clinical Personnel', value: 'faculty' },
+    { label: 'Hospital Staff', value: 'staff' }
 ];
 
 const statusSelectOptions = [
@@ -889,12 +896,14 @@ const viewProfile = (user) => {
 // Helper functions for ID field
 const getIdLabel = (role) => {
     const labels = {
-        'student': 'Student ID',
-        'faculty': 'Faculty ID',
-        'staff': 'Staff ID'
+        'student': 'Patient/Visitor ID (optional)',
+        'faculty': 'Clinical Personnel ID',
+        'staff': 'Hospital Staff ID'
     };
     return labels[role] || 'ID Number';
 };
+
+const isIdRequired = (role) => role !== 'student';
 
 const getIdHint = (role) => {
     const hints = {
@@ -951,20 +960,24 @@ const saveUser = async () => {
         return;
     }
     
-    // Clean and validate ID number - strip non-digits and check length
+    const idRequired = isIdRequired(formData.value.role);
+
+    // Clean and validate ID number - strip non-digits and check length when required
     const cleanedIdNumber = (formData.value.id_number || '').replace(/\D/g, '');
     
-    if (!cleanedIdNumber) {
-        showSnackbar('ID number is required', 'error');
-        return;
+    if (idRequired) {
+        if (!cleanedIdNumber) {
+            showSnackbar('ID number is required', 'error');
+            return;
+        }
+        
+        if (cleanedIdNumber.length !== 9) {
+            showSnackbar('ID Number must be exactly 9 digits (currently ' + cleanedIdNumber.length + ' digits)', 'error');
+            return;
+        }
     }
     
-    if (cleanedIdNumber.length !== 9) {
-        showSnackbar('ID Number must be exactly 9 digits (currently ' + cleanedIdNumber.length + ' digits)', 'error');
-        return;
-    }
-    
-    // Update the form data with cleaned ID
+    // Update the form data with cleaned ID when provided
     formData.value.id_number = cleanedIdNumber;
     
     // Validate phone number if provided
@@ -984,7 +997,7 @@ const saveUser = async () => {
         // Prepare data with proper ID field based on role
         const submitData = {
             ...formData.value,
-            student_id: formData.value.role === 'student' ? cleanedIdNumber : null,
+            student_id: formData.value.role === 'student' ? (cleanedIdNumber || null) : null,
             faculty_id: formData.value.role === 'faculty' ? cleanedIdNumber : null,
             staff_id: formData.value.role === 'staff' ? cleanedIdNumber : null,
             send_otp: !isEditing.value
@@ -1169,7 +1182,14 @@ const getRoleColor = (role) => {
 };
 
 const formatRole = (role) => {
-    return role?.charAt(0).toUpperCase() + role?.slice(1) || '';
+    const roleLabels = {
+        student: 'Patient / Visitor',
+        faculty: 'Clinical Personnel',
+        staff: 'Hospital Staff',
+        rescuer: 'Clinical Responder'
+    };
+
+    return roleLabels[role] || (role?.charAt(0).toUpperCase() + role?.slice(1) || '');
 };
 
 const getStatusColor = (status) => {

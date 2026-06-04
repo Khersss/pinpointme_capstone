@@ -8,7 +8,7 @@
                 <div class="page-header mb-4 mb-md-6">
                     <div class="page-header-content">
                         <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold gradient-text">False Alarm Reports</h1>
-                        <p class="text-grey mt-1 text-body-2">View reports submitted by rescuers for false/joke rescue requests</p>
+                        <p class="text-grey mt-1 text-body-2">View reports submitted by responders for false/joke rescue requests</p>
                     </div>
                 </div>
 
@@ -106,7 +106,7 @@
                     <v-card-text v-else-if="filteredReports.length === 0" class="text-center py-8">
                         <v-icon size="48" color="grey-lighten-1">mdi-check-decagram-outline</v-icon>
                         <p class="mt-3 text-grey">No false alarm reports found</p>
-                        <p class="text-caption text-grey-lighten-1">False alarm reports from rescuers will appear here</p>
+                        <p class="text-caption text-grey-lighten-1">False alarm reports from responders will appear here</p>
                     </v-card-text>
 
                     <!-- Reports Table (Desktop) -->
@@ -217,7 +217,7 @@
 
                             <!-- Reporter -->
                             <div class="mb-3">
-                                <p class="text-caption text-grey mb-1">Reported By (Rescuer)</p>
+                                <p class="text-caption text-grey mb-1">Reported By (Responder)</p>
                                 <div class="d-flex align-center">
                                     <v-icon size="16" color="primary" class="mr-2">mdi-lifebuoy</v-icon>
                                     <span class="font-weight-medium">{{ getReporterName(selectedReport) }}</span>
@@ -389,9 +389,9 @@ const viewReport = (report) => {
 // Helpers
 const getReporterName = (report) => {
     if (report.user) {
-        return `${report.user.first_name || ''} ${report.user.last_name || ''}`.trim() || 'Unknown Rescuer';
+        return `${report.user.first_name || ''} ${report.user.last_name || ''}`.trim() || 'Unknown Responder';
     }
-    return report.initiator || 'Unknown Rescuer';
+    return report.initiator || 'Unknown Responder';
 };
 
 const extractReason = (report) => {
