@@ -55,9 +55,9 @@
     >
         <v-list>
             <v-list-item prepend-icon="mdi-view-dashboard" title="Dashboard" href="/admin/dashboard" :active="activePage === 'dashboard'" @click="closeDrawerOnMobile"></v-list-item>
-            <v-list-item prepend-icon="mdi-account-group" title="Users" href="/admin/users" :active="activePage === 'users'" @click="closeDrawerOnMobile"></v-list-item>
+            <v-list-item prepend-icon="mdi-account-group" title="Patients/Visitors" href="/admin/users" :active="activePage === 'users'" @click="closeDrawerOnMobile"></v-list-item>
             <v-list-item prepend-icon="mdi-lifebuoy" title="Responders" href="/admin/rescuers" :active="activePage === 'rescuers'" @click="closeDrawerOnMobile"></v-list-item>
-            <v-list-item prepend-icon="mdi-office-building" title="Buildings" href="/admin/buildings" :active="activePage === 'buildings'" @click="closeDrawerOnMobile"></v-list-item>
+            <v-list-item prepend-icon="mdi-office-building" title="Building" href="/admin/buildings" :active="activePage === 'buildings'" @click="closeDrawerOnMobile"></v-list-item>
             <v-list-item prepend-icon="mdi-file-chart" title="Reports" href="/admin/reports" :active="activePage === 'reports'" @click="closeDrawerOnMobile"></v-list-item>
             <v-list-item prepend-icon="mdi-star-half-full" title="Feedbacks" href="/admin/feedbacks" :active="activePage === 'feedbacks'" @click="closeDrawerOnMobile"></v-list-item>
             <v-list-item prepend-icon="mdi-shield-alert" title="Preventive Measures" href="/admin/preventive-measures" :active="activePage === 'preventive-measures'" @click="closeDrawerOnMobile"></v-list-item>
@@ -136,7 +136,7 @@
                     <v-icon size="32" color="#B0BEC5">mdi-account-check-outline</v-icon>
                 </div>
                 <p class="nc-empty-title">No pending applications</p>
-                <p class="nc-empty-sub">External rescuer applications will appear here for review</p>
+                <p class="nc-empty-sub">External responder applications will appear here for review</p>
             </div>
             <div v-else>
                 <div
@@ -319,7 +319,7 @@
                     <v-icon size="32" color="#B0BEC5">mdi-bell-check-outline</v-icon>
                 </div>
                 <p class="nc-empty-title">No activity yet</p>
-                <p class="nc-empty-sub">Rescue request updates and safe confirmations will appear here</p>
+                <p class="nc-empty-sub">Assistance request updates and resolved confirmations will appear here</p>
             </div>
             <div v-else>
                 <!-- Regular Activity Notifications -->
@@ -459,7 +459,7 @@
                                 @click.stop="handleApproveCriticalSafe(notif)"
                             >
                                 <v-icon size="14">mdi-check</v-icon>
-                                <span>Approve Safe</span>
+                                <span>Approve</span>
                             </button>
                             <button 
                                 class="nc-decline-btn"
@@ -520,7 +520,7 @@
                             </span>
                             <span class="nc-safe-chip">
                                 <v-icon size="10">mdi-check-circle</v-icon> 
-                                {{ notif.type === 'rescue_safe_rescuer_approved' ? 'Rescuer Approved' : 'Self-Confirmed Safe' }}
+                                {{ notif.type === 'rescue_safe_rescuer_approved' ? 'Responder Approved' : 'Self-Confirmed Assisted' }}
                             </span>
                         </div>
                     </div>
@@ -559,7 +559,7 @@
                     <v-icon size="32" color="#B0BEC5">mdi-check-circle-outline</v-icon>
                 </div>
                 <p class="nc-empty-title">No cancellation reports</p>
-                <p class="nc-empty-sub">When users cancel rescue requests, their reasons will appear here</p>
+                <p class="nc-empty-sub">When users cancel assistance requests, their reasons will appear here</p>
             </div>
             <div v-else>
                 <div
@@ -611,7 +611,7 @@
                     <v-icon size="32" color="#B0BEC5">mdi-chat-sleep-outline</v-icon>
                 </div>
                 <p class="nc-empty-title">No conversations</p>
-                <p class="nc-empty-sub">Messages between users and rescuers will appear here</p>
+                <p class="nc-empty-sub">Messages between users and responders will appear here</p>
             </div>
             <div v-else>
                 <div
@@ -754,7 +754,7 @@
                 <p class="mb-3">
                     This will deny the safe request from
                     <strong>{{ denyCriticalSafeTarget?.data?.user_name }}</strong>
-                    (Critical urgency level). A rescuer should be dispatched to verify the patient's safety.
+                    (Critical urgency level). A responder should be dispatched to verify the patient's safety.
                 </p>
                 <v-textarea
                     v-model="denyCriticalSafeReason"
@@ -783,7 +783,7 @@
         <v-card rounded="lg">
             <v-card-title class="d-flex align-center">
                 <v-icon start>mdi-image</v-icon>
-                Safety Proof Photo
+                Assisted Proof Photo
                 <v-spacer />
                 <v-btn icon variant="text" @click="criticalSafeProofPhotoDialog = false">
                     <v-icon>mdi-close</v-icon>
@@ -1271,15 +1271,15 @@ const handleApproveRescuer = async (app) => {
         if (result.success) {
             pendingRescuerApplications.value = pendingRescuerApplications.value.filter(a => a.id !== app.id);
             previousPendingRescuerCount.value = pendingRescuerApplications.value.length;
-            showToast('✅ Rescuer Approved', `${app.first_name} ${app.last_name} can now access the full system`, {
+            showToast('✅ Responder Approved', `${app.first_name} ${app.last_name} can now access the full system`, {
                 color: 'success', icon: 'mdi-account-check', timeout: 5000
             });
         } else {
-            showToast('Error', result.message || 'Failed to approve rescuer', { color: 'error', icon: 'mdi-alert' });
+            showToast('Error', result.message || 'Failed to approve responder', { color: 'error', icon: 'mdi-alert' });
         }
     } catch (err) {
-        console.error('Error approving rescuer:', err);
-        showToast('Error', 'Failed to approve rescuer', { color: 'error', icon: 'mdi-alert' });
+        console.error('Error approving responder:', err);
+        showToast('Error', 'Failed to approve responder', { color: 'error', icon: 'mdi-alert' });
     } finally {
         approvalLoading.value = null;
     }
@@ -1316,11 +1316,11 @@ const handleDeclineRescuer = async () => {
                 color: 'warning', icon: 'mdi-account-cancel', timeout: 5000
             });
         } else {
-            showToast('Error', result.message || 'Failed to decline rescuer', { color: 'error', icon: 'mdi-alert' });
+            showToast('Error', result.message || 'Failed to decline responder', { color: 'error', icon: 'mdi-alert' });
         }
     } catch (err) {
-        console.error('Error declining rescuer:', err);
-        showToast('Error', 'Failed to decline rescuer', { color: 'error', icon: 'mdi-alert' });
+        console.error('Error declining responder:', err);
+        showToast('Error', 'Failed to decline Responder', { color: 'error', icon: 'mdi-alert' });
     } finally {
         approvalLoading.value = null;
     }
@@ -1561,21 +1561,21 @@ const fetchPendingRequests = async () => {
                     type = 'pending';
                 } else if (status === 'accepted' || status === 'in_progress' || status === 'en_route') {
                     notifId = `rescue-progress-${reqId}`;
-                    title = 'Rescue in progress';
+                    title = 'Assistance in progress';
                     message = `${name} — ${location}`;
                     icon = 'mdi-run-fast';
                     color = 'info';
                     type = 'progress';
                 } else if (status === 'rescued' || status === 'completed' || status === 'safe') {
                     notifId = `rescue-done-${reqId}`;
-                    title = 'Rescue completed';
-                    message = `${name} has been rescued at ${location}`;
+                    title = 'Assistance completed';
+                    message = `${name} has received assistance at ${location}`;
                     icon = 'mdi-check-circle';
                     color = 'success';
                     type = 'completed';
                 } else if (status === 'cancelled') {
                     notifId = `rescue-cancelled-${reqId}`;
-                    title = 'Rescue cancelled';
+                    title = 'Assistance cancelled';
                     message = `Request for ${name} at ${location} was cancelled`;
                     icon = 'mdi-close-circle';
                     color = 'error';
@@ -1615,8 +1615,8 @@ const fetchPendingRequests = async () => {
 
             popupAlert.value = {
                 show: true,
-                title: 'New Rescue Request',
-                message: `${name} needs help at ${location}`,
+                title: 'New Assistance Request',
+                message: `${name} needs assistance at ${location}`,
                 type: 'error',
                 icon: 'mdi-alert-circle',
                 callback: () => { showNotificationPanel.value = true; notifTab.value = 'activity'; },
@@ -1627,7 +1627,7 @@ const fetchPendingRequests = async () => {
             setTimeout(() => { popupAlert.value.show = false; }, 10000);
         }
 
-        // Only add notifications for NEW rescue requests or STATUS CHANGES
+        // Only add notifications for NEW assistance requests or STATUS CHANGES
         // Compare with previous state to avoid duplicates
         all.forEach(req => {
             const name = `${req.firstName || ''} ${req.lastName || ''}`.trim() || 'Someone';
@@ -1650,13 +1650,13 @@ const fetchPendingRequests = async () => {
                 if (status === 'pending') {
                     addActivityNotification(`rescue-pending-${reqId}`, `${name} needs help!`, `📍 ${location}`, 'mdi-alert-circle', 'warning', 'pending', req);
                 } else if (status === 'accepted' || status === 'in_progress' || status === 'en_route') {
-                    addActivityNotification(`rescue-progress-${reqId}`, 'Rescue in progress', `${name} — ${location}`, 'mdi-run-fast', 'info', 'progress', req);
+                    addActivityNotification(`rescue-progress-${reqId}`, 'Assistance in progress', `${name} — ${location}`, 'mdi-run-fast', 'info', 'progress', req);
                     // Play sound + popup when rescuer responds (status change from previous)
                     if (previousReq && previousStatus !== status) {
                         popupAlert.value = {
                             show: true,
-                            title: 'Rescuer Responded',
-                            message: `A rescuer is now handling ${name}'s request at ${location}`,
+                            title: 'Responder Responded',
+                            message: `A responder is now handling ${name}'s request at ${location}`,
                             type: 'info',
                             icon: 'mdi-run-fast',
                             callback: () => { showNotificationPanel.value = true; notifTab.value = 'activity'; },
@@ -1666,13 +1666,13 @@ const fetchPendingRequests = async () => {
                         setTimeout(() => { popupAlert.value.show = false; }, 6000);
                     }
                 } else if (status === 'rescued' || status === 'completed' || status === 'safe') {
-                    addActivityNotification(`rescue-done-${reqId}`, 'Rescue completed', `${name} has been rescued at ${location}`, 'mdi-check-circle', 'success', 'completed', req);
-                    // Play sound + popup when rescue is completed
+                    addActivityNotification(`rescue-done-${reqId}`, 'Assistance completed', `${name} has received assistance at ${location}`, 'mdi-check-circle', 'success', 'completed', req);
+                    // Play sound + popup when assistance is completed
                     if (previousReq && previousStatus !== status) {
                         popupAlert.value = {
                             show: true,
-                            title: 'Rescue Completed',
-                            message: `${name} has been rescued at ${location}`,
+                            title: 'Assistance Completed',
+                            message: `${name} has received assistance at ${location}`,
                             type: 'success',
                             icon: 'mdi-check-circle',
                             callback: () => { showNotificationPanel.value = true; notifTab.value = 'activity'; },
@@ -1682,12 +1682,12 @@ const fetchPendingRequests = async () => {
                         setTimeout(() => { popupAlert.value.show = false; }, 6000);
                     }
                 } else if (status === 'cancelled') {
-                    addActivityNotification(`rescue-cancelled-${reqId}`, 'Rescue cancelled', `Request for ${name} at ${location} was cancelled`, 'mdi-close-circle', 'error', 'cancelled', req);
+                    addActivityNotification(`rescue-cancelled-${reqId}`, 'Assistance cancelled', `Request for ${name} at ${location} was cancelled`, 'mdi-close-circle', 'error', 'cancelled', req);
                     // Play sound + popup when request is cancelled
                     if (previousReq && previousStatus !== status) {
                         popupAlert.value = {
                             show: true,
-                            title: 'Request Cancelled',
+                            title: 'Assistance Cancelled',
                             message: `Request for ${name} at ${location} was cancelled`,
                             type: 'error',
                             icon: 'mdi-close-circle',
@@ -1835,7 +1835,7 @@ const sendForceAlert = async (request) => {
 
         popupAlert.value = {
             show: true, title: 'Force Alert Sent',
-            message: 'Available rescuers will receive an unstoppable ringtone. Rescuers with ongoing rescues will only get a normal notification.',
+            message: 'Available responders will receive an unstoppable ringtone. Responders with ongoing rescues will only get a normal notification.',
             type: 'success', icon: 'mdi-check-circle', callback: null,
         };
         setTimeout(() => { popupAlert.value.show = false; }, 5000);
@@ -1887,7 +1887,7 @@ const fetchCancellationNotifications = async () => {
                 const latest = newUnread[0];
                 popupAlert.value = {
                     show: true,
-                    title: latest.title || 'Rescue Cancelled',
+                    title: latest.title || 'Assistance Cancelled',
                     message: latest.data?.cancellation_reason
                         ? `Reason: ${latest.data.cancellation_reason}`
                         : latest.message,
@@ -1936,8 +1936,8 @@ const fetchSafeConfirmationNotifications = async () => {
                 const isRescuerApproved = latest.type === 'rescue_safe_rescuer_approved';
                 popupAlert.value = {
                     show: true,
-                    title: latest.title || (isRescuerApproved ? 'Rescuer Approved User as Safe' : 'User Marked Safe'),
-                    message: latest.message || 'A user has been confirmed safe',
+                    title: latest.title || (isRescuerApproved ? 'Responder Approved User as Assisted' : 'User Marked Assisted'),
+                    message: latest.message || 'A user has been confirmed assisted',
                     type: 'success',
                     icon: isRescuerApproved ? 'mdi-account-check' : 'mdi-shield-check',
                     callback: () => {
@@ -1995,8 +1995,8 @@ const fetchCriticalSafeApprovalNotifications = async () => {
         if (newUnread.length > 0) {
             popupAlert.value = {
                 show: true,
-                title: '🛡️ Critical Patient Safe Request',
-                message: `${newUnread[0].data?.user_name || 'A critical patient'} is requesting to be marked safe. Admin approval required.`,
+                title: '🛡️ Critical Patient Assisted Request',
+                message: `${newUnread[0].data?.user_name || 'A critical patient'} is requesting to be marked as assisted. Admin approval required.`,
                 type: 'warning',
                 icon: 'mdi-shield-alert',
                 callback: () => {
@@ -2026,16 +2026,16 @@ const handleApproveCriticalSafe = async (notif) => {
                 await markAdminNotificationRead(notif.id);
                 notif.read_at = new Date().toISOString();
             }
-            showToast('✅ Safe Request Approved', `${notif.data?.user_name || 'User'} has been marked as safe.`, { color: 'success', icon: 'mdi-check-circle' });
+            showToast('✅ Assisted Request Approved', `${notif.data?.user_name || 'User'} has been marked as assisted.`, { color: 'success', icon: 'mdi-check-circle' });
             // Refresh notifications
             fetchCriticalSafeApprovalNotifications();
             fetchSafeConfirmationNotifications();
         } else {
-            showToast('Error', resp?.message || 'Failed to approve safe request', { color: 'error', icon: 'mdi-alert' });
+            showToast('Error', resp?.message || 'Failed to approve assisted request', { color: 'error', icon: 'mdi-alert' });
         }
     } catch (err) {
-        console.error('Error approving critical safe:', err);
-        showToast('Error', err.message || 'Failed to approve safe request', { color: 'error', icon: 'mdi-alert' });
+        console.error('Error approving critical assisted:', err);
+        showToast('Error', err.message || 'Failed to approve assisted request', { color: 'error', icon: 'mdi-alert' });
     } finally {
         criticalSafeActionLoading.value = null;
     }
@@ -2050,7 +2050,7 @@ const showDenyCriticalSafeDialog = (notif) => {
 const handleDenyCriticalSafe = async () => {
     const notif = denyCriticalSafeTarget.value;
     if (!notif?.data?.rescue_id) {
-        showToast('Error', 'Missing rescue request ID', { color: 'error', icon: 'mdi-alert' });
+        showToast('Error', 'Missing assistance request ID', { color: 'error', icon: 'mdi-alert' });
         return;
     }
     if (!denyCriticalSafeReason.value.trim()) {
@@ -2068,15 +2068,15 @@ const handleDenyCriticalSafe = async () => {
                 notif.read_at = new Date().toISOString();
             }
             denyCriticalSafeDialogVisible.value = false;
-            showToast('Safe Request Denied', `A rescuer should verify ${notif.data?.user_name || 'the patient'}'s safety.`, { color: 'warning', icon: 'mdi-shield-alert' });
+            showToast('Assisted Request Denied', `A responder should verify ${notif.data?.user_name || 'the patient'}'s safety.`, { color: 'warning', icon: 'mdi-shield-alert' });
             // Refresh notifications
             fetchCriticalSafeApprovalNotifications();
         } else {
-            showToast('Error', resp?.message || 'Failed to deny safe request', { color: 'error', icon: 'mdi-alert' });
+            showToast('Error', resp?.message || 'Failed to deny assisted request', { color: 'error', icon: 'mdi-alert' });
         }
     } catch (err) {
-        console.error('Error denying critical safe:', err);
-        showToast('Error', err.message || 'Failed to deny safe request', { color: 'error', icon: 'mdi-alert' });
+        console.error('Error denying critical assisted:', err);
+        showToast('Error', err.message || 'Failed to deny assisted request', { color: 'error', icon: 'mdi-alert' });
     } finally {
         criticalSafeActionLoading.value = null;
     }
