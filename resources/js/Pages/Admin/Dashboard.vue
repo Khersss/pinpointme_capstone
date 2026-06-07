@@ -9,7 +9,7 @@
                 <div class="page-header mb-4 mb-md-6">
                     <div class="page-header-content">
                         <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold gradient-text">Dashboard Overview</h1>
-                        <p class="text-grey mt-1 text-body-2">Welcome back! Here's what's happening with rescue operations.</p>
+                        <p class="text-grey mt-1 text-body-2">Welcome back! Here is the latest incident reporting activity.</p>
                     </div>
                     <v-select
                         v-model="timeFilter"
@@ -53,7 +53,7 @@
                             <v-card-text class="position-relative">
                                 <div class="d-flex align-center justify-space-between">
                                     <div>
-                                        <p class="text-white text-caption mb-1 opacity-80">Need Help</p>
+                                        <p class="text-white text-caption mb-1 opacity-80">Need Assistance</p>
                                         <h2 class="text-h3 font-weight-bold text-white">{{ statusCounts.pending || 0 }}</h2>
                                         <v-chip color="rgba(255,255,255,0.2)" size="x-small" class="mt-2 text-white">
                                             <v-icon start size="12">mdi-hand-heart</v-icon>
@@ -93,7 +93,7 @@
                             <v-card-text class="position-relative">
                                 <div class="d-flex align-center justify-space-between">
                                     <div>
-                                        <p class="text-white text-caption mb-1 opacity-80">Marked as Safe</p>
+                                        <p class="text-white text-caption mb-1 opacity-80">Marked as Resolved</p>
                                         <h2 class="text-h3 font-weight-bold text-white">{{ statusCounts.completed || 0 }}</h2>
                                         <v-chip color="rgba(255,255,255,0.2)" size="x-small" class="mt-2 text-white">
                                             <v-icon start size="12">mdi-shield-check</v-icon>
@@ -185,14 +185,14 @@
                 </v-row>
 
                 <v-row class="mt-4">
-                    <!-- Rescues by Building -->
+                    <!-- Rescues by Building // To be edited - per room --> 
                     <v-col cols="12" md="6">
                         <v-card rounded="lg" height="100%" elevation="2">
                             <v-card-title class="d-flex align-center pa-4">
                                 <v-avatar color="info" size="40" class="mr-3">
                                     <v-icon color="white">mdi-office-building</v-icon>
                                 </v-avatar>
-                                <span class="font-weight-bold">Rescues by Building</span>
+                                <span class="font-weight-bold">Assistance Provided</span>
                             </v-card-title>
                             <v-divider></v-divider>
                             <v-card-text class="pa-4">
@@ -227,7 +227,7 @@
                                                    <!-- IF NONE-->                   
                                 <v-alert v-else type="info" variant="tonal" rounded="lg">
                                     <v-icon start>mdi-information</v-icon>
-                                    No rescue data available for this period.
+                                    No assistance data available for this period.
                                 </v-alert>
                             </v-card-text>
                         </v-card>
@@ -437,7 +437,7 @@
                                 <v-avatar color="error" size="40" class="mr-3">
                                     <v-icon color="white">mdi-bell-alert</v-icon>
                                 </v-avatar>
-                                <span class="font-weight-bold">Recent Rescue Alerts</span>
+                                <span class="font-weight-bold">Recent Incident Alerts</span>
                                 <v-spacer />
                                 <v-btn variant="tonal" color="primary" href="/admin/reports" rounded="lg" size="small">
                                     <v-icon start size="18">mdi-arrow-right</v-icon>
@@ -681,22 +681,22 @@ const statDialogItems = ref([]);
 
 const STAT_CONFIG = {
     total: {
-        title: 'All Rescue Requests',
+        title: 'All Assistance Requests',
         icon: 'mdi-alert-circle-outline',
         statuses: null, // all
     },
     pending: {
-        title: 'People Who Need Help',
+        title: 'People Who Need Assistance',
         icon: 'mdi-hand-heart',
         statuses: ['pending'],
     },
     in_progress: {
-        title: 'Rescues In Progress',
+        title: 'Assistance In Progress',
         icon: 'mdi-progress-clock',
         statuses: ['accepted', 'in_progress', 'en_route'],
     },
     completed: {
-        title: 'Marked as Safe',
+        title: 'Marked as Resolved',
         icon: 'mdi-shield-check',
         statuses: ['completed', 'rescued', 'safe'],
     },
