@@ -28,7 +28,7 @@
             <!-- Loading State -->
                 <div v-if="loading" class="loading-container">
                 <v-progress-circular indeterminate color="primary" size="64" />
-                <p class="mt-4 text-grey">Loading response details...</p>
+                <p class="mt-4 text-grey">Loading assistance request details...</p>
             </div>
 
             <!-- No Rescue Found -->
@@ -345,7 +345,7 @@
                                 icon="mdi-clock-alert-outline"
                             >
                                 <div class="text-subtitle-2 font-weight-bold">User Processing Cancellation</div>
-                                <div class="text-body-2">You cannot accept this request while the user is going through cancellation steps.</div>
+                                <div class="text-body-2">This action is unavailable while the patient/visitor cancellation is in progress.</div>
                             </v-alert>
 
                             <!-- Marking Safe In Progress Warning - FOR REMOVAL -->
@@ -358,7 +358,7 @@
                                 icon="mdi-shield-check-outline"
                             >
                                 <div class="text-subtitle-2 font-weight-bold">User Considering Marking Self Assisted</div>
-                                <div class="text-body-2">You cannot accept this request while the user is considering marking themselves as assisted.</div>
+                                <div class="text-body-2">This action is unavailable while the patient/visitor is currently modifying their assistance status.</div>
                             </v-alert>
 
                                 <v-btn
@@ -373,7 +373,7 @@
                                 elevation="3"
                             >
                                 <v-icon start size="22">mdi-run-fast</v-icon>
-                                <span class="btn-text">Start Response</span>
+                                <span class="btn-text">Accept Request</span>
                             </v-btn>
                         </div>
                         
@@ -677,7 +677,7 @@
                 <v-card-title class="d-flex align-center pa-4 bg-primary">
                     <v-icon color="white" class="mr-2">mdi-alert-circle</v-icon>
                     <span class="text-white text-subtitle-1 font-weight-bold">
-                        {{ currentStatus === 'assigned' ? 'Cancel Assignment' : 'Cancel Response' }}
+                        {{ currentStatus === 'assigned' ? 'Cancel Assignment' : 'Cancel Request' }}
                     </span>
                     <v-spacer />
                     <v-btn icon variant="text" size="small" @click="showCancelDialog = false; cancellationReason = ''; cancelType = 'valid'">
@@ -722,7 +722,7 @@
                 </v-card-text>
                 <v-card-actions class="pa-4 pt-0">
                     <v-btn variant="outlined" color="grey" @click="showCancelDialog = false; cancellationReason = ''; cancelType = 'valid'" class="rounded-lg">
-                        {{ currentStatus === 'assigned' ? 'Keep Assignment' : 'Keep Response' }}
+                        {{ currentStatus === 'assigned' ? 'Keep Assignment' : 'Keep Request' }}
                     </v-btn>
                     <v-spacer />
                     <v-btn
@@ -944,6 +944,7 @@
                         </v-alert>
 
                         <!-- Show proof photo if provided -->
+                        <!-- 
                         <div v-if="rescueRequest?.cancel_proof_photo" class="proof-photo-container mb-3">
                             <div class="text-caption font-weight-bold mb-2">
                                 <v-icon size="14" class="mr-1">mdi-camera</v-icon>
@@ -962,9 +963,10 @@
                                     </v-row>
                                 </template>
                             </v-img>
-                        </div>
+                        </div> 
+                        -->
                     </div>
-                    
+                    <!--
                     <v-tabs v-model="cancelApprovalTab" density="compact" class="mb-4" color="warning">
                         <v-tab value="approve" prepend-icon="mdi-check-circle">
                             <span class="text-caption">Approve</span>
@@ -973,7 +975,8 @@
                             <span class="text-caption">Deny</span>
                         </v-tab>
                     </v-tabs>
-                    
+                    -->
+                    <!--
                     <v-window v-model="cancelApprovalTab">
                         <v-window-item value="approve">
                             <div class="text-center py-4">
@@ -1008,10 +1011,12 @@
                             </v-alert>
                         </v-window-item>
                     </v-window>
+                    -->
                 </v-card-text>
-                
-                <v-card-actions class="pa-3 pt-0">
-                    <!-- Mobile-optimized horizontal button layout -->
+
+                <!-- <v-card-actions class="pa-3 pt-0"> 
+                    // Mobile-optimized horizontal button layout
+                    
                     <div class="d-flex flex-row gap-2 w-100">
                         <v-btn 
                             variant="outlined" 
@@ -1054,7 +1059,9 @@
                             <span class="text-overline text-sm-caption font-weight-medium">Deny</span>
                         </v-btn>
                     </div>
-                </v-card-actions>
+                    
+                </v-card-actions> 
+                -->
             </v-card>
         </v-dialog>
 

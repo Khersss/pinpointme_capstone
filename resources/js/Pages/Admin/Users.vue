@@ -11,7 +11,7 @@
                 <div class="d-flex align-center mb-4">
                     <div>
                         <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold gradient-text">User Management</h1>
-                        <p class="text-grey mt-1 text-body-2">Manage patient, clinical personnel, and hospital staff accounts</p>
+                        <p class="text-grey mt-1 text-body-2">Manage patient/visitor accounts</p>
                     </div>
                 </div>
 
@@ -28,7 +28,8 @@
                             <v-icon size="22" class="stat-inline-icon blue-icon">mdi-school</v-icon>
                             <div class="stat-inline-value">{{ stats.by_role?.student || 0 }}</div>
                             <div class="stat-inline-label">Patients/Visitors</div>
-                        </div>
+                        </div>    
+                        <!--- Removed Clinical Personnel and Hospital Staff                
                         <div class="stat-inline">
                             <v-icon size="22" class="stat-inline-icon purple-icon">mdi-human-male-board</v-icon>
                             <div class="stat-inline-value">{{ stats.by_role?.faculty || 0 }}</div>
@@ -39,6 +40,7 @@
                             <div class="stat-inline-value">{{ stats.by_role?.staff || 0 }}</div>
                             <div class="stat-inline-label">Hospital Staff</div>
                         </div>
+                        -->
                     </div>
                 </v-card>
 
@@ -315,13 +317,14 @@
                         </v-row>
                         <v-text-field
                             v-model="formData.email"
-                            label="Email"
+                            label="Email (Optional)"
                             type="email"
                             variant="outlined"
                             density="compact"
                             :rules="[
-                                v => !!v || 'Email is required', 
-                                v => /.+@.+\..+/.test(v) || 'Invalid email'
+                                v => !v || /.+@.+\..+/.test(v) || 'Invalid email'
+                            /*  v => !!v || 'Email is required',
+                                v => /.+@.+\..+/.test(v) || 'Invalid email' */
                             ]"
                             class="mb-3"
                             hint="Accepts institutional or external email addresses"
@@ -329,6 +332,7 @@
                             @keypress="preventInvalidEmailChars"
                             @input="sanitizeEmail"
                         />
+        
                         <v-select
                             v-model="formData.role"
                             :items="roleSelectOptions"

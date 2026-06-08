@@ -10,7 +10,7 @@
                 <div class="page-header mb-4 mb-md-6">
                     <div class="page-header-content">
                         <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold gradient-text">Preventive Measures</h1>
-                        <p class="text-grey mt-1 text-body-2">Manage educational content and safety videos</p>
+                        <p class="text-grey mt-1 text-body-2">Manage health protocols, safety guidelines, and compliance standards.</p>
                     </div>
                     <v-btn 
                         color="primary" 
