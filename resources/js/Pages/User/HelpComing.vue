@@ -70,7 +70,7 @@
                         <!-- Completed State Actions - Moved to top for immediate visibility -->
                         <div v-if="rescue.status === 'rescued' || rescue.status === 'safe'" class="text-center py-4 mb-4">
                             <v-icon size="56" color="success" class="mb-2">mdi-check-circle</v-icon>
-                            <h3 class="text-h6 mb-1">Rescue Complete</h3>
+                            <h3 class="text-h6 mb-1">Incident Resolved</h3>
                             <p v-if="rescue.first_name || rescue.last_name" class="text-grey mb-1" style="font-weight: 600;">
                                 <v-icon size="16" class="mr-1">mdi-account-alert</v-icon>
                                 {{ getReporterName() }}
@@ -150,7 +150,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <!-- View Map Button -->
+                                    <!-- View Map Button 
                                     <v-btn
                                         variant="flat"
                                         color="#3674B5"
@@ -163,15 +163,16 @@
                                         <v-icon start size="20">mdi-map-marker-radius</v-icon>
                                         View Floor Map
                                     </v-btn>
+                                    -->
                                 </template>
                                 <template v-else>
                                     <v-alert type="info" variant="tonal" density="compact" class="rounded-lg">
                                         <div class="text-caption">
                                             <template v-if="['rescued', 'safe', 'cancelled'].includes(rescue.status)">
-                                                Location was not provided during this rescue request.
+                                                Location was not provided for this incident.
                                             </template>
                                             <template v-else>
-                                                Location not yet provided. Tap "Update Details" below to add your location so rescuers can find you.
+                                                Location not yet provided. Tap "Update Details" below to add your location so responders can find you.
                                             </template>
                                         </div>
                                     </v-alert>
@@ -189,7 +190,7 @@
                                 </v-avatar>
                                 <div class="card-header-text">
                                     <h3>Update Details</h3>
-                                    <p>Add missing information to help rescuers find you</p>
+                                    <p>Add missing information to help responders find you</p>
                                 </div>
                                 <v-icon class="ml-auto" color="black">{{ showUpdateForm ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
                             </div>
@@ -330,8 +331,8 @@
                                     <v-icon color="white" size="20">{{ (rescue.assigned_rescuer || rescue.rescuer) ? 'mdi-account-check' : 'mdi-shield-check' }}</v-icon>
                                 </v-avatar>
                                 <div class="card-header-text">
-                                    <h3>{{ (rescue.assigned_rescuer || rescue.rescuer) ? (rescue.status === 'rescued' || rescue.status === 'safe' ? 'Your Rescuer' : 'Help is Coming') : (rescue.first_name || rescue.last_name ? 'Samaritan Report - Safe' : 'Marked Safe by Yourself') }}</h3>
-                                    <p>{{ (rescue.assigned_rescuer || rescue.rescuer) ? (rescue.status === 'rescued' || rescue.status === 'safe' ? 'Rescue completed' : 'Rescuer assigned to help you') : (rescue.first_name || rescue.last_name ? 'Person marked as safe by reporter' : 'You have marked yourself as safe') }}</p>
+                                    <h3>{{ (rescue.assigned_rescuer || rescue.rescuer) ? (rescue.status === 'rescued' || rescue.status === 'safe' ? 'Assigned Responder' : 'Assistance is Coming') : (rescue.first_name || rescue.last_name ? 'Samaritan Report - Safe' : 'Marked Safe by Yourself') }}</h3>
+                                    <p>{{ (rescue.assigned_rescuer || rescue.rescuer) ? (rescue.status === 'rescued' || rescue.status === 'safe' ? 'Incident Resolved' : 'A responder is assigned to assist you') : (rescue.first_name || rescue.last_name ? 'Person marked as safe by reporter' : 'You have marked yourself as safe') }}</p>
                                 </div>
                             </div>
                             <v-card-text class="pt-0">
@@ -487,7 +488,7 @@
 
                                     <!-- Completion Time -->
                                     <div v-if="(rescue.status === 'rescued' || rescue.status === 'safe') && rescue.updated_at" class="detail-item">
-                                        <span class="detail-label">Rescue Completed</span>
+                                        <span class="detail-label">Incident Resolved</span>
                                         <p class="detail-value">
                                             <v-icon color="success" size="16" class="mr-2">mdi-clock-check</v-icon>
                                             {{ formatRescueDateTime(rescue.updated_at) }}
@@ -496,7 +497,7 @@
 
                                     <!-- Rescuer's Completion Notes -->
                                     <div v-if="rescue.completion_notes && (rescue.status === 'rescued' || rescue.status === 'safe')" class="detail-item">
-                                        <span class="detail-label">Rescuer Notes</span>
+                                        <span class="detail-label">Responder Notes</span>
                                         <div class="completion-notes-box">
                                             <v-icon size="14" color="grey" class="mr-1" style="flex-shrink:0;">mdi-note-text</v-icon>
                                             <p class="detail-value" style="margin:0; white-space:pre-wrap;">{{ rescue.completion_notes }}</p>
@@ -684,8 +685,8 @@
                                 </div>
                                 <h3 class="approval-title">Cancellation Pending Approval</h3>
                                 <p class="approval-subtitle">
-                                    Your cancellation request has been sent to the rescuer.
-                                    Use chat to confirm you no longer need help.
+                                    Your cancellation request has been sent to the responder.
+                                    Use chat to confirm you no longer need assistance.
                                 </p>
                                 <div class="approval-timestamp">
                                     <v-icon size="14" class="mr-1">mdi-clock-outline</v-icon>
@@ -842,7 +843,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Normal Slide to confirm Mark as Safe -->
+                                <!-- Normal Slide to confirm Mark as Safe 
                                 <div v-else class="slide-to-confirm" @mousedown="startSlide" @touchstart="startSlide">
                                     <div class="slide-track">
                                         <div class="slide-progress" :style="{ width: slideProgress + '%' }"></div>
@@ -865,9 +866,10 @@
                                         </div>
                                     </div>
                                 </div>
+                                -->
                             </div>
                             
-                            <!-- Combined urgency notice for High/Critical -->
+                            <!-- Combined urgency notice for High/Critical 
                             <v-alert 
                                 v-if="isHighOrCriticalUrgency"
                                 type="warning" 
@@ -880,8 +882,9 @@
                                     Your urgency level is <strong>{{ rescue.injuries }}</strong>. A rescuer must accept and verify your safety before you can be marked as safe.
                                 </div>
                             </v-alert>
+                            -->
 
-                            <!-- Info hint if rescuer is assigned (non-high/critical) -->
+                            <!-- Info hint if rescuer is assigned (non-high/critical) 
                             <v-alert 
                                 v-else-if="(rescue.assigned_rescuer || rescue.rescuer) && ['assigned', 'in_progress'].includes(rescue.status)"
                                 type="info" 
@@ -893,6 +896,7 @@
                                      Since a rescuer is assigned, they will need to approve your safe request.
                                 </div>
                             </v-alert>
+                            -->
                             
                             <div class="secondary-actions">
                                 <div class="action-row">
@@ -927,7 +931,7 @@
                                         flex
                                     >
                                         <v-icon start>mdi-close-circle-outline</v-icon>
-                                        {{ cancelHoldActive ? 'Hold...' : 'Cancel  ' }}
+                                        {{ cancelHoldActive ? 'Hold...' : 'Cancel Request' }}
                                     </v-btn>
                                     <v-btn
                                         v-else-if="isCancelBlockedByUrgency && !['rescued', 'safe', 'cancelled', 'completed'].includes(rescue.status)"
@@ -1176,7 +1180,7 @@
                         <div class="d-flex align-center justify-space-between">
                             <div class="d-flex align-center">
                                 <v-icon size="22" color="white" class="mr-2">mdi-account-circle</v-icon>
-                                <span class="text-h6 font-weight-bold">Rescuer Profile</span>
+                                <span class="text-h6 font-weight-bold">Responder Profile</span>
                             </div>
                             <v-btn icon variant="text" size="small" @click="showRescuerProfile = false">
                                 <v-icon size="18" color="rgba(255,255,255,0.8)">mdi-close</v-icon>
@@ -1304,6 +1308,17 @@
                         <!-- Action Buttons -->
                         <div class="d-flex flex-row gap-2">
                             <v-btn
+                                variant="outlined"
+                                size="small"
+                                rounded="xl"
+                                class="flex-grow-1 me-5"
+                                @click="closeCancelReasonDialog"
+                                style="min-height: 36px;"
+                            >
+                                <v-icon start size="14">mdi-arrow-left</v-icon>
+                                <span class="text-overline text-sm-caption font-weight-medium">Go Back</span>
+                            </v-btn>
+                            <v-btn
                                 color="error"
                                 variant="flat"
                                 size="small"
@@ -1316,17 +1331,6 @@
                             >
                                 <v-icon start size="14">mdi-send</v-icon>
                                 <span class="text-overline text-sm-caption font-weight-medium">Submit</span>
-                            </v-btn>
-                            <v-btn
-                                variant="outlined"
-                                size="small"
-                                rounded="xl"
-                                class="flex-grow-1"
-                                @click="closeCancelReasonDialog"
-                                style="min-height: 36px;"
-                            >
-                                <v-icon start size="14">mdi-arrow-left</v-icon>
-                                <span class="text-overline text-sm-caption font-weight-medium">Go Back</span>
                             </v-btn>
                         </div>
                     </v-card-text>
@@ -2080,7 +2084,7 @@ const triggerStatusNotification = (oldStatus, newStatus) => {
         case 'completed':
             notificationData = {
                 title: '✅ Rescue Complete!',
-                message: 'You have been marked as safe. Thank you for using PinPointMe.',
+                message: 'You have been marked as resolved. Thank you for using PinPointMe.',
                 type: 'success',
                 icon: 'mdi-check-circle',
                 sound: 'success',
@@ -3272,6 +3276,7 @@ const submitCancellationWithReason = async () => {
     }
 };
 
+
 /** Submit the actual cancellation to the backend */
 const submitCancellation = async () => {
     // Redirect to reason modal instead of direct cancellation
@@ -3651,8 +3656,8 @@ const handleGoBack = () => {
 }
 
 /* Status Hero */
-.status-hero {
-    background: linear-gradient(135deg, #3674B5 0%, #2196F3 100%);
+.status-hero { 
+    background: linear-gradient(135deg, #3674B5 0%, #2196F3 100%); /*for In Progress*/ 
     padding: 24px 16px 36px;
     position: relative;
     overflow: hidden;

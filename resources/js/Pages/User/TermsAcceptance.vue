@@ -19,7 +19,7 @@
                             <div class="welcome-highlight">
                                 
                                 <v-icon size="16" color="rgba(255, 255, 255, 0.8)" class="mr-2">mdi-information-outline</v-icon>
-                                <span class="highlight-text">Please review and accept our Terms & Conditions and Privacy Policy</span>
+                                <span class="highlight-text">Please review and accept the Terms & Conditions and Privacy Policy</span>
                             </div>
                         </div>
                     </div>
@@ -128,7 +128,7 @@
                                     <div class="contact-box mt-4">
                                         <v-icon color="#3674B5" class="mr-2">mdi-email-outline</v-icon>
                                         <div>
-                                            <strong>Questions?</strong><br>
+                                            <strong>Contact Us</strong><br> 
                                             <a href="mailto:pinpointme@gmail.com" class="text-grey-darken-1">pinpointme@gmail.com</a>
                                         </div>
                                     </div>

@@ -24,7 +24,7 @@
                 :chats="normalizedChats"
                 :loading="loading"
                 :refreshing="refreshing"
-                empty-message="Messages from rescuers will appear here when you're assigned to a rescue request"
+                empty-message="Messages from responders will appear here when you're assigned to an assistance request"
                 scroll-storage-key="user_inbox_scroll_position"
                 @open-chat="openChat"
             />

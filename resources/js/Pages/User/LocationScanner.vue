@@ -3773,7 +3773,8 @@ const showNotification = (message, color = 'info') => {
 }
 
 .active-hero {
-    background: linear-gradient(135deg, #FF9800 0%, #FFC107 100%);
+    background: linear-gradient(135deg, #FF9800 0%, #FFC107 100%); /* Active Rescue Display */
+    /* background: #334155; */
     padding: 40px 20px;
     position: relative;
     overflow: hidden;

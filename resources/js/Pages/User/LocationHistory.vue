@@ -24,13 +24,13 @@
                     <div class="hero-icon-wrap">
                         <v-icon size="32" color="white">mdi-map-clock-outline</v-icon>
                     </div>
-                    <h1 class="hero-title">Rescue History</h1>
-                    <p class="hero-subtitle">Track and review your past rescue requests</p>
+                    <h1 class="hero-title">Incident History</h1>
+                    <p class="hero-subtitle">View and track your past incident requests.</p>
                     <!-- Stats Row -->
                      <div class="filter-bar mb-4">
                     <v-text-field
                         v-model="searchQuery"
-                        placeholder="Search code or location..."
+                        placeholder="Search incident code or location..."
                         prepend-inner-icon="mdi-magnify"
                         variant="outlined"
                         density="compact"
