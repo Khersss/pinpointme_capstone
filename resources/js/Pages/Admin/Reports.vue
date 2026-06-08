@@ -11,7 +11,7 @@
                 <div class="d-flex align-center mb-4">
                     <div>
                         <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold gradient-text">Reports & Analytics</h1>
-                        <p class="text-grey mt-1 text-body-2">Monitor rescue operations and system reports</p>
+                        <p class="text-grey mt-1 text-body-2">Monitor incident responses and system reports</p>
                     </div>
                 </div>
 
@@ -30,8 +30,8 @@
                                     <v-icon :color="activeTab === 'rescue' ? 'white' : '#1976D2'" size="20">mdi-ambulance</v-icon>
                                 </v-avatar>
                                 <div class="flex-grow-1">
-                                    <div :class="activeTab === 'rescue' ? 'text-white' : ''" class="font-weight-bold text-body-2">Rescue Reports</div>
-                                    <div :class="activeTab === 'rescue' ? 'text-blue-lighten-4' : 'text-grey'" class="text-caption">Emergency operations</div>
+                                    <div :class="activeTab === 'rescue' ? 'text-white' : ''" class="font-weight-bold text-body-2">Incident Reports</div>
+                                    <div :class="activeTab === 'rescue' ? 'text-blue-lighten-4' : 'text-grey'" class="text-caption">Incident reporting activity</div>
                                 </div>
                                 <v-chip :color="activeTab === 'rescue' ? 'white' : 'primary'" :variant="activeTab === 'rescue' ? 'flat' : 'tonal'" size="x-small" class="font-weight-bold">
                                     <span :class="activeTab === 'rescue' ? 'text-primary' : ''">{{ counts.total || 0 }}</span>
@@ -52,8 +52,8 @@
                                     <v-icon :color="activeTab === 'self-safe' ? 'white' : '#388E3C'" size="20">mdi-shield-check</v-icon>
                                 </v-avatar>
                                 <div class="flex-grow-1">
-                                    <div :class="activeTab === 'self-safe' ? 'text-white' : ''" class="font-weight-bold text-body-2">Self-Safe Reports</div>
-                                    <div :class="activeTab === 'self-safe' ? 'text-green-lighten-4' : 'text-grey'" class="text-caption">Safe confirmations</div>
+                                    <div :class="activeTab === 'self-safe' ? 'text-white' : ''" class="font-weight-bold text-body-2">Self-Marked Resolved Reports</div>
+                                    <div :class="activeTab === 'self-safe' ? 'text-green-lighten-4' : 'text-grey'" class="text-caption">Self-Marked as resolved confirmations</div>
                                 </div>
                                 <v-chip :color="activeTab === 'self-safe' ? 'white' : 'success'" :variant="activeTab === 'self-safe' ? 'flat' : 'tonal'" size="x-small" class="font-weight-bold">
                                     <span :class="activeTab === 'self-safe' ? 'text-success' : ''">{{ selfSafeReports.length || 0 }}</span>
@@ -175,7 +175,7 @@
                 <v-card rounded="lg">
                     <v-card-title class="d-flex align-center">
                         <v-icon start>mdi-table</v-icon>
-                        Rescue Requests
+                        Incident Requests
                         <v-spacer />
                         <v-chip size="small" color="primary">{{ filteredData.length }} records</v-chip>
                     </v-card-title>
@@ -349,7 +349,7 @@
                     <v-card rounded="lg">
                         <v-card-title class="d-flex align-center">
                             <v-icon start color="success">mdi-shield-check</v-icon>
-                            Self-Marked Safe Reports
+                            Self-Marked Resolved Reports
                             <v-spacer />
                             <v-chip size="small" color="success">{{ filteredSelfSafeData.length }} records</v-chip>
                         </v-card-title>
@@ -608,7 +608,7 @@
                             </p>
                             <p class="text-body-2 text-grey-darken-3">
                                 <v-icon size="16" color="warning" class="mr-1">mdi-alert-outline</v-icon>
-                                <strong>Action Taken:</strong> Request has been removed from active rescue operations
+                                <strong>Action Taken:</strong> Request has been removed from active incident response
                             </p>
                         </v-card>
                     </div>
@@ -621,7 +621,7 @@
             <v-card v-if="selectedSelfSafe" class="rounded-xl">
                 <v-card-title class="d-flex align-center bg-success text-white">
                     <v-icon start>mdi-shield-check</v-icon>
-                    Self-Safe Report Details
+                    Self-Marked Resolved Report Details
                     <v-spacer />
                     <v-btn icon variant="text" color="white" @click="selfSafeDetailsDialog = false">
                         <v-icon>mdi-close</v-icon>
@@ -635,7 +635,7 @@
                         </v-avatar>
                         <div>
                             <div class="font-weight-bold text-h6">{{ selectedSelfSafe.user_name }}</div>
-                            <div class="text-grey">Rescue Code: {{ selectedSelfSafe.rescue_code }}</div>
+                            <div class="text-grey">Incident Code: {{ selectedSelfSafe.rescue_code }}</div>
                         </div>
                     </div>
 
@@ -659,7 +659,7 @@
                     <div class="mb-4">
                         <p class="text-subtitle-2 text-grey-darken-2 mb-2">
                             <v-icon size="18" class="mr-1">mdi-text-box</v-icon>
-                            Reason for Marking Safe
+                            Reason for Marking Resolved
                         </p>
                         <v-card variant="outlined" class="pa-3 rounded-lg">
                             <p class="text-body-1">{{ selectedSelfSafe.safe_proof_reason || 'No reason provided' }}</p>
@@ -672,7 +672,7 @@
                             <template v-slot:prepend>
                                 <v-icon color="success">mdi-clock-check</v-icon>
                             </template>
-                            <v-list-item-title>Marked Safe At</v-list-item-title>
+                            <v-list-item-title>Marked Resolved At</v-list-item-title>
                             <v-list-item-subtitle>{{ formatDateTime(selectedSelfSafe.self_marked_safe_at) }}</v-list-item-subtitle>
                         </v-list-item>
                         <v-list-item>
@@ -716,7 +716,7 @@
             <v-card v-if="selectedReport">
                 <v-card-title class="d-flex align-center">
                     <v-icon start color="primary">mdi-file-document</v-icon>
-                    Rescue Request Details
+                    Incident Request Details
                     <v-spacer />
                     <v-chip :color="getStatusColor(selectedReport.status)" size="small">
                         {{ formatStatus(selectedReport.status) }}
@@ -728,7 +728,7 @@
                             <template v-slot:prepend>
                                 <v-icon>mdi-identifier</v-icon>
                             </template>
-                            <v-list-item-title>Rescue Code</v-list-item-title>
+                            <v-list-item-title>Incident Code</v-list-item-title>
                             <v-list-item-subtitle>{{ selectedReport.rescue_code }}</v-list-item-subtitle>
                         </v-list-item>
                         <v-list-item>
@@ -816,7 +816,7 @@
                             <template v-slot:prepend>
                                 <v-icon>mdi-note-text</v-icon>
                             </template>
-                            <v-list-item-title>Rescue Notes</v-list-item-title>
+                            <v-list-item-title>Responder Notes</v-list-item-title>
                             <v-list-item-subtitle class="text-wrap">{{ selectedReport.completion_notes }}</v-list-item-subtitle>
                         </v-list-item>
                     </v-list>
@@ -825,7 +825,7 @@
                     <div v-if="selectedReport.completion_photo" class="pa-4 pt-0">
                         <p class="text-caption text-medium-emphasis mb-2 d-flex align-center">
                             <v-icon size="14" class="mr-1" color="success">mdi-camera-check</v-icon>
-                            Rescue Completion Proof Photo
+                            Incident Completion Proof Photo
                             <v-chip size="x-small" color="success" variant="tonal" class="ml-2">
                                 <v-icon start size="10">mdi-shield-check</v-icon>
                                 Verified
@@ -844,7 +844,7 @@
                     <div v-if="selectedReport.safe_proof_photo" class="pa-4 pt-0">
                         <p class="text-caption text-medium-emphasis mb-2 d-flex align-center">
                             <v-icon size="14" class="mr-1" color="info">mdi-account-check</v-icon>
-                            Self-Safe Proof Photo
+                            Self-Marked Resolved Proof Photo
                         </p>
                         <v-img
                             :src="selectedReport.safe_proof_photo"
@@ -1008,7 +1008,7 @@ const timeFilters = [
 
 const statusFilters = [
     { label: 'All Status', value: 'all' },
-    { label: 'Need Help', value: 'need_help' },
+    { label: 'Need Assistance', value: 'need_help' },
     { label: 'In Progress', value: 'in_progress' },
     { label: 'Assisted', value: 'rescued' },
     { label: 'Cancelled', value: 'cancelled' },
@@ -1048,7 +1048,7 @@ const filteredData = computed(() => {
 const statusDistribution = computed(() => {
     const total = reportsList.value.length || 1;
     return [
-        { name: 'Need Help', count: counts.value.pending, percentage: Math.round((counts.value.pending / total) * 100), color: 'warning' },
+        { name: 'Need Assistance', count: counts.value.pending, percentage: Math.round((counts.value.pending / total) * 100), color: 'warning' },
         { name: 'In Progress', count: counts.value.in_progress, percentage: Math.round((counts.value.in_progress / total) * 100), color: 'info' },
         { name: 'Assisted', count: counts.value.completed, percentage: Math.round((counts.value.completed / total) * 100), color: 'success' },
         { name: 'Cancelled', count: counts.value.cancelled || 0, percentage: Math.round(((counts.value.cancelled || 0) / total) * 100), color: 'error' },
@@ -1403,7 +1403,7 @@ const getStatusColor = (status) => {
 
 const formatStatus = (status) => {
     const labels = {
-        pending: 'Need Help',
+        pending: 'Need Assistance',
         accepted: 'In Progress',
         in_progress: 'In Progress',
         en_route: 'In Progress',
@@ -1512,14 +1512,14 @@ const exportSelfSafeReports = async () => {
         ]);
         
         autoTable(doc, {
-            head: [['User', 'Rescue Code', 'Reason', 'Date', 'Photo']],
+            head: [['User', 'Incident Code', 'Reason', 'Date', 'Photo']],
             body: tableData,
             startY: 30,
         });
         
         doc.save('self-safe-reports.pdf');
         
-        snackbarText.value = 'Self-Safe reports exported successfully!';
+        snackbarText.value = 'Self-Marked Resolved reports exported successfully!';
         snackbarColor.value = 'success';
         snackbar.value = true;
     } catch (error) {

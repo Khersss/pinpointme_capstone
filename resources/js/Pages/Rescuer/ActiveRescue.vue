@@ -348,7 +348,7 @@
                                 <div class="text-body-2">You cannot accept this request while the user is going through cancellation steps.</div>
                             </v-alert>
 
-                            <!-- Marking Safe In Progress Warning -->
+                            <!-- Marking Safe In Progress Warning - FOR REMOVAL -->
                             <v-alert 
                                 v-if="rescueRequest?.marking_safe_in_progress_at"
                                 type="info"
@@ -357,8 +357,8 @@
                                 class="mb-3"
                                 icon="mdi-shield-check-outline"
                             >
-                                <div class="text-subtitle-2 font-weight-bold">User Considering Marking Self Safe</div>
-                                <div class="text-body-2">You cannot accept this request while the user is considering marking themselves as safe.</div>
+                                <div class="text-subtitle-2 font-weight-bold">User Considering Marking Self Assisted</div>
+                                <div class="text-body-2">You cannot accept this request while the user is considering marking themselves as assisted.</div>
                             </v-alert>
 
                                 <v-btn
@@ -605,7 +605,7 @@
                         class="mb-3"
                     />
 
-                    <!-- Photo Upload -->
+                    <!-- Photo Upload -SHOULD NOT BE REQUIRED --> 
                     <div class="completion-photo-section">
                         <label class="photo-upload-label">
                             <v-icon start size="18">mdi-camera</v-icon>
@@ -650,6 +650,7 @@
                             @change="onCompletionPhotoSelected"
                         />
                     </div>
+                
                 </v-card-text>
                 <v-card-actions class="px-5 pb-4">
                     <v-btn variant="text" rounded="lg" @click="showCompleteDialog = false; resetSlide()">Cancel</v-btn>
@@ -693,8 +694,8 @@
                             @click="cancelType = 'valid'"
                         >
                             <v-icon :color="cancelType === 'valid' ? 'warning' : 'grey'" size="24" class="mb-1">mdi-arrow-u-left-top</v-icon>
-                            <span class="cancel-option-title">Valid Cancel</span>
-                            <span class="cancel-option-desc">Return request to Need Help queue</span>
+                            <span class="cancel-option-title">Requeue</span>
+                            <span class="cancel-option-desc">Return request to Need Assistance queue</span>
                         </div>
                         <div 
                             :class="['cancel-option', cancelType === 'invalid' ? 'cancel-option-active cancel-option-danger' : '']"
@@ -747,8 +748,8 @@
                         <v-icon color="white" size="28">mdi-account-check</v-icon>
                     </div>
                     <div class="flex-grow-1">
-                        <span class="text-white text-subtitle-1 font-weight-bold d-block">Safe Request Received</span>
-                        <span class="text-white-darken-1 text-caption">User wants to mark themselves as safe</span>
+                        <span class="text-white text-subtitle-1 font-weight-bold d-block">Assisted Request Received</span>
+                        <span class="text-white-darken-1 text-caption">User wants to mark themselves as Assisted</span>
                     </div>
                 </v-card-title>
                 
@@ -765,23 +766,23 @@
                             </v-avatar>
                             <div>
                                 <h4 class="text-subtitle-1 font-weight-bold mb-0">{{ getPersonInNeedName() }}</h4>
-                                <p class="text-caption text-grey mb-0">is requesting to be marked as safe</p>
+                                <p class="text-caption text-grey mb-0">is requesting to be marked as assisted</p>
                             </div>
                         </div>
                         
                         <v-alert type="info" variant="tonal" density="compact" class="mb-0">
                             <div class="text-caption">
-                                <strong>Before approving:</strong> Verify the user is actually safe. 
+                                <strong>Before approving:</strong> Verify the user is actually assisted. 
                                 If you're unsure, deny the request and assess in person.
                             </div>
                         </v-alert>
                     </div>
                     
-                    <!-- Safe Proof Photo and Reason -->
+                    <!-- Assisted Proof Photo and Reason -->
                     <div v-if="rescueRequest?.safe_proof_photo || rescueRequest?.safe_proof_reason" class="proof-section mb-4">
                         <div class="d-flex align-center mb-2">
                             <v-icon size="18" color="success" class="mr-2">mdi-shield-check</v-icon>
-                            <span class="text-subtitle-2 text-grey-darken-2">Safety Proof Submitted</span>
+                            <span class="text-subtitle-2 text-grey-darken-2">Assisted Proof Submitted</span>
                         </div>
                         
                         <!-- Proof Photo -->
@@ -804,7 +805,7 @@
                         <div v-if="rescueRequest?.safe_proof_reason" class="proof-reason-container">
                             <p class="text-caption text-grey-darken-1 mb-2">
                                 <v-icon size="16" class="mr-1">mdi-text-box</v-icon>
-                                Reason for Safety
+                                Proof of Reason for being Assisted
                             </p>
                             <v-card variant="outlined" class="pa-3 rounded-lg" style="border-color: #4CAF50;">
                                 <p class="text-body-2 mb-0">{{ rescueRequest.safe_proof_reason }}</p>
@@ -826,8 +827,8 @@
                             <div class="text-center py-4">
                                 <v-icon size="48" color="success" class="mb-3">mdi-shield-check</v-icon>
                                 <p class="text-body-2 text-grey-darken-1">
-                                    Confirming this means you verify that the user is safe and no longer requires assistance.
-                                    This will complete the rescue operation.
+                                    Confirming this means you verify that the user is already assisted and no longer requires assistance.
+                                    This will complete the assistance operation.
                                 </p>
                             </div>
                         </v-window-item>
@@ -909,7 +910,7 @@
                     </div>
                     <div class="flex-grow-1">
                         <span class="text-white text-subtitle-1 font-weight-bold d-block">Cancel Request Received</span>
-                        <span class="text-white-darken-1 text-caption">User wants to cancel the rescue</span>
+                        <span class="text-white-darken-1 text-caption">User wants to cancel the assistance request</span>
                     </div>
                 </v-card-title>
                 
@@ -926,7 +927,7 @@
                             </v-avatar>
                             <div>
                                 <h4 class="text-subtitle-1 font-weight-bold mb-0">{{ getPersonInNeedName() }}</h4>
-                                <p class="text-caption text-grey mb-0">is requesting to cancel the rescue</p>
+                                <p class="text-caption text-grey mb-0">is requesting to cancel the assistance request</p>
                             </div>
                         </div>
                         
@@ -979,11 +980,11 @@
                                 <v-icon size="48" color="success" class="mb-3">mdi-check-circle</v-icon>
                                 <p class="text-body-2 text-grey-darken-1">
                                     Confirming this means you verify that the user is safe and no longer requires assistance.
-                                    This will cancel the rescue request.
+                                    This will cancel the assistance request.
                                 </p>
                                 <v-alert type="success" variant="tonal" density="compact" class="mt-3">
                                     <div class="text-caption">
-                                        <strong>Approving will:</strong> Cancel the rescue request, free you for other assignments, and mark as resolved.
+                                        <strong>Approving will:</strong> Cancel the assistance request, free you for other assignments, and marked as resolved.
                                     </div>
                                 </v-alert>
                             </div>
@@ -1133,7 +1134,7 @@
             </v-card>
         </v-dialog>
 
-        <!-- Media Viewer Dialog (for photos/videos from rescue request) -->
+        <!-- Media Viewer Dialog (for photos/videos from assistance request) -->
         <v-dialog v-model="showMediaViewer" max-width="600" content-class="media-viewer-dialog">
             <v-card class="bg-black rounded-xl">
                 <v-card-title class="d-flex align-center justify-space-between text-white pa-3">
@@ -1594,7 +1595,7 @@ const acceptRescue = async () => {
 
         // Block if user is currently considering marking themselves safe
         if (rescueRequest.value?.marking_safe_in_progress_at) {
-            showSnackbar('User is currently considering marking themselves safe. Please wait.', 'warning');
+            showSnackbar('User is currently considering marking themselves assisted. Please wait.', 'warning');
             updating.value = false;
             return;
         }
@@ -1654,12 +1655,12 @@ const acceptRescue = async () => {
             // Refresh data to update UI
             await fetchActiveRescue();
         } else if (error?.status === 409 && error?.data?.marking_safe_in_progress) {
-            showSnackbar('User is currently considering marking themselves safe. Please wait.', 'warning');
+            showSnackbar('User is currently considering marking themselves assisted. Please wait.', 'warning');
             await fetchActiveRescue();
         } else if (error?.status === 409 && error?.data?.already_accepted) {
-            showSnackbar(error.data?.message || 'Already accepted by another rescuer.', 'warning');
+            showSnackbar(error.data?.message || 'Already accepted by another responder.', 'warning');
         } else {
-            showSnackbar('Failed to accept rescue', 'error');
+            showSnackbar('Failed to accept assistance request', 'error');
         }
     } finally {
         updating.value = false;
@@ -1700,8 +1701,8 @@ const startRescue = async () => {
             showSnackbar('Response started! You can now proceed to the location.', 'success');
         }
     } catch (error) {
-        console.error('Error starting rescue:', error);
-        showSnackbar('Failed to start rescue', 'error');
+        console.error('Error starting assistance request:', error);
+        showSnackbar('Failed to start assistance request', 'error');
     } finally {
         updating.value = false;
     }
@@ -1752,7 +1753,7 @@ const completeRescue = async () => {
             // Update local response request with completion data
             rescueRequest.value = { ...rescueRequest.value, ...data, status: 'safe' };
             currentStatus.value = 'safe';
-            showSnackbar('Person marked as safe!', 'success');
+            showSnackbar('Person marked as Resolved!', 'success');
             showCompleteDialog.value = false;
             resetSlide();
             removeCompletionPhoto();
@@ -1766,8 +1767,8 @@ const completeRescue = async () => {
             } catch (e) { /* ignore */ }
         }
     } catch (error) {
-        console.error('Error completing rescue:', error);
-        showSnackbar('Failed to mark as safe', 'error');
+        console.error('Error completing assistance request:', error);
+        showSnackbar('Failed to mark as Resolved', 'error');
     } finally {
         updating.value = false;
     }
@@ -1803,10 +1804,10 @@ const cancelRescue = async () => {
                 setTimeout(() => router.visit('/rescuer/dashboard'), 500);
             }
         } else {
-            // Valid cancel — return request back to pending so other rescuers can pick it up
+            // Valid cancel(Requeue) — return request back to pending so other rescuers can pick it up
             const response = await apiFetch(`/api/rescue-requests/${rescueRequest.value.id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify({
                     status: 'pending',
                     cancellation_reason: cancellationReason.value,
@@ -1829,8 +1830,8 @@ const cancelRescue = async () => {
             }
         }
     } catch (error) {
-        console.error('Error cancelling rescue:', error);
-        showSnackbar('Failed to cancel rescue', 'error');
+        console.error('Error cancelling assistance request:', error);
+        showSnackbar('Failed to cancel assistance request', 'error');
     } finally {
         updating.value = false;
     }
@@ -1983,7 +1984,7 @@ const formatStatus = (status) => {
         'assigned': 'Assigned',
         'in_progress': 'In Progress',
         'rescued': 'Assisted',
-        'safe': 'Safe',
+        'safe': 'Resolved',
         'cancelled': 'Cancelled',
     };
     return labels[status] || status;
@@ -2068,7 +2069,7 @@ const handleApproveSafeRequest = async () => {
     
     safeApprovalProcessing.value = true;
     try {
-        const response = await approveSafeRequest(rescueRequest.value.id, 'Confirmed safe by rescuer');
+        const response = await approveSafeRequest(rescueRequest.value.id, 'Confirmed resolved by responder');
         
         // Update local state
         if (response.data) {
@@ -2084,7 +2085,7 @@ const handleApproveSafeRequest = async () => {
         } catch (e) { /* ignore */ }
         
         showSafeApprovalDialog.value = false;
-        showSnackbar('User marked as okay. Response completed.', 'success');
+        showSnackbar('User marked as assisted. Response completed.', 'success');
         
         // Vibrate for successful completion
         if (navigator.vibrate) {
@@ -2096,8 +2097,8 @@ const handleApproveSafeRequest = async () => {
             router.visit('/rescuer/dashboard');
         }, 500);
     } catch (error) {
-        console.error('Failed to approve safe request:', error);
-        showSnackbar('Failed to approve safe request. Please try again.', 'error');
+        console.error('Failed to approve assisted request:', error);
+        showSnackbar('Failed to approve assisted request. Please try again.', 'error');
     } finally {
         safeApprovalProcessing.value = false;
     }
@@ -2105,7 +2106,7 @@ const handleApproveSafeRequest = async () => {
 
 const handleDenySafeRequest = async () => {
     if (!rescueRequest.value?.id || !safeApprovalDenyReason.value.trim()) {
-        showSnackbar('Please provide a reason for denying the safe request.', 'warning');
+        showSnackbar('Please provide a reason for denying the assisted request.', 'warning');
         return;
     }
     
@@ -2124,9 +2125,9 @@ const handleDenySafeRequest = async () => {
         showSafeApprovalDialog.value = false;
         safeApprovalDenyReason.value = '';
         safeApprovalTab.value = 'approve';
-        showSnackbar('Safe request denied. User has been notified to wait for your assessment.', 'info');
+        showSnackbar('Assisted request denied. User has been notified to wait for your assessment.', 'info');
     } catch (error) {
-        console.error('Failed to deny safe request:', error);
+        console.error('Failed to deny ass request:', error);
         showSnackbar('Failed to deny safe request. Please try again.', 'error');
     } finally {
         safeApprovalProcessing.value = false;

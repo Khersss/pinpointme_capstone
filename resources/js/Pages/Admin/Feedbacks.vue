@@ -27,7 +27,7 @@
                                     <v-icon :color="activeTab === 'rescue' ? 'white' : '#1976D2'" size="20">mdi-lifebuoy</v-icon>
                                 </v-avatar>
                                 <div class="flex-grow-1">
-                                    <div :class="activeTab === 'rescue' ? 'text-white' : ''" class="font-weight-bold text-body-2">Rescue Feedback</div>
+                                    <div :class="activeTab === 'rescue' ? 'text-white' : ''" class="font-weight-bold text-body-2">Incident Response Feedback</div>
                                     <div :class="activeTab === 'rescue' ? 'text-blue-lighten-4' : 'text-grey'" class="text-caption">Ratings & reviews</div>
                                 </div>
                                 <v-chip :color="activeTab === 'rescue' ? 'white' : 'primary'" :variant="activeTab === 'rescue' ? 'flat' : 'tonal'" size="x-small" class="font-weight-bold">

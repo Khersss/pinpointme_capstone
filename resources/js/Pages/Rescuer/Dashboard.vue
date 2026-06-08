@@ -57,7 +57,7 @@
                         </v-avatar>
                     </template>
                     <v-list-item-title class="font-weight-bold">
-                        {{ request.firstName || 'Someone' }} needs help!
+                        {{ request.firstName || 'Someone' }} needs assistance!
                     </v-list-item-title>
                     <v-list-item-subtitle>
                         <v-icon size="12">mdi-map-marker</v-icon>
@@ -123,7 +123,7 @@
                         @click="selectedTab = 'pending'"
                     >
                         <v-icon size="16" class="tab-icon">mdi-alert-circle</v-icon>
-                        <span class="tab-text">Need Help</span>
+                        <span class="tab-text">Need Assistance</span>
                         <v-chip size="x-small" color="white" variant="flat" class="tab-count">{{ counts.pending }}</v-chip>
                     </button>
                     <button 
@@ -164,7 +164,7 @@
                             
                             <h2 class="status-title">Account Under Review</h2>
                             <p class="status-description">
-                                Your rescuer application has been submitted successfully. 
+                                Your responder application has been submitted successfully. 
                                 Our administrators are currently reviewing your credentials and will approve your account shortly.
                             </p>
                         </div>
@@ -248,7 +248,7 @@
                             
                             <h2 class="status-title declined-title">Application Declined</h2>
                             <p class="status-description">
-                                We're sorry, but your rescuer application has been reviewed and was not approved at this time.
+                                We're sorry, but your responder application has been reviewed and was not approved at this time.
                             </p>
                         </div>
 
@@ -268,7 +268,7 @@
                                 <div class="info-card-content">
                                     <v-icon size="20" color="#3674B5" class="info-icon">mdi-email-outline</v-icon>
                                     <div class="info-text">
-                                        <span class="info-label">Need Help?</span>
+                                        <span class="info-label">Need Assistance?</span>
                                         <span class="info-value">Contact the administrator for more information or to appeal this decision.</span>
                                     </div>
                                 </div>
@@ -343,7 +343,7 @@
                         <template v-else>
                             <div v-if="pendingRequests.length === 0" class="empty-state">
                                 <v-icon size="64" color="grey-lighten-1">mdi-inbox-outline</v-icon>
-                                <p class="text-grey mt-2">No pending rescue requests</p>
+                                <p class="text-grey mt-2">No pending assistance requests</p>
                             </div>
                             <div
                                 v-for="request in pendingRequests"
@@ -411,7 +411,7 @@
                                 <!-- Marking safe in progress indicator -->
                                 <div v-if="request.marking_safe_in_progress_at" class="marking-safe-in-progress-indicator">
                                     <v-icon size="14" color="info" class="mr-1">mdi-shield-check-outline</v-icon>
-                                    <span class="text-caption text-info">User considering marking self safe</span>
+                                    <span class="text-caption text-info">User considering marking self resolved</span>
                                 </div>
                             </div>
                         </template>
@@ -421,7 +421,7 @@
                     <div v-if="selectedTab === 'inProgress'">
                         <div v-if="inProgressRequests.length === 0" class="empty-state">
                             <v-icon size="64" color="grey-lighten-1">mdi-progress-clock</v-icon>
-                            <p class="text-grey mt-2">No rescues in progress</p>
+                            <p class="text-grey mt-2">No in progress assistance requests </p>
                         </div>
                         <div
                             v-for="request in inProgressRequests"
@@ -519,7 +519,7 @@
                         <div v-if="filteredRescuedRequests.length === 0" class="empty-state">
                             <v-icon size="64" color="grey-lighten-1">mdi-check-circle-outline</v-icon>
                             <p class="text-grey mt-2">
-                                {{ rescuedSearchQuery || rescuedSelectedDate ? 'No rescued persons match your filters.' : 'No rescued users yet' }}
+                                {{ rescuedSearchQuery || rescuedSelectedDate ? 'No assisted persons match your filters.' : 'No assisted users yet' }}
                             </p>
                             <v-btn 
                                 v-if="rescuedSearchQuery || rescuedSelectedDate"
@@ -606,7 +606,7 @@
 
                     <!-- Text content -->
                     <div class="fa-label">URGENT</div>
-                    <h2 class="fa-title">Rescue Request Waiting</h2>
+                    <h2 class="fa-title">Assistance Request Waiting</h2>
                     <p class="fa-subtitle">
                         Admin has triggered a force alert.<br>
                         A request has been pending too long — please accept immediately.
@@ -883,7 +883,7 @@ onMounted(async () => {
     const unregisterMessageCallback = onNewMessages((newCount) => {
         // Don't show message notifications if rescuer is restricted
         if (isRescuerRestricted.value) {
-            console.log('[Dashboard] Rescuer is restricted, skipping message notification');
+            console.log('[Dashboard] Responder is restricted, skipping message notification');
             return;
         }
         
@@ -957,7 +957,7 @@ const pollForNewRequests = async () => {
         if (newRequests.length > 0) {
             // Don't send any notifications if rescuer is restricted by admin
             if (isRescuerRestricted.value) {
-                console.log('[Dashboard] Rescuer is restricted, skipping notifications');
+                console.log('[Dashboard] Responder is restricted, skipping notifications');
             }
             // If rescuer has active assignment → soft notification only
             else if (hasActiveAssignment.value) {
@@ -993,7 +993,7 @@ const pollForNewRequests = async () => {
             popupAlert.value = {
                 show: true,
                 title: '\uD83D\uDD14 URGENT: Admin Force Alert!',
-                message: `${name} needs IMMEDIATE help at ${location}! Accept now to stop the alarm.`,
+                message: `${name} needs IMMEDIATE assistance at ${location}! Accept now to stop the alarm.`,
                 type: 'error',
                 icon: 'mdi-alarm-light',
                 callback: () => {
@@ -1020,7 +1020,7 @@ const triggerNewRequestNotification = (request, totalNew) => {
     
     showPopupNotification(
         `🚨 NEW EMERGENCY${totalNew > 1 ? ` (${totalNew})` : ''}`,
-        `${name} needs help at ${location}! Urgency: ${urgencyText}`,
+        `${name} needs assistance at ${location}! Urgency: ${urgencyText}`,
         'error',
         'mdi-alert-circle',
         () => {
@@ -1039,7 +1039,7 @@ const triggerSoftRequestNotification = (request, totalNew) => {
     popupAlert.value = {
         show: true,
         title: `New Request${totalNew > 1 ? ` (${totalNew})` : ''}`,
-        message: `${name} needs help at ${location}. Urgency: ${urgencyText}`,
+        message: `${name} needs assistance at ${location}. Urgency: ${urgencyText}`,
         type: 'info',
         icon: 'mdi-bell',
         callback: null,
@@ -1122,7 +1122,7 @@ const refreshRescuerStatus = async () => {
         const user = response?.data || response;
         if (user?.status) {
             rescuerStatus.value = user.status;
-            console.log('[Dashboard] Updated rescuer status to:', user.status);
+            console.log('[Dashboard] Updated responder status to:', user.status);
             
             // Also update localStorage so other components see the change
             const storedData = localStorage.getItem('userData');
@@ -1173,14 +1173,14 @@ const acceptRescue = async (request) => {
 
     // Check if user is currently considering marking themselves safe
     if (request.marking_safe_in_progress_at) {
-        showNotification('This user is currently considering marking themselves safe. Please wait for them to finish.', 'warning');
+        showNotification('This user is currently considering marking themselves resolved. Please wait for them to finish.', 'warning');
         return;
     }
 
     // Check if rescuer status allows accepting requests
     if (rescuerStatus.value && ['off_duty', 'unavailable'].includes(rescuerStatus.value.toLowerCase())) {
         const statusText = rescuerStatus.value === 'off_duty' ? 'off duty' : 'unavailable';
-        showNotification(`You cannot accept rescue requests while you are ${statusText}. Please contact an administrator to change your status.`, 'error');
+        showNotification(`You cannot accept assistance requests while you are ${statusText}. Please contact an administrator to change your status.`, 'error');
         return;
     }
     

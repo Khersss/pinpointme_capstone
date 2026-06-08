@@ -46,7 +46,7 @@
                         <div class="stat-inline">
                             <v-icon size="22" class="stat-inline-icon orange-icon">mdi-account-clock</v-icon>
                             <div class="stat-inline-value">{{ counts.pending || 0 }}</div>
-                            <div class="stat-inline-label">Pending</div>
+                            <div class="stat-inline-label">Pending Approval</div>
                         </div>
                     </div>
                 </v-card>
@@ -1228,7 +1228,7 @@ const deleteRescuer = async () => {
         
         const data = await response.json();
         if (data.success) {
-            showSnackbar('Rescuer deleted successfully', 'success');
+            showSnackbar('Responder deleted successfully', 'success');
             deleteDialog.value = false;
             fetchRescuers();
         }

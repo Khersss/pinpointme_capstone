@@ -8,7 +8,7 @@
                 <div class="page-header mb-4 mb-md-6">
                     <div class="page-header-content">
                         <h1 :class="isMobile ? 'text-h5' : 'text-h4'" class="font-weight-bold gradient-text">False Alarm Reports</h1>
-                        <p class="text-grey mt-1 text-body-2">View reports submitted by responders for false/joke rescue requests</p>
+                        <p class="text-grey mt-1 text-body-2">View reports submitted by responders for false assistance requests</p>
                     </div>
                 </div>
 
