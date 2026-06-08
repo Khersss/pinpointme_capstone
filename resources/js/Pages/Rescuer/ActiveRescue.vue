@@ -28,7 +28,7 @@
             <!-- Loading State -->
                 <div v-if="loading" class="loading-container">
                 <v-progress-circular indeterminate color="primary" size="64" />
-                <p class="mt-4 text-grey">Loading assistance request details...</p>
+                <p class="mt-4 text-grey">Loading assistance request details...</p> 
             </div>
 
             <!-- No Rescue Found -->
@@ -43,9 +43,9 @@
                 <!-- Completion Banner (if completed) - HelpComing Style -->
                 <div v-if="currentStatus === 'rescued' || currentStatus === 'safe' || currentStatus === 'completed'" class="text-center py-4 mb-4">
                     <v-icon size="56" color="success" class="mb-2">mdi-check-circle</v-icon>
-                    <h3 class="text-h6 mb-1">Response Complete</h3>
+                    <h3 class="text-h6 mb-1">Incident Resolved</h3>
                     
-                    <p class="text-grey mb-3">Person has been successfully responded to and marked as okay.</p>
+                    <p class="text-grey mb-3">Patient/Visitor has been responded to and resolved successfully.</p>
                 </div>
 
                 <!-- Urgency Banner -->
@@ -469,7 +469,7 @@
                                     </div>
                                     <div class="slide-text">
                                         <span v-if="!isSlideComplete" class="slide-instruction">
-                                            {{ isSliding ? 'Keep sliding...' : 'Slide to mark as safe' }}
+                                            {{ isSliding ? 'Keep sliding...' : 'Slide to mark as Resolved' }}
                                         </span>
                                         <span v-else class="slide-success">
                                             Person marked as safe!
@@ -563,7 +563,8 @@
                                     </div>
                                 </div>
 
-                                <!-- Completion Photo -->
+                                <!-- 
+                                // Completion Photo 
                                 <div v-if="rescueRequest?.completion_photo" class="summary-photo-section">
                                     <div class="summary-photo-label">
                                         <v-icon size="16" color="grey">mdi-camera</v-icon>
@@ -576,6 +577,8 @@
                                         </div>
                                     </div>
                                 </div>
+                                -->
+
                             </div>
                         </v-expand-transition>
                     </div>
@@ -588,7 +591,7 @@
             <v-card rounded="xl">
                 <div class="complete-dialog-header">
                     <v-icon size="28" color="white">mdi-shield-check</v-icon>
-                    <span class="complete-dialog-title">Mark as Safe</span>
+                    <span class="complete-dialog-title">Mark as Resolved</span>
                 </div>
                 <v-card-text class="pa-5">
                     <p class="text-body-2 text-medium-emphasis mb-4">
@@ -605,7 +608,8 @@
                         class="mb-3"
                     />
 
-                    <!-- Photo Upload -SHOULD NOT BE REQUIRED --> 
+                    <!-- 
+                    // Photo Upload -SHOULD NOT BE REQUIRED  
                     <div class="completion-photo-section">
                         <label class="photo-upload-label">
                             <v-icon start size="18">mdi-camera</v-icon>
@@ -650,8 +654,9 @@
                             @change="onCompletionPhotoSelected"
                         />
                     </div>
+                    -->
                 
-                </v-card-text>
+                </v-card-text> 
                 <v-card-actions class="px-5 pb-4">
                     <v-btn variant="text" rounded="lg" @click="showCompleteDialog = false; resetSlide()">Cancel</v-btn>
                     <v-spacer />
@@ -661,11 +666,11 @@
                         rounded="lg"
                         @click="completeRescue"
                         :loading="updating"
-                        :disabled="!completionPhotoFile"
                         class="px-6"
                     >
+                        <!-- :disabled="!completionPhotoFile" -->
                         <v-icon start size="18">mdi-check-circle</v-icon>
-                        Confirm Safe
+                        Confirm
                     </v-btn>
                 </v-card-actions>
             </v-card>
@@ -904,6 +909,7 @@
         <!-- Cancel Approval Request Dialog -->
         <v-dialog v-model="showCancelApprovalDialog" max-width="440" persistent>
             <v-card rounded="xl" class="cancel-approval-dialog">
+                <!--
                 <v-card-title class="d-flex align-center pa-4 bg-warning">
                     <div class="pulse-icon mr-3">
                         <v-icon color="white" size="28">mdi-cancel</v-icon>
@@ -911,7 +917,29 @@
                     <div class="flex-grow-1">
                         <span class="text-white text-subtitle-1 font-weight-bold d-block">Cancel Request Received</span>
                         <span class="text-white-darken-1 text-caption">User wants to cancel the assistance request</span>
+                        <div 
                     </div>
+                        <v-btn icon variant="text" size="small" @click="showCancelDialog = false; cancellationReason = ''; cancelType = 'valid'">
+                        <v-icon color="white">mdi-close</v-icon>
+                    </v-btn>
+                    </div>
+                </v-card-title>
+                -->
+                <v-card-title class="d-flex align-center pa-4 bg-warning">
+                    <div class="pulse-icon mr-3">
+                        <v-icon color="white" size="28">mdi-alert-circle</v-icon> 
+                    </div>
+
+                    <div class="flex-grow-1">
+                        <span class="text-white text-subtitle-1 font-weight-bold d-block">Cancel Request Received</span>
+                        <span class="text-white-darken-1 text-caption">User wants to cancel the assistance request</span>
+                    </div>
+
+                    <v-btn 
+                        icon variant="text" size="small" @click="handleCancelRedirect"
+                    >
+                        <v-icon color="white">mdi-close</v-icon>
+                    </v-btn>
                 </v-card-title>
                 
                 <v-card-text class="pa-5">
@@ -936,12 +964,13 @@
                             <div class="text-caption"><strong>Reason:</strong></div>
                             <div class="text-body-2">{{ rescueRequest?.cancel_approval_reason || 'No reason provided' }}</div>
                         </v-alert>
-                        
-                        <!-- Show proof details if provided -->
+                        <!--
+                        // Show proof details if provided
                         <v-alert v-if="rescueRequest?.cancel_proof_details" type="info" variant="tonal" density="compact" class="mb-3">
                             <div class="text-caption"><strong>Proof of safety:</strong></div>
                             <div class="text-body-2">{{ rescueRequest.cancel_proof_details }}</div>
                         </v-alert>
+                        -->
 
                         <!-- Show proof photo if provided -->
                         <!-- 
@@ -1472,6 +1501,7 @@ const statusSteps = [
 const statusOrder = ['pending', 'assigned', 'in_progress', 'rescued'];
 
 // Methods
+
 const fetchRescueDetails = async () => {
     try {
         const id = props.rescueId || localStorage.getItem('lastRescueRequestId');
@@ -1743,9 +1773,13 @@ const completeRescue = async () => {
     updating.value = true;
     try {
         const formData = new FormData();
+        
+        // Notes are optional
         if (completionNotes.value) {
             formData.append('completion_notes', completionNotes.value);
         }
+        
+        // Photo is now entirely optional - it only appends if it exists
         if (completionPhotoFile.value) {
             formData.append('completion_photo', completionPhotoFile.value);
         }
@@ -1763,7 +1797,12 @@ const completeRescue = async () => {
             showSnackbar('Person marked as Resolved!', 'success');
             showCompleteDialog.value = false;
             resetSlide();
-            removeCompletionPhoto();
+            
+            // Safe execution: Only run if a photo clean-up function exists and was used
+            if (completionPhotoFile.value && typeof removeCompletionPhoto === 'function') {
+                removeCompletionPhoto();
+            }
+            
             localStorage.removeItem('lastRescueRequestId');
 
             // Update localStorage so Profile and other pages reflect 'available' status
@@ -1919,9 +1958,11 @@ const rescueDuration = computed(() => {
 });
 
 // Completion photo helpers
+/** 
 const triggerCompletionPhotoInput = () => {
     completionPhotoInputRef.value?.click();
 };
+
 
 const onCompletionPhotoSelected = (e) => {
     const file = e.target.files?.[0];
@@ -1929,6 +1970,7 @@ const onCompletionPhotoSelected = (e) => {
     completionPhotoFile.value = file;
     completionPhotoPreview.value = URL.createObjectURL(file);
 };
+
 
 const removeCompletionPhoto = () => {
     if (completionPhotoPreview.value) {
@@ -1938,6 +1980,7 @@ const removeCompletionPhoto = () => {
     completionPhotoPreview.value = null;
     if (completionPhotoInputRef.value) completionPhotoInputRef.value.value = '';
 };
+*/
 
 const getUrgencyColor = (level) => {
     const colors = {

@@ -411,7 +411,7 @@
                                 <!-- Marking safe in progress indicator -->
                                 <div v-if="request.marking_safe_in_progress_at" class="marking-safe-in-progress-indicator">
                                     <v-icon size="14" color="info" class="mr-1">mdi-shield-check-outline</v-icon>
-                                    <span class="text-caption text-info">User considering marking self resolved</span>
+                                    <span class="text-caption text-info">User Considering Marking Self Resolved</span>
                                 </div>
                             </div>
                         </template>

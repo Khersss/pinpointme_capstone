@@ -1486,6 +1486,81 @@ class RescueRequestController extends Controller
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
      */
+
+    public function completeRescue(Request $request, $id)
+    {
+        $rescueRequest = RescueRequest::with(['building', 'floor', 'room', 'requester', 'rescuer'])->findOrFail($id);
+
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'completion_notes' => 'nullable|string|max:1000',
+            'completion_photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
+        ], );
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        try {
+            $updateData = [
+                'status' => 'safe',
+                'completion_notes' => $request->completion_notes,
+            ];
+
+            // Handle completion photo upload
+            if ($request->hasFile('completion_photo')) {
+                $file = $request->file('completion_photo');
+                $filename = 'completion_' . $rescueRequest->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('rescue_completions', $filename, 'public');
+                $updateData['completion_photo'] = '/storage/' . $path;
+            }
+
+            $rescueRequest->update($updateData);
+
+            // Set rescuer back to available
+            if ($rescueRequest->assigned_rescuer) {
+                $rescuer = \App\Models\User::find($rescueRequest->assigned_rescuer);
+                if ($rescuer && $rescuer->role === 'rescuer') {
+                    $rescuer->update(['status' => 'available']);
+                }
+            }
+
+            // Log completion in audit trail for admin visibility
+            \App\Models\AuditTrail::create([
+                'user_id' => $rescueRequest->assigned_rescuer ?? auth()->id(),
+                'action' => 'rescue_completed',
+                'description' => sprintf(
+                    'Rescue completed. Request #%d (Code: %s) for %s %s at %s. Notes: %s. Photo: %s',
+                    $rescueRequest->id,
+                    $rescueRequest->rescue_code ?? 'N/A',
+                    $rescueRequest->firstName ?? $rescueRequest->requester?->first_name ?? 'Unknown',
+                    $rescueRequest->lastName ?? $rescueRequest->requester?->last_name ?? '',
+                    $rescueRequest->building?->name . ' > ' . $rescueRequest->floor?->floor_name . ' > ' . $rescueRequest->room?->room_name,
+                    $request->completion_notes ?? 'None',
+                    isset($updateData['completion_photo']) ? 'Uploaded' : 'None'
+                ),
+                'ip_address' => $request->ip(),
+            ]);
+
+            // Reload relationships
+            $rescueRequest->load(['building', 'floor', 'room', 'requester', 'rescuer']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Rescue completed successfully.',
+                'data' => $rescueRequest,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to complete rescue: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+    
+    /**
     public function completeRescue(Request $request, $id)
     {
         $rescueRequest = RescueRequest::with(['building', 'floor', 'room', 'requester', 'rescuer'])->findOrFail($id);
@@ -1560,6 +1635,7 @@ class RescueRequestController extends Controller
             ], 500);
         }
     }
+    */
 
     /**
      * Set cancel-in-progress status when user starts cancel flow
